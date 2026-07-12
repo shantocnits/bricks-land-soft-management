@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Hind Siliguri', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-primary: #034C3C;
+    --color-primary-dark: #023E31;
+    --color-primary-light: #056651;
+    --color-secondary: #068A6B;
+    --color-accent: #009E74;
+    --color-accent-hover: #008762;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+/* Smooth transition for theme toggle */
+*, *::before, *::after {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+[x-cloak] {
+    display: none !important;
+}
