@@ -10,6 +10,21 @@ class Dashboard extends Component
     public $filterPeriod = 'today'; // today, 7days, 15days, month, last_month
     public $dateFilter = '2026-07-12';
 
+    /**
+     * Restrict access to users with dashboard permission or admin role.
+     */
+    public function mount()
+    {
+        $user = auth()->user();
+        try {
+            if (!$user->hasRole('admin') && !$user->hasPermissionTo('dashboard')) {
+                abort(403, 'Unauthorized access.');
+            }
+        } catch (\Exception $e) {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     // Sample data structure matching the tables in image_680313.png
     public $challans = [
         ['category' => '১ম শ্রেণি', 'challan_no' => 'CH-101', 'qty' => 5000, 'total' => '৳ ৪৫,০০০'],

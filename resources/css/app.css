@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -25,4 +25,25 @@
 
 [x-cloak] {
     display: none !important;
+}
+
+/* Hide Livewire navigate progress bar globally */
+.livewire-progress-bar {
+    display: none !important;
+}
+
+/* Custom fade-in and slide-up animation */
+@keyframes settingsFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-settings-fade {
+    animation: settingsFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

@@ -104,19 +104,19 @@
 
                 <!-- Form with Alpine.js Validation & Interactions -->
                 <form 
-                    action="{{ route('login.post') }}" 
+                    action="{{ route('login') }}" 
                     method="POST" 
                     x-data="{ 
-                        username: '', 
+                        email: '', 
                         password: '',
                         showPassword: false,
                         submitted: false,
-                        usernameErrorMsg: '',
-                        passwordErrorMsg: '',
-                        get usernameError() {
-                            if (this.usernameErrorMsg) return this.usernameErrorMsg;
+                        emailErrorMsg: '{{ $errors->first('email') }}',
+                        passwordErrorMsg: '{{ $errors->first('password') }}',
+                        get emailError() {
+                            if (this.emailErrorMsg) return this.emailErrorMsg;
                             if (!this.submitted) return '';
-                            return this.username.trim() === '' ? 'ইউজারনেম আবশ্যক' : '';
+                            return this.email.trim() === '' ? 'ইমেইল আবশ্যক' : '';
                         },
                         get passwordError() {
                             if (this.passwordErrorMsg) return this.passwordErrorMsg;
@@ -125,19 +125,17 @@
                         },
                         submitForm(e) {
                             this.submitted = true;
-                            this.usernameErrorMsg = '';
-                            this.passwordErrorMsg = '';
-                            if (this.username.trim() === '' || this.password.length < 4) {
+                            if (this.emailError || this.passwordError) {
                                 e.preventDefault();
                             }
                         }
                     }"
                     x-init="let count = 0; let interval = setInterval(() => { 
-                        let u = document.getElementById('username');
-                        let p = document.getElementById('password');
-                        if (u) { u.value = ''; u.dispatchEvent(new Event('input')); }
-                        if (p) { p.value = ''; p.dispatchEvent(new Event('input')); }
-                        username = ''; 
+                        let eField = document.getElementById('email');
+                        let pField = document.getElementById('password');
+                        if (eField) { eField.value = ''; }
+                        if (pField) { pField.value = ''; }
+                        email = ''; 
                         password = ''; 
                         count++; 
                         if (count > 10) clearInterval(interval); 
@@ -146,26 +144,23 @@
                     
                     @csrf
 
-                    <!-- Username Field -->
+                    <!-- Email Field -->
                     <div class="mb-5">
-                        <label for="username" class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
-                            ইউজারনেম
+                        <label for="email" class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+                            ইমেইল
                         </label>
                         <input 
-                            type="text" 
-                            name="username" 
-                            id="username"
-                            x-model="username"
-                            @input="usernameErrorMsg = ''"
+                            type="email" 
+                            name="email" 
+                            id="email"
+                            x-model="email"
+                            @input="emailErrorMsg = ''; submitted = false"
                             autocomplete="username"
-                            class="w-full py-2.5 px-4 rounded-xl border bg-gray-50 dark:bg-slate-800 dark:text-white transition-all duration-200 outline-none text-sm @error('username') border-red-500 ring-4 ring-red-100 dark:ring-red-950/20 @else border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-4 focus:ring-primary/10 @enderror"
-                            placeholder="আপনার ইউজারনেম লিখুন">
+                            :class="emailError ? 'w-full py-2.5 px-4 rounded-xl border bg-gray-50 dark:bg-slate-800 dark:text-white transition-all duration-200 outline-none text-sm border-red-500 ring-4 ring-red-100 dark:ring-red-950/20' : 'w-full py-2.5 px-4 rounded-xl border bg-gray-50 dark:bg-slate-800 dark:text-white transition-all duration-200 outline-none text-sm border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-4 focus:ring-primary/10'"
+                            placeholder="আপনার ইমেইল লিখুন">
                         
                         <!-- Client-Side or Server-Side Error Message -->
-                        <p x-show="usernameError" x-text="usernameError" class="text-red-500 text-[10px] mt-1.5 font-semibold" x-cloak></p>
-                        @error('username')
-                            <p class="text-red-500 text-[10px] mt-1.5 font-semibold">{{ $message }}</p>
-                        @enderror
+                        <p x-show="emailError" x-text="emailError" class="text-red-500 text-[10px] mt-1.5 font-semibold" x-cloak></p>
                     </div>
 
                     <!-- Password Field -->
@@ -179,9 +174,9 @@
                                 name="password" 
                                 id="password"
                                 x-model="password"
-                                @input="passwordErrorMsg = ''"
+                                @input="passwordErrorMsg = ''; submitted = false"
                                 autocomplete="current-password"
-                                class="w-full py-2.5 pl-4 pr-12 rounded-xl border bg-gray-50 dark:bg-slate-800 dark:text-white transition-all duration-200 outline-none text-sm @error('password') border-red-500 ring-4 ring-red-100 dark:ring-red-950/20 @else border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-4 focus:ring-primary/10 @enderror"
+                                :class="(passwordError || emailErrorMsg) ? 'w-full py-2.5 pl-4 pr-12 rounded-xl border bg-gray-50 dark:bg-slate-800 dark:text-white transition-all duration-200 outline-none text-sm border-red-500 ring-4 ring-red-100 dark:ring-red-950/20' : 'w-full py-2.5 pl-4 pr-12 rounded-xl border bg-gray-50 dark:bg-slate-800 dark:text-white transition-all duration-200 outline-none text-sm border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-4 focus:ring-primary/10'"
                                 placeholder="আপনার পাসওয়ার্ড লিখুন">
                             
                             <!-- Toggle Button -->
@@ -205,17 +200,28 @@
                         
                         <!-- Client-Side or Server-Side Error Message -->
                         <p x-show="passwordError" x-text="passwordError" class="text-red-500 text-[10px] mt-1.5 font-semibold" x-cloak></p>
-                        @error('password')
-                            <p class="text-red-500 text-[10px] mt-1.5 font-semibold">{{ $message }}</p>
-                        @enderror
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="flex items-center justify-between mb-6">
+                        <label for="remember_me" class="inline-flex items-center cursor-pointer">
+                            <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-[#009E74] focus:ring-[#009E74] dark:bg-slate-800 dark:border-slate-700" name="remember">
+                            <span class="ms-2 text-xs text-gray-600 dark:text-gray-400 font-medium">আমায় মনে রাখুন</span>
+                        </label>
+                        @if (Route::has('password.request'))
+                            <a class="text-xs text-[#009E74] hover:underline font-semibold" href="{{ route('password.request') }}">
+                                পাসওয়ার্ড ভুলে গেছেন?
+                            </a>
+                        @endif
                     </div>
 
                     <!-- Submit Button -->
                     <button 
                         type="submit" 
-                        class="w-full py-3 bg-[#009E74] hover:bg-[#008762] text-white font-extrabold rounded-xl shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-[0.98] transition-all duration-150 text-sm">
+                        class="w-full py-3 bg-[#009E74] hover:bg-[#008762] text-white font-extrabold rounded-xl shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-[0.98] transition-all duration-150 text-sm mb-4">
                         লগইন
                     </button>
+
                 </form>
             </div>
         </div>

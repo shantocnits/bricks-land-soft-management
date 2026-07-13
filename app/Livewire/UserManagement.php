@@ -3,17 +3,42 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class UserManagement extends Component
 {
+    use WithPagination;
+
+    // Create user properties
     public $name = '';
     public $email = '';
     public $password = '';
     public $role = 'user';
     public $selectedPermissions = [];
+
+    // Edit user properties
+    public $editingUserId = null;
+    public $editName = '';
+    public $editEmail = '';
+    public $editPassword = '';
+    public $editRole = 'user';
+    public $editSelectedPermissions = [];
+
+    /**
+     * Authorize user access.
+     */
+    public function mount()
+    {
+        if (!Auth::user()->hasRole('admin')) {
+            abort(403, 'Unauthorized access.');
+        }
+    }
 
     // The list of all sidebar menus that can be configured
     public $menuOptions = [
@@ -42,19 +67,16 @@ class UserManagement extends Component
     ];
 
     protected $rules = [
-        'name' => 'required|string|min:3|unique:users,name',
-        'email' => 'required|email|unique:users,email',
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|unique:users,email',
         'password' => 'required|string|min:6',
         'role' => 'required|in:admin,user',
     ];
 
     protected $messages = [
-        'name.required' => 'ইউজারনেম আবশ্যক।',
-        'name.min' => 'ইউজারনেম কমপক্ষে ৩ অক্ষরের হতে হবে।',
-        'name.unique' => 'এই ইউজারনেমটি ইতিমধ্যে ব্যবহৃত হয়েছে।',
-        'email.required' => 'ইমেইল আবশ্যক।',
-        'email.email' => 'একটি সঠিক ইমেইল ঠিকানা দিন।',
-        'email.unique' => 'এই ইমেইলটি ইতিমধ্যে ব্যবহৃত হয়েছে।',
+        'name.required' => 'নাম আবশ্যক।',
+        'email.required' => 'ইউজারনেম/ইমেইল আবশ্যক।',
+        'email.unique' => 'এই ইউজারনেম/ইমেইলটি ইতিমধ্যে ব্যবহৃত হয়েছে।',
         'password.required' => 'পাসওয়ার্ড আবশ্যক।',
         'password.min' => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
     ];
@@ -66,39 +88,97 @@ class UserManagement extends Component
     {
         $this->validate();
 
-        User::create([
+        $user = User::create([
             'name' => $this->name,
             'email' => $this->email,
             'password' => Hash::make($this->password),
             'role' => $this->role,
-            'permissions' => $this->role === 'admin' ? null : $this->selectedPermissions,
         ]);
+
+        $user->assignRole($this->role);
+        if ($this->role === 'user') {
+            $user->syncPermissions($this->selectedPermissions);
+        }
 
         $this->reset(['name', 'email', 'password', 'role', 'selectedPermissions']);
         session()->flash('message', 'নতুন ব্যবহারকারী সফলভাবে তৈরি হয়েছে!');
     }
 
     /**
-     * Instantly create a demo user with default access.
+     * Load user details into edit mode.
      */
-    public function createDemoUser()
+    public function editUser($userId)
     {
-        $randomSuffix = rand(100, 999);
-        $demoUsername = 'user_' . $randomSuffix;
-        $demoEmail = 'user_' . $randomSuffix . '@example.com';
+        $user = User::find($userId);
+        if ($user && $user->email !== 'admin@gmail.com') {
+            $this->editingUserId = $user->id;
+            $this->editName = $user->name;
+            $this->editEmail = $user->email;
+            $this->editRole = $user->hasRole('admin') ? 'admin' : 'user';
+            $this->editSelectedPermissions = $user->permissions()->pluck('name')->toArray();
+            $this->editPassword = '';
+        }
+    }
 
-        // Give default demo access to dashboard, challan, and delivery
-        $defaultDemoPermissions = ['dashboard', 'challan', 'delivery'];
-
-        User::create([
-            'name' => $demoUsername,
-            'email' => $demoEmail,
-            'password' => Hash::make('12345678'),
-            'role' => 'user',
-            'permissions' => $defaultDemoPermissions,
+    /**
+     * Update an existing user's details.
+     */
+    public function updateUser()
+    {
+        $this->validate([
+            'editName' => 'required|string|max:255',
+            'editEmail' => 'required|string|unique:users,email,' . $this->editingUserId,
+            'editPassword' => 'nullable|string|min:6',
+            'editRole' => 'required|in:admin,user',
+        ], [
+            'editName.required' => 'নাম আবশ্যক।',
+            'editEmail.required' => 'ইউজারনেম/ইমেইল আবশ্যক।',
+            'editEmail.unique' => 'এই ইউজারনেম/ইমেইলটি ইতিমধ্যে ব্যবহৃত হয়েছে।',
+            'editPassword.min' => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
         ]);
 
-        session()->flash('message', "ডেমো ইউজার তৈরি হয়েছে! ইউজারনেম: {$demoUsername}, পাসওয়ার্ড: 12345678");
+        $user = User::find($this->editingUserId);
+        if ($user && $user->email !== 'admin@gmail.com') {
+            $user->name = $this->editName;
+            $user->email = $this->editEmail;
+            $user->role = $this->editRole;
+            
+            if (!empty($this->editPassword)) {
+                $user->password = Hash::make($this->editPassword);
+            }
+
+            $user->save();
+
+            $user->syncRoles([$this->editRole]);
+            if ($this->editRole === 'admin') {
+                $user->syncPermissions([]);
+            } else {
+                $user->syncPermissions($this->editSelectedPermissions);
+            }
+
+            $this->cancelEdit();
+            session()->flash('message', 'ব্যবহারকারীর তথ্য সফলভাবে আপডেট হয়েছে!');
+        }
+    }
+
+    /**
+     * Cancel the editing state.
+     */
+    public function cancelEdit()
+    {
+        $this->reset(['editingUserId', 'editName', 'editEmail', 'editPassword', 'editRole', 'editSelectedPermissions']);
+    }
+
+    /**
+     * Log in as another user (Impersonation).
+     */
+    public function loginAsUser($userId)
+    {
+        $user = User::find($userId);
+        if ($user) {
+            Auth::login($user);
+            return redirect()->route('dashboard');
+        }
     }
 
     /**
@@ -107,16 +187,18 @@ class UserManagement extends Component
     public function toggleAdmin($userId)
     {
         $user = User::find($userId);
-        if ($user && $user->id !== auth()->id()) {
-            $user->role = $user->role === 'admin' ? 'user' : 'admin';
-            // Clear permissions if upgraded to admin
-            if ($user->role === 'admin') {
-                $user->permissions = null;
+        if ($user && $user->id !== Auth::id() && $user->email !== 'admin@gmail.com') {
+            if ($user->hasRole('admin')) {
+                $user->syncRoles(['user']);
+                $user->syncPermissions([]);
+                $user->role = 'user';
             } else {
-                $user->permissions = ['dashboard'];
+                $user->syncRoles(['admin']);
+                $user->syncPermissions([]);
+                $user->role = 'admin';
             }
             $user->save();
-            session()->flash('message', "{$user->name}-এর রোল সফলভাবে পরিবর্তন করা হয়েছে!");
+            session()->flash('message', "{$user->email}-এর রোল সফলভাবে পরিবর্তন করা হয়েছে!");
         }
     }
 
@@ -126,17 +208,13 @@ class UserManagement extends Component
     public function togglePermission($userId, $menuKey)
     {
         $user = User::find($userId);
-        if ($user && $user->role !== 'admin') {
-            $permissions = is_array($user->permissions) ? $user->permissions : [];
-            
-            if (in_array($menuKey, $permissions)) {
-                $permissions = array_values(array_diff($permissions, [$menuKey]));
+        if ($user && !$user->hasRole('admin') && $user->email !== 'admin@gmail.com') {
+            Permission::findOrCreate($menuKey);
+            if ($user->hasPermissionTo($menuKey)) {
+                $user->revokePermissionTo($menuKey);
             } else {
-                $permissions[] = $menuKey;
+                $user->givePermissionTo($menuKey);
             }
-            
-            $user->permissions = $permissions;
-            $user->save();
         }
     }
 
@@ -146,7 +224,7 @@ class UserManagement extends Component
     public function deleteUser($userId)
     {
         $user = User::find($userId);
-        if ($user && $user->id !== auth()->id()) {
+        if ($user && $user->id !== Auth::id() && $user->email !== 'admin@gmail.com') {
             $user->delete();
             session()->flash('message', 'ব্যবহারকারী মুছে ফেলা হয়েছে!');
         }
@@ -154,7 +232,7 @@ class UserManagement extends Component
 
     public function render()
     {
-        $users = User::orderBy('created_at', 'desc')->get();
+        $users = User::orderBy('created_at', 'desc')->paginate(5);
 
         return view('livewire.user-management', [
             'users' => $users

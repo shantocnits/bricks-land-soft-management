@@ -4,9 +4,16 @@
           darkMode: localStorage.getItem('darkMode') === 'true', 
           sidebarOpen: false 
       }" 
-      x-init="sidebarOpen = window.innerWidth >= 768; window.addEventListener('resize', () => { if (window.innerWidth < 768) sidebarOpen = false; }); $watch('darkMode', val => localStorage.setItem('darkMode', val))"
+      x-init="sidebarOpen = window.innerWidth >= 768; window.addEventListener('resize', () => { if (window.innerWidth < 768) sidebarOpen = false; }); $watch('darkMode', val => { localStorage.setItem('darkMode', val); if (val) { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } })"
       :class="{ 'dark': darkMode }">
 <head>
+    <script>
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">

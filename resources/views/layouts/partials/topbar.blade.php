@@ -46,11 +46,11 @@
 
         <!-- Utility Buttons Group -->
         <div class="hidden sm:flex items-center space-x-2">
-            <!-- 1. History -->
+            <!-- 1. Update Record -->
             <div x-data="{ hover: false }" class="relative flex items-center justify-center">
                 <button @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
                     </svg>
                 </button>
                 <div 
@@ -63,11 +63,11 @@
                     x-transition:leave-end="opacity-0 translate-y-1 scale-95"
                     class="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-white text-[10px] font-bold rounded-xl shadow-xl whitespace-nowrap z-50 pointer-events-none border border-emerald-700 font-sans"
                     x-cloak>
-                    ইতিহাস
+                    আপডেট রেকর্ড
                 </div>
             </div>
             
-            <!-- 2. Documents -->
+            <!-- 2. Login Record -->
             <div x-data="{ hover: false }" class="relative flex items-center justify-center">
                 <button @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -84,32 +84,11 @@
                     x-transition:leave-end="opacity-0 translate-y-1 scale-95"
                     class="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-white text-[10px] font-bold rounded-xl shadow-xl whitespace-nowrap z-50 pointer-events-none border border-emerald-700 font-sans"
                     x-cloak>
-                    ডকুমেন্টস
+                    লগইন রেকর্ড
                 </div>
             </div>
             
-            <!-- 3. Support/Phone -->
-            <div x-data="{ hover: false }" class="relative flex items-center justify-center">
-                <button @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                    </svg>
-                </button>
-                <div 
-                    x-show="hover"
-                    x-transition:enter="transition ease-out duration-200 transform"
-                    x-transition:enter-start="opacity-0 translate-y-1 scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                    x-transition:leave="transition ease-in duration-150 transform"
-                    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                    x-transition:leave-end="opacity-0 translate-y-1 scale-95"
-                    class="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-white text-[10px] font-bold rounded-xl shadow-xl whitespace-nowrap z-50 pointer-events-none border border-emerald-700 font-sans"
-                    x-cloak>
-                    সাপোর্ট
-                </div>
-            </div>
-            
-            <!-- 4. Video Tutorial -->
+            <!-- 3. Video Tutorial -->
             <div x-data="{ hover: false }" class="relative flex items-center justify-center">
                 <button @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -130,14 +109,14 @@
                     ভিডিও টিউটোরিয়াল
                 </div>
             </div>
-
-            <!-- 5. Social/Twitter -->
+            
+            <!-- 4. Payment Method -->
             <div x-data="{ hover: false }" class="relative flex items-center justify-center">
-                <a href="#" @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                <button @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
                     </svg>
-                </a>
+                </button>
                 <div 
                     x-show="hover"
                     x-transition:enter="transition ease-out duration-200 transform"
@@ -148,7 +127,7 @@
                     x-transition:leave-end="opacity-0 translate-y-1 scale-95"
                     class="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-white text-[10px] font-bold rounded-xl shadow-xl whitespace-nowrap z-50 pointer-events-none border border-emerald-700 font-sans"
                     x-cloak>
-                    এক্স / টুইটার
+                    পেমেন্ট মেথড
                 </div>
             </div>
         </div>
