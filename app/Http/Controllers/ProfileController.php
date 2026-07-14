@@ -55,6 +55,27 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Redirect::to('/');
+    /**
+     * Upload dynamic profile photo.
+     */
+    public function uploadPhoto(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'photo' => 'required|image|max:2048',
+        ]);
+
+        $user = Auth::user();
+        if ($user) {
+            // Delete old photo if exists
+            if ($user->profile_photo) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo);
+            }
+
+            $path = $request->file('photo')->store('profile-photos', 'public');
+            $user->profile_photo = $path;
+            $user->save();
+        }
+
+        return back();
     }
 }

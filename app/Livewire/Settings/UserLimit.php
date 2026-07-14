@@ -12,6 +12,10 @@ class UserLimit extends Component
     public $limitType = 'daily_invoice_limit';
     public $amount = '';
 
+    // Modal and Search control
+    public $showModal = false;
+    public $search = '';
+
     protected $rules = [
         'selectedUserId' => 'required|exists:users,id',
         'limitType' => 'required|in:daily_invoice_limit,max_discount_limit,daily_payment_limit',
@@ -26,8 +30,21 @@ class UserLimit extends Component
         'amount.numeric' => 'পরিমাণ অবশ্যই একটি সংখ্যা হতে হবে।',
     ];
 
+    public function openAddModal()
+    {
+        $this->resetForm();
+        $this->showModal = true;
+    }
+
     public function setLimit()
     {
+        // Block action if logged in as Demo
+        if (auth()->user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে কোনো লিমিট পরিবর্তন করা সম্ভব নয়।');
+            $this->showModal = false;
+            return;
+        }
+
         $this->validate();
 
         UserLimitModel::updateOrCreate(
@@ -41,20 +58,48 @@ class UserLimit extends Component
         );
 
         session()->flash('message', 'ইউজার লিমিট সফলভাবে সেট করা হয়েছে।');
-        $this->reset(['selectedUserId', 'amount']);
+        $this->showModal = false;
+        $this->resetForm();
     }
 
     public function deleteLimit($id)
     {
+        // Block action if logged in as Demo
+        if (auth()->user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে লিমিট মুছে ফেলা সম্ভব নয়।');
+            return;
+        }
+
         UserLimitModel::destroy($id);
         session()->flash('message', 'ইউজার লিমিট সফলভাবে মুছে ফেলা হয়েছে।');
     }
 
+    public function cancelEdit()
+    {
+        $this->showModal = false;
+        $this->resetForm();
+    }
+
+    public function resetForm()
+    {
+        $this->reset(['selectedUserId', 'amount']);
+        $this->limitType = 'daily_invoice_limit';
+    }
+
     public function render()
     {
+        $query = UserLimitModel::with('user');
+
+        if (!empty($this->search)) {
+            $query->whereHas('user', function($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('email', 'like', '%' . $this->search . '%');
+            })->orWhere('limit_type', 'like', '%' . $this->search . '%');
+        }
+
         return view('livewire.settings.user-limit', [
             'users' => User::orderBy('name', 'asc')->get(),
-            'activeLimits' => UserLimitModel::with('user')->orderBy('id', 'desc')->get(),
+            'activeLimits' => $query->orderBy('id', 'desc')->get(),
         ]);
     }
 }

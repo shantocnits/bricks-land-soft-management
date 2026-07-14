@@ -56,7 +56,7 @@
     <div class="flex-grow overflow-y-auto overflow-x-visible py-3 space-y-1 scrollbar-thin scrollbar-thumb-emerald-800 scrollbar-track-transparent">
         
         <!-- 1. ড্যাশবোর্ড -->
-        @if($hasAccess('dashboard'))
+        @if(auth()->check())
         <div class="mx-2">
             <a href="{{ route('dashboard') }}" 
                @mouseenter="showTooltip('ড্যাশবোর্ড', $el)"
@@ -73,11 +73,11 @@
 
         <!-- 2. চালান (Dropdown) -->
         @if($hasAccess('challan'))
-        <div class="mx-2" x-data="{ open: false }">
+        <div class="mx-2" x-data="{ open: {{ request()->routeIs('challan.*') ? 'true' : 'false' }} }">
             <button @click="open = !open" 
                     @mouseenter="showTooltip('চালান', $el)"
                     @mouseleave="hideTooltip()"
-                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-emerald-100 hover:bg-emerald-800/50 hover:text-white transition-all duration-200">
+                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ request()->routeIs('challan.*') ? 'bg-emerald-800/50 text-white' : 'text-emerald-100 hover:bg-emerald-800/50 hover:text-white' }} transition-all duration-200">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -89,9 +89,28 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                 </svg>
             </button>
-            <div x-show="open" x-transition:enter="transition ease-out duration-205" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" class="mt-1 ml-6 space-y-1" :class="{ 'hidden': !sidebarOpen }">
-                <a href="#" class="block px-4 py-2 text-xs text-emerald-200 hover:text-white hover:bg-emerald-800/40 rounded transition-all font-sans">নতুন চালান</a>
-                <a href="#" class="block px-4 py-2 text-xs text-emerald-200 hover:text-white hover:bg-emerald-800/40 rounded transition-all font-sans">চালান তালিকা</a>
+            <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 -translate-y-2" x-transition:enter-end="transform opacity-100 translate-y-0" class="mt-1 ml-6 space-y-0.5" :class="{ 'hidden': !sidebarOpen }">
+                <a href="{{ route('challan.today') }}" 
+                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('challan.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40' }}">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    আজকের চালান
+                </a>
+                <a href="{{ route('challan.pending') }}" 
+                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('challan.pending') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40' }}">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    অগ্রিম চালান
+                </a>
+                <a href="{{ route('challan.all') }}" 
+                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('challan.all') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40' }}">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    সব চালান
+                </a>
             </div>
         </div>
         @endif
@@ -439,24 +458,7 @@
         </div>
         @endif
 
-        <!-- Divider for Admin Tools -->
-        @if($currentUser && $currentUser->role === 'admin')
-        <div class="h-[1px] bg-emerald-800/40 my-4 mx-4"></div>
 
-        <!-- 23. ইউজার মেনু (Only for Admin) -->
-        <div class="mx-2">
-            <a href="{{ route('user-management') }}" 
-               @mouseenter="showTooltip('ইউজার মেনু', $el)"
-               @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('user-management') ? 'bg-secondary text-white shadow-sm' : 'text-emerald-100 hover:bg-emerald-800/50 hover:text-white' }} transition-all duration-200">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
-                <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
-                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">ইউজার মেনু</span>
-            </a>
-        </div>
-        @endif
 
     </div>
 

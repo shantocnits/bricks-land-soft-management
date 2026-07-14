@@ -47,3 +47,27 @@
 .animate-settings-fade {
     animation: settingsFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+/* Force cursor pointer on clickable elements */
+button, 
+a, 
+input[type="button"], 
+input[type="submit"], 
+input[type="reset"],
+select,
+[role="button"],
+.cursor-clickable,
+.cursor-pointer {
+    cursor: pointer !important;
+}
+
+/* Remove default spinner arrows in number inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+

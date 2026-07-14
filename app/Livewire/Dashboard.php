@@ -15,14 +15,7 @@ class Dashboard extends Component
      */
     public function mount()
     {
-        $user = auth()->user();
-        try {
-            if (!$user->hasRole('admin') && !$user->hasPermissionTo('dashboard')) {
-                abort(403, 'Unauthorized access.');
-            }
-        } catch (\Exception $e) {
-            abort(403, 'Unauthorized access.');
-        }
+        // Accessible by all authenticated users
     }
 
     // Sample data structure matching the tables in image_680313.png

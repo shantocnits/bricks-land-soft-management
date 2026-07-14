@@ -3,18 +3,47 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
 
 class Settings extends Component
 {
-    public $activeTab = 'profile'; // Default tab
+    public $activeTab = 'my_profile'; // Default tab
 
     protected $queryString = [
-        'activeTab' => ['as' => 'tab', 'except' => 'profile']
+        'activeTab' => ['as' => 'tab', 'except' => 'my_profile']
     ];
 
+    /**
+     * Mount and validate tab access.
+     */
+    public function mount()
+    {
+        $allowedTabs = $this->getAllowedTabs();
+        if (!in_array($this->activeTab, $allowedTabs)) {
+            $this->activeTab = 'my_profile';
+        }
+    }
+
+    /**
+     * Handle tab changes.
+     */
     public function setTab($tab)
     {
-        $this->activeTab = $tab;
+        $allowedTabs = $this->getAllowedTabs();
+        if (in_array($tab, $allowedTabs)) {
+            $this->activeTab = $tab;
+        }
+    }
+
+    /**
+     * Helper to get allowed tabs based on roles.
+     */
+    private function getAllowedTabs()
+    {
+        if (Auth::user() && Auth::user()->role === 'admin') {
+            return ['my_profile', 'profile', 'category', 'ledger', 'user', 'password', 'limit', 'printer', 'stock', 'sms'];
+        }
+        return ['my_profile', 'password'];
     }
 
     public function render()

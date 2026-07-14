@@ -3,78 +3,46 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\PermissionRegistrar;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
-        // Reset cached roles and permissions
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        // Ensure Spatie roles exist
+        Role::findOrCreate('admin');
+        Role::findOrCreate('user');
+        Role::findOrCreate('demo');
 
-        // The list of all sidebar menus/permissions
-        $menuPermissions = [
-            'dashboard',
-            'challan',
-            'payment',
-            'delivery',
-            'due_ledger',
-            'cash_ledger',
-            'load_ledger',
-            'unload',
-            'brick_ledger',
-            'ledger',
-            'customer',
-            'sales_report',
-            'inventory',
-            'documents',
-            'raw_material',
-            'staff',
-            'vehicle_acc',
-            'vehicle_rent',
-            'debts',
-            'accounts',
-            'production',
-            'phone',
-        ];
-
-        // Create Spatie Permissions
-        foreach ($menuPermissions as $perm) {
-            Permission::findOrCreate($perm);
+        // 1. admin@gmail.com (admin account)
+        $admin = User::firstOrCreate([
+            'email' => 'admin@gmail.com'
+        ], [
+            'name' => 'admin',
+            'password' => \Hash::make('12345678'),
+            'role' => 'admin',
+        ]);
+        if (!$admin->hasRole('admin')) {
+            $admin->assignRole('admin');
         }
 
-        // Create Spatie Roles
-        $adminRole = Role::findOrCreate('admin');
-        $userRole = Role::findOrCreate('user');
-
-        // Assign all permissions to Admin role
-        $adminRole->syncPermissions($menuPermissions);
-
-        // Assign dashboard, challan, and delivery to User role as basic default
-        $userRole->syncPermissions([]);
-
-        // Create Default Admin Users and assign Spatie Roles
-        $demoUser = User::create([
-            'name' => 'Demo',
-            'email' => 'demo@example.com',
-            'password' => Hash::make('12345678'),
-            'role' => 'admin',
+        // 2. shanto@gmail.com (ggg - demo account)
+        $demo = User::firstOrCreate([
+            'email' => 'shanto@gmail.com'
+        ], [
+            'name' => 'ggg',
+            'password' => \Hash::make('12345678'),
+            'role' => 'demo',
         ]);
-        $demoUser->assignRole($adminRole);
-
-        $mainAdmin = User::create([
-            'name' => 'admin',
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('12345678'),
-            'role' => 'admin',
-        ]);
-        $mainAdmin->assignRole($adminRole);
+        if (!$demo->hasRole('demo')) {
+            $demo->assignRole('demo');
+        }
     }
 }

@@ -35,8 +35,22 @@ class UserManagement extends Component
      */
     public function mount()
     {
-        if (!Auth::user()->hasRole('admin')) {
-            abort(403, 'Unauthorized access.');
+        // Ensure Spatie roles exist in database
+        Role::findOrCreate('admin');
+        Role::findOrCreate('user');
+        Role::findOrCreate('demo');
+
+        // Automatically assign Spatie admin role to database admins
+        $currentUser = Auth::user();
+        if ($currentUser && $currentUser->role === 'admin' && !$currentUser->hasRole('admin')) {
+            $currentUser->assignRole('admin');
+        }
+        if ($currentUser && $currentUser->role === 'demo' && !$currentUser->hasRole('demo')) {
+            $currentUser->assignRole('demo');
+        }
+
+        if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('demo'))) {
+            return $this->redirectRoute('dashboard');
         }
     }
 
@@ -70,7 +84,7 @@ class UserManagement extends Component
         'name' => 'required|string|max:255',
         'email' => 'required|string|unique:users,email',
         'password' => 'required|string|min:6',
-        'role' => 'required|in:admin,user',
+        'role' => 'required|in:admin,user,demo',
     ];
 
     protected $messages = [
@@ -86,7 +100,18 @@ class UserManagement extends Component
      */
     public function createUser()
     {
+        // Block action if logged in as Demo
+        if (Auth::user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে কোনো ব্যবহারকারী তৈরি করা সম্ভব নয়।');
+            return;
+        }
+
         $this->validate();
+
+        // Ensure Spatie roles exist
+        Role::findOrCreate('admin');
+        Role::findOrCreate('user');
+        Role::findOrCreate('demo');
 
         $user = User::create([
             'name' => $this->name,
@@ -96,7 +121,10 @@ class UserManagement extends Component
         ]);
 
         $user->assignRole($this->role);
-        if ($this->role === 'user') {
+        if ($this->role === 'user' || $this->role === 'demo') {
+            foreach ($this->selectedPermissions as $perm) {
+                Permission::findOrCreate($perm);
+            }
             $user->syncPermissions($this->selectedPermissions);
         }
 
@@ -109,12 +137,23 @@ class UserManagement extends Component
      */
     public function editUser($userId)
     {
+        // Block action if logged in as Demo
+        if (Auth::user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে তথ্য সংশোধন করা সম্ভব নয়।');
+            return;
+        }
+
         $user = User::find($userId);
         if ($user && $user->email !== 'admin@gmail.com') {
+            // Ensure roles exist
+            Role::findOrCreate('admin');
+            Role::findOrCreate('user');
+            Role::findOrCreate('demo');
+
             $this->editingUserId = $user->id;
             $this->editName = $user->name;
             $this->editEmail = $user->email;
-            $this->editRole = $user->hasRole('admin') ? 'admin' : 'user';
+            $this->editRole = $user->role;
             $this->editSelectedPermissions = $user->permissions()->pluck('name')->toArray();
             $this->editPassword = '';
         }
@@ -125,11 +164,17 @@ class UserManagement extends Component
      */
     public function updateUser()
     {
+        // Block action if logged in as Demo
+        if (Auth::user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে তথ্য সংশোধন করা সম্ভব নয়।');
+            return;
+        }
+
         $this->validate([
             'editName' => 'required|string|max:255',
             'editEmail' => 'required|string|unique:users,email,' . $this->editingUserId,
             'editPassword' => 'nullable|string|min:6',
-            'editRole' => 'required|in:admin,user',
+            'editRole' => 'required|in:admin,user,demo',
         ], [
             'editName.required' => 'নাম আবশ্যক।',
             'editEmail.required' => 'ইউজারনেম/ইমেইল আবশ্যক।',
@@ -139,6 +184,11 @@ class UserManagement extends Component
 
         $user = User::find($this->editingUserId);
         if ($user && $user->email !== 'admin@gmail.com') {
+            // Ensure roles exist
+            Role::findOrCreate('admin');
+            Role::findOrCreate('user');
+            Role::findOrCreate('demo');
+
             $user->name = $this->editName;
             $user->email = $this->editEmail;
             $user->role = $this->editRole;
@@ -153,6 +203,9 @@ class UserManagement extends Component
             if ($this->editRole === 'admin') {
                 $user->syncPermissions([]);
             } else {
+                foreach ($this->editSelectedPermissions as $perm) {
+                    Permission::findOrCreate($perm);
+                }
                 $user->syncPermissions($this->editSelectedPermissions);
             }
 
@@ -174,6 +227,12 @@ class UserManagement extends Component
      */
     public function loginAsUser($userId)
     {
+        // Block action if logged in as Demo
+        if (Auth::user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে অন্য ব্যবহারকারী হিসেবে লগইন করা সম্ভব নয়।');
+            return;
+        }
+
         $user = User::find($userId);
         if ($user) {
             Auth::login($user);
@@ -186,8 +245,19 @@ class UserManagement extends Component
      */
     public function toggleAdmin($userId)
     {
+        // Block action if logged in as Demo
+        if (Auth::user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে রোল পরিবর্তন করা সম্ভব নয়।');
+            return;
+        }
+
         $user = User::find($userId);
         if ($user && $user->id !== Auth::id() && $user->email !== 'admin@gmail.com') {
+            // Ensure Spatie roles exist
+            Role::findOrCreate('admin');
+            Role::findOrCreate('user');
+            Role::findOrCreate('demo');
+
             if ($user->hasRole('admin')) {
                 $user->syncRoles(['user']);
                 $user->syncPermissions([]);
@@ -207,8 +277,23 @@ class UserManagement extends Component
      */
     public function togglePermission($userId, $menuKey)
     {
+        // Block action if logged in as Demo
+        if (Auth::user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে পারমিশন পরিবর্তন করা সম্ভব নয়।');
+            return;
+        }
+
         $user = User::find($userId);
-        if ($user && !$user->hasRole('admin') && $user->email !== 'admin@gmail.com') {
+        if ($user && $user->email !== 'admin@gmail.com') {
+            // Ensure roles exist
+            Role::findOrCreate('admin');
+            Role::findOrCreate('user');
+            Role::findOrCreate('demo');
+
+            if ($user->hasRole('admin')) {
+                return; // Admin has total menu access
+            }
+
             Permission::findOrCreate($menuKey);
             if ($user->hasPermissionTo($menuKey)) {
                 $user->revokePermissionTo($menuKey);
@@ -223,6 +308,12 @@ class UserManagement extends Component
      */
     public function deleteUser($userId)
     {
+        // Block action if logged in as Demo
+        if (Auth::user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে ব্যবহারকারী ডিলিট করা সম্ভব নয়।');
+            return;
+        }
+
         $user = User::find($userId);
         if ($user && $user->id !== Auth::id() && $user->email !== 'admin@gmail.com') {
             $user->delete();

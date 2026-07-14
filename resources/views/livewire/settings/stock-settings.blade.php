@@ -1,4 +1,18 @@
-﻿<div class="space-y-6">
+<div class="space-y-6">
+    <!-- Header banner card -->
+    <div class="flex items-start gap-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-2xl">
+        <div class="flex-shrink-0 p-2 bg-emerald-600 text-white rounded-xl flex items-center justify-center">
+            <!-- Layers Icon -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m0 0A2.25 2.25 0 0119.5 9v.878m-15 0a2.25 2.25 0 00-2.25 2.25v6.75A2.25 2.25 0 004.5 21h15a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25m-15 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128"/>
+            </svg>
+        </div>
+        <div>
+            <h4 class="font-bold text-gray-800 dark:text-white text-sm">স্টক সেটিংস</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">ভাটার ইটের সামগ্রিক স্টক ট্র্যাকিং অথবা খামাল ও শ্রেণি ভিত্তিক পৃথক স্টক পদ্ধতি বেছে নিন।</p>
+        </div>
+    </div>
+
     <!-- Success Alert -->
     @if (session()->has('message'))
         <div x-data="{ show: true }" 
@@ -13,13 +27,16 @@
         </div>
     @endif
 
-    <div class="max-w-4xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-colors duration-300">
-        <div class="flex items-center gap-3 border-b border-gray-100 dark:border-slate-800 pb-4 mb-6">
+    <div class="bg-white dark:bg-slate-900 border border-gray-155 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-colors duration-300">
+        <div class="flex items-center gap-3 border-b border-gray-150 dark:border-slate-800 pb-4 mb-6">
             <h3 class="font-bold text-sm text-gray-800 dark:text-white">স্টক সিস্টেম কনফিগারেশন</h3>
         </div>
 
         <!-- Danger/Warning Alert -->
         <div class="mb-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/60 text-red-800 dark:text-red-400 text-xs rounded-2xl flex gap-3 font-sans leading-relaxed">
+            <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
             <div>
                 <span class="font-black">ঝুঁকি সতর্কতা:</span> স্টক সিস্টেম পরিবর্তন করলে সফটওয়্যারের চালানের হিসাব ও স্টক ক্যালকুলেশন মেকানিজম পরিবর্তিত হয়। রানিং প্রোডাকশন ডেটা সহ চলমান ভাটার ক্ষেত্রে স্টক সিস্টেম পরিবর্তনের পূর্বে ডেটা ব্যাকআপ নেওয়া এবং সিস্টেম এডমিনের পরামর্শ নেওয়া আবশ্যক।
             </div>
@@ -96,7 +113,7 @@
             <!-- Submit -->
             <div class="flex">
                 <button type="submit" onclick="return confirm('আপনি কি নিশ্চিত যে স্টক সিস্টেম পরিবর্তন করতে চান?')"
-                        class="px-8 py-2.5 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-xl transition-all shadow-md">
+                        class="px-8 py-3.5 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
                     স্টক সেটিংস সংরক্ষণ করুন
                 </button>
             </div>

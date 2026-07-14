@@ -14,15 +14,15 @@ class PasswordChange extends Component
 
     protected $rules = [
         'current_password' => 'required',
-        'new_password' => 'required|string|min:6|confirmed|different:current_password',
+        'new_password' => 'required|string|min:8|confirmed|different:current_password',
     ];
 
     protected $messages = [
         'current_password.required' => 'পুরাতন পাসওয়ার্ড আবশ্যক।',
         'new_password.required' => 'নতুন পাসওয়ার্ড আবশ্যক।',
-        'new_password.min' => 'নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
+        'new_password.min' => 'নতুন পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।',
         'new_password.confirmed' => 'নতুন পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মেলেনি।',
-        'new_password.different' => 'নতুন পাসওয়ার্ড পুরাতন পাসওয়ার্ডের চেয়ে আলাদা হতে হবে।',
+        'new_password.different' => 'নতুন পাসওয়ার্ড পুরাতন পাসওয়ার্ডের চেয়ে আলাদা হতে হবে。',
     ];
 
     public function changePassword()

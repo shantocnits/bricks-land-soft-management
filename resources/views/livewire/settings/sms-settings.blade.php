@@ -1,4 +1,18 @@
-﻿<div class="space-y-6">
+<div class="space-y-6">
+    <!-- Header banner card matching screenshot -->
+    <div class="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-slate-800">
+        <div class="flex-shrink-0 p-3 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-2xl flex items-center justify-center shadow-sm">
+            <!-- SMS Icon -->
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+            </svg>
+        </div>
+        <div>
+            <h2 class="font-bold text-gray-800 dark:text-white text-lg font-sans">এসএমএস সেটিংস</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-sans">কোন অ্যাকশনের সময় অটোমেটিক এসএমএস পাঠাতে চান তা ঠিক করুন</p>
+        </div>
+    </div>
+
     <!-- Success Alert -->
     @if (session()->has('message'))
         <div x-data="{ show: true }" 
@@ -13,94 +27,112 @@
         </div>
     @endif
 
-    <div class="max-w-2xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-colors duration-300">
-        <div class="flex items-center gap-3 border-b border-gray-100 dark:border-slate-800 pb-4 mb-6">
-            <h3 class="font-bold text-sm text-gray-800 dark:text-white">এসএমএস অটো-নোটিফিকেশন সেটিংস</h3>
-        </div>
-
-        <form wire:submit.prevent="save" class="space-y-6">
+    <form wire:submit.prevent="save" class="space-y-6">
+        
+        <!-- Toggle Switch Grid (2 column card grid) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            <div class="divide-y divide-gray-100 dark:divide-slate-800">
-                
-                <!-- 1. New Invoice -->
-                <div class="flex items-center justify-between py-4">
-                    <div class="pr-4">
-                        <h4 class="font-bold text-xs text-gray-800 dark:text-white">নতুন ইনভয়েস (চালান) নোটিফিকেশন</h4>
-                        <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
-                            নতুন চালান বা ইনভয়েস এন্ট্রি করার সাথে সাথে কাস্টমারের মোবাইলে কনফার্মেশন এসএমএস পাঠানো হবে।
-                        </p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                        <input type="checkbox" wire:model="sms_new_invoice" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-200 dark:bg-slate-800 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-250/20 dark:peer-focus:ring-emerald-950/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-700 peer-checked:bg-primary"></div>
-                    </label>
+            <!-- 1. New Invoice -->
+            <div x-data="{ on: @entangle('sms_new_invoice') }"
+                 class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4 transition-all">
+                <div class="space-y-1">
+                    <h4 class="font-bold text-gray-800 dark:text-white text-xs font-sans">নতুন ইনভয়েস</h4>
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 font-sans leading-relaxed">কাস্টমার ইনভয়েস প্রিন্ট করার সময় এসএমএস যাবে</p>
                 </div>
-
-                <!-- 2. Invoice Update -->
-                <div class="flex items-center justify-between py-4">
-                    <div class="pr-4">
-                        <h4 class="font-bold text-xs text-gray-800 dark:text-white">ইনভয়েস আপডেট নোটিফিকেশন</h4>
-                        <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
-                            পূর্বে তৈরি করা কোনো চালানের পরিমাণ, রেট বা তথ্য পরিবর্তন করা হলে কাস্টমারকে নোটিফিকেশন পাঠানো হবে।
-                        </p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                        <input type="checkbox" wire:model="sms_update_invoice" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-200 dark:bg-slate-800 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-250/20 dark:peer-focus:ring-emerald-950/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-700 peer-checked:bg-primary"></div>
-                    </label>
-                </div>
-
-                <!-- 3. Invoice Delete -->
-                <div class="flex items-center justify-between py-4">
-                    <div class="pr-4">
-                        <h4 class="font-bold text-xs text-gray-800 dark:text-white">ইনভয়েস ডিলিট নোটিফিকেশন</h4>
-                        <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
-                            নিরাপত্তার স্বার্থে কোনো চালান বাতিল বা সম্পূর্ণ ডিলিট করা হলে মালিক পক্ষকে সতর্কতা নোটিফিকেশন পাঠানো হবে।
-                        </p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                        <input type="checkbox" wire:model="sms_delete_invoice" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-200 dark:bg-slate-800 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-250/20 dark:peer-focus:ring-emerald-950/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-700 peer-checked:bg-primary"></div>
-                    </label>
-                </div>
-
-                <!-- 4. New Delivery -->
-                <div class="flex items-center justify-between py-4">
-                    <div class="pr-4">
-                        <h4 class="font-bold text-xs text-gray-800 dark:text-white">নতুন ইট ডেলিভারি নোটিফিকেশন</h4>
-                        <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
-                            ভাটা থেকে ইট লোডিং বা ডেলিভারি এন্ট্রি করা হলে চালকের বিবরণ সহ কাস্টমারকে নোটিফিকেশন পাঠানো হবে।
-                        </p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                        <input type="checkbox" wire:model="sms_new_delivery" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-200 dark:bg-slate-800 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-250/20 dark:peer-focus:ring-emerald-950/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-700 peer-checked:bg-primary"></div>
-                    </label>
-                </div>
-
-                <!-- 5. Due Collection -->
-                <div class="flex items-center justify-between py-4">
-                    <div class="pr-4">
-                        <h4 class="font-bold text-xs text-gray-800 dark:text-white">বাকি টাকা আদায় (Due Collection) নোটিফিকেশন</h4>
-                        <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
-                            কাস্টমার থেকে বকেয়া পেমেন্ট সংগ্রহ করে রিসিভ এন্ট্রি করা হলে প্রাপ্ত টাকার পরিমাণ ও বর্তমান বকেয়া ব্যালেন্সের এসএমএস যাবে।
-                        </p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                        <input type="checkbox" wire:model="sms_due_collection" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-200 dark:bg-slate-800 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-250/20 dark:peer-focus:ring-emerald-950/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-700 peer-checked:bg-primary"></div>
-                    </label>
-                </div>
-
-            </div>
-
-            <!-- Submit -->
-            <div class="flex pt-4">
-                <button type="submit"
-                        class="px-8 py-2.5 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-xl transition-all shadow-md">
-                    এসএমএস সেটিংস সংরক্ষণ করুন
+                <button type="button" @click="on = !on" class="relative flex-shrink-0 focus:outline-none cursor-pointer w-11 h-6">
+                    <div class="w-11 h-6 rounded-full transition-colors duration-300 absolute inset-0"
+                         :class="on ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
+                         :class="on ? 'translate-x-5' : 'translate-x-0'"></div>
                 </button>
             </div>
-        </form>
-    </div>
+
+            <!-- 2. Invoice Update -->
+            <div x-data="{ on: @entangle('sms_update_invoice') }"
+                 class="bg-white dark:bg-slate-900 border border-gray-155 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4 transition-all">
+                <div class="space-y-1">
+                    <h4 class="font-bold text-gray-800 dark:text-white text-xs font-sans">ইনভয়েস আপডেট</h4>
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 font-sans leading-relaxed">কোনো ইনভয়েস এডিট বা আপডেট করার সময় এসএমএস যাবে</p>
+                </div>
+                <button type="button" @click="on = !on" class="relative flex-shrink-0 focus:outline-none cursor-pointer w-11 h-6">
+                    <div class="w-11 h-6 rounded-full transition-colors duration-300 absolute inset-0"
+                         :class="on ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
+                         :class="on ? 'translate-x-5' : 'translate-x-0'"></div>
+                </button>
+            </div>
+
+            <!-- 3. Invoice Delete -->
+            <div x-data="{ on: @entangle('sms_delete_invoice') }"
+                 class="bg-white dark:bg-slate-900 border border-gray-155 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4 transition-all">
+                <div class="space-y-1">
+                    <h4 class="font-bold text-gray-800 dark:text-white text-xs font-sans">ইনভয়েস ডিলিট</h4>
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 font-sans leading-relaxed">ইনভয়েস ডিলিট করলে কাস্টমার বা এডমিন এসএমএস পাবে</p>
+                </div>
+                <button type="button" @click="on = !on" class="relative flex-shrink-0 focus:outline-none cursor-pointer w-11 h-6">
+                    <div class="w-11 h-6 rounded-full transition-colors duration-300 absolute inset-0"
+                         :class="on ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
+                         :class="on ? 'translate-x-5' : 'translate-x-0'"></div>
+                </button>
+            </div>
+
+            <!-- 4. New Delivery -->
+            <div x-data="{ on: @entangle('sms_new_delivery') }"
+                 class="bg-white dark:bg-slate-900 border border-gray-155 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4 transition-all">
+                <div class="space-y-1">
+                    <h4 class="font-bold text-gray-800 dark:text-white text-xs font-sans">নতুন ডেলিভারি</h4>
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 font-sans leading-relaxed">ইট ডেলিভারি এন্ট্রি দেওয়ার সময় এসএমএস যাবে</p>
+                </div>
+                <button type="button" @click="on = !on" class="relative flex-shrink-0 focus:outline-none cursor-pointer w-11 h-6">
+                    <div class="w-11 h-6 rounded-full transition-colors duration-300 absolute inset-0"
+                         :class="on ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
+                         :class="on ? 'translate-x-5' : 'translate-x-0'"></div>
+                </button>
+            </div>
+
+            <!-- 5. New Due Collection -->
+            <div x-data="{ on: @entangle('sms_due_collection') }"
+                 class="bg-white dark:bg-slate-900 border border-gray-155 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4 transition-all">
+                <div class="space-y-1">
+                    <h4 class="font-bold text-gray-800 dark:text-white text-xs font-sans">নতুন বাকি কালেকশন</h4>
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 font-sans leading-relaxed">বকেয়া টাকা জমার সময় কনফার্মেশন এসএমএস যাবে</p>
+                </div>
+                <button type="button" @click="on = !on" class="relative flex-shrink-0 focus:outline-none cursor-pointer w-11 h-6">
+                    <div class="w-11 h-6 rounded-full transition-colors duration-300 absolute inset-0"
+                         :class="on ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
+                         :class="on ? 'translate-x-5' : 'translate-x-0'"></div>
+                </button>
+            </div>
+
+            <!-- 6. Due Collection Update -->
+            <div x-data="{ on: @entangle('sms_due_collection_update') }"
+                 class="bg-white dark:bg-slate-900 border border-gray-155 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4 transition-all">
+                <div class="space-y-1">
+                    <h4 class="font-bold text-gray-800 dark:text-white text-xs font-sans">বাকি কালেকশন আপডেট</h4>
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 font-sans leading-relaxed">জমা বা বকেয়া এন্ট্রি আপডেট করার সময় এসএমএস যাবে</p>
+                </div>
+                <button type="button" @click="on = !on" class="relative flex-shrink-0 focus:outline-none cursor-pointer w-11 h-6">
+                    <div class="w-11 h-6 rounded-full transition-colors duration-300 absolute inset-0"
+                         :class="on ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
+                         :class="on ? 'translate-x-5' : 'translate-x-0'"></div>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Submit Button: Full-width green button -->
+        <button type="submit"
+                class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer hover:scale-[1.005] active:scale-[0.995] font-sans flex items-center justify-center gap-2">
+            <!-- Save Icon -->
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/>
+            </svg>
+            সেটিংস সেভ করুন
+        </button>
+
+    </form>
 </div>

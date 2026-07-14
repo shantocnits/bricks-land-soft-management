@@ -1,4 +1,4 @@
-﻿<div class="space-y-6">
+<div class="space-y-6">
     <!-- Success Alert -->
     @if (session()->has('message'))
         <div x-data="{ show: true }"
@@ -12,7 +12,6 @@
             <span class="font-medium">{{ session('message') }}</span>
         </div>
     @endif
-
 
     <!-- Top Alert Box -->
     <div class="flex items-start gap-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-2xl">
@@ -28,12 +27,12 @@
         </div>
     </div>
 
-    <!-- Details Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Stack (Grid of 1 column, always full width) -->
+    <div class="space-y-6">
         
-        <!-- Left: Business Info Form (2/3 width on large screens) -->
-        <div class="lg:col-span-2 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-colors duration-300">
-            <div class="flex items-center gap-3 border-b border-gray-100 dark:border-slate-800 pb-4 mb-6">
+        <!-- 1. Business Info Form Card -->
+        <div class="w-full bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-colors duration-300">
+            <div class="flex items-center gap-3 border-b border-gray-150 dark:border-slate-800 pb-4 mb-6">
                 <h3 class="font-bold text-sm text-gray-800 dark:text-white">বিজনেস বিবরণ</h3>
             </div>
 
@@ -90,52 +89,53 @@
                 <!-- Action Button -->
                 <div class="flex pt-2">
                     <button type="submit"
-                            class="px-6 py-2.5 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-xl transition-all shadow-md hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
+                            class="px-8 py-3.5 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-xl transition-all shadow-md hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
                         তথ্য আপডেট করুন
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- Right: Billing Info Card (1/3 width on large screens) -->
-        <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col transition-colors duration-300">
-            <div class="flex items-center gap-3 border-b border-gray-100 dark:border-slate-800 pb-4 mb-6">
+        <!-- 2. Billing Info Card -->
+        <div class="w-full bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-colors duration-300">
+            <div class="flex items-center gap-3 border-b border-gray-150 dark:border-slate-800 pb-4 mb-6">
                 <h3 class="font-bold text-sm text-gray-800 dark:text-white">বিলিং তথ্য</h3>
             </div>
 
-            <div class="space-y-5 flex-grow">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Client ID -->
                 <div>
-                    <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1 uppercase tracking-wide">ক্লায়েন্ট আইডি</span>
-                    <div class="w-full py-3 px-4 bg-gray-50 dark:bg-slate-950/50 border border-gray-100 dark:border-slate-800 text-xs font-bold text-emerald-700 dark:text-emerald-400 rounded-xl">
+                    <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1.5 uppercase tracking-wide">ক্লায়েন্ট আইডি</span>
+                    <div class="w-full py-3.5 px-4 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 text-xs font-bold text-emerald-700 dark:text-emerald-400 rounded-xl">
                         {{ $client_id }}
                     </div>
                 </div>
 
                 <!-- Monthly Software Fee -->
                 <div>
-                    <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1 uppercase tracking-wide">মাসিক সফটওয়্যার ফি</span>
-                    <div class="w-full py-3 px-4 bg-gray-50 dark:bg-slate-950/50 border border-gray-100 dark:border-slate-800 text-xs font-bold text-gray-800 dark:text-gray-200 rounded-xl">
+                    <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1.5 uppercase tracking-wide">মাসিক সফটওয়্যার ফি</span>
+                    <div class="w-full py-3.5 px-4 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 text-xs font-bold text-gray-800 dark:text-gray-200 rounded-xl">
                         ৳ {{ number_format($monthly_fee, 2) }}
                     </div>
                 </div>
 
                 <!-- SMS Rate -->
                 <div>
-                    <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1 uppercase tracking-wide">এসএমএস রেট (প্রতিটি)</span>
-                    <div class="w-full py-3 px-4 bg-gray-50 dark:bg-slate-950/50 border border-gray-100 dark:border-slate-800 text-xs font-bold text-gray-800 dark:text-gray-200 rounded-xl">
+                    <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1.5 uppercase tracking-wide">এসএমএস রেট (প্রতিটি)</span>
+                    <div class="w-full py-3.5 px-4 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 text-xs font-bold text-gray-800 dark:text-gray-200 rounded-xl">
                         ৳ {{ $sms_rate }}
                     </div>
                 </div>
+            </div>
 
-                <!-- Next Payment Date Banner (Light orange background) -->
-                <div class="mt-8 p-4 bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50 rounded-2xl flex flex-col items-center justify-center text-center gap-1.5">
-                    <span class="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide">পরবর্তী পেমেন্ট</span>
-                    <div class="flex items-center gap-2 text-sm font-extrabold text-orange-700 dark:text-orange-450">
-                        <span>{{ $next_payment_date }}</span>
-                    </div>
+            <!-- Next Payment Date Banner (Light orange background) -->
+            <div class="mt-6 p-4 bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50 rounded-2xl flex flex-col items-center justify-center text-center gap-1.5">
+                <span class="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide">পরবর্তী পেমেন্ট</span>
+                <div class="flex items-center gap-2 text-sm font-extrabold text-orange-700 dark:text-orange-450">
+                    <span>{{ $next_payment_date }}</span>
                 </div>
             </div>
         </div>
+
     </div>
 </div>

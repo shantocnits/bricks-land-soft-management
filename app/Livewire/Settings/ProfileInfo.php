@@ -3,10 +3,16 @@
 namespace App\Livewire\Settings;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileInfo extends Component
 {
+    use WithFileUploads;
+
+    // Company Settings properties
     public $company_name_bn;
     public $company_name_en;
     public $address;
@@ -14,11 +20,13 @@ class ProfileInfo extends Component
     public $owner_phone;
     public $invoice_phones;
 
-    // Billing Info (Read-only for normal settings)
+    // Billing Info (Read-only)
     public $client_id;
     public $monthly_fee;
     public $sms_rate;
     public $next_payment_date;
+
+
 
     public function mount()
     {
@@ -53,10 +61,18 @@ class ProfileInfo extends Component
         $this->monthly_fee = Setting::get('monthly_fee');
         $this->sms_rate = Setting::get('sms_rate');
         $this->next_payment_date = Setting::get('next_payment_date');
+
+
     }
 
     public function save()
     {
+        // Block action if logged in as Demo
+        if (Auth::user()->hasRole('demo')) {
+            session()->flash('message', 'ডেমো মোডে প্রতিষ্ঠানের তথ্য পরিবর্তন করা সম্ভব নয়।');
+            return;
+        }
+
         $this->validate([
             'company_name_bn' => 'required|string|max:255',
             'company_name_en' => 'required|string|max:255',
@@ -82,6 +98,8 @@ class ProfileInfo extends Component
 
         session()->flash('message', 'প্রতিষ্ঠানের তথ্য সফলভাবে আপডেট করা হয়েছে।');
     }
+
+
 
     public function render()
     {

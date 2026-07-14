@@ -12,6 +12,7 @@ class SmsSettings extends Component
     public $sms_delete_invoice = false;
     public $sms_new_delivery = false;
     public $sms_due_collection = false;
+    public $sms_due_collection_update = false;
 
     public function mount()
     {
@@ -22,6 +23,7 @@ class SmsSettings extends Component
             'sms_delete_invoice' => '0',
             'sms_new_delivery' => '1',
             'sms_due_collection' => '1',
+            'sms_due_collection_update' => '0',
         ];
 
         foreach ($defaults as $key => $val) {
@@ -35,6 +37,7 @@ class SmsSettings extends Component
         $this->sms_delete_invoice = Setting::get('sms_delete_invoice') === '1';
         $this->sms_new_delivery = Setting::get('sms_new_delivery') === '1';
         $this->sms_due_collection = Setting::get('sms_due_collection') === '1';
+        $this->sms_due_collection_update = Setting::get('sms_due_collection_update') === '1';
     }
 
     public function save()
@@ -44,6 +47,7 @@ class SmsSettings extends Component
         Setting::set('sms_delete_invoice', $this->sms_delete_invoice ? '1' : '0');
         Setting::set('sms_new_delivery', $this->sms_new_delivery ? '1' : '0');
         Setting::set('sms_due_collection', $this->sms_due_collection ? '1' : '0');
+        Setting::set('sms_due_collection_update', $this->sms_due_collection_update ? '1' : '0');
 
         session()->flash('message', 'এসএমএস সেটিংস সফলভাবে আপডেট করা হয়েছে।');
     }
