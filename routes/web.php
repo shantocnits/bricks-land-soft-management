@@ -19,6 +19,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/challan/today',   \App\Livewire\Challan\TodayChallan::class)->name('challan.today');
     Route::get('/challan/pending', \App\Livewire\Challan\PendingChallan::class)->name('challan.pending');
     Route::get('/challan/all',     \App\Livewire\Challan\AllChallan::class)->name('challan.all');
+    Route::get('/challan/customer-profile/{phone}', \App\Livewire\Challan\CustomerProfile::class)->name('challan.customer-profile');
     
     // Profile Routes (from Breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

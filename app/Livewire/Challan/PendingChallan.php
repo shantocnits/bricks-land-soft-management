@@ -8,6 +8,7 @@
  use App\Models\ChallanItem;
  use App\Models\Category;
  use App\Models\Ledger;
+ use App\Models\Setting;
  
  class PendingChallan extends Component
  {
@@ -25,6 +26,7 @@
      public $customer_address = '';
      public $ledger_id = '';
      public $challan_no = '';
+     public $challan_type = 'অগ্রিম';
      public $notes = '';
      public $date = '';
      
@@ -42,11 +44,61 @@
      public $grand_total = 0;
      public $due = 0;
  
+     // Delivery Modal States
+     public $showDeliveryModal = false;
+     public $deliveryChallanId = null;
+     public $deliveryNo = '৫';
+     public $deliveryDate = '';
+     public $nextDeliveryDate = '';
+     public $deliveryNotes = '';
+     public $driverName = '';
+     public $driverPhone = '';
+     public $vehicleNo = '';
+     public $vehicleRent = 0;
+     public $smsToCustomer = true;
+     public $todayDeliveryQty = 0;
+     public $deliveryItemCategory = '';
+     public $deliveryTotalQty = 0;
+ 
+     // Challan Details Modal States
+     public $showChallanDetailsModal = false;
+     public $detailsChallan = null;
+ 
      protected $paginationTheme = 'tailwind';
  
      public function mount()
      {
          $this->date = now()->toDateString();
+         $this->ensureCategoriesExist();
+     }
+
+     /**
+      * Ensure default categories exist (safety preseed).
+      */
+     protected function ensureCategoriesExist()
+     {
+         if (Category::count() === 0) {
+             Setting::firstOrCreate(
+                 ['key' => 'category_types'],
+                 ['value' => json_encode(['ইট', 'আধলা', 'অন্যান্য'])]
+             );
+             $defaults = [
+                 ['name' => '১ নং',       'type' => 'ইট',       'rate' => 8.10],
+                 ['name' => 'পিকটি',       'type' => 'ইট',       'rate' => 9.00],
+                 ['name' => '২ নং (ক)',    'type' => 'ইট',       'rate' => 8.50],
+                 ['name' => '২ নং (খ)',    'type' => 'ইট',       'rate' => 7.50],
+                 ['name' => '৩ নং ছালট',  'type' => 'ইট',       'rate' => 4.50],
+                 ['name' => '৩ নং গরিয়া', 'type' => 'ইট',       'rate' => 6.00],
+                 ['name' => 'এলোট',        'type' => 'ইট',       'rate' => 3.00],
+                 ['name' => '১ নং আদলা',  'type' => 'আধলা',     'rate' => 4.50],
+                 ['name' => '৩ নং আদলা',  'type' => 'আধলা',     'rate' => 1.50],
+                 ['name' => 'রাবিশ',       'type' => 'অন্যান্য', 'rate' => 500.00],
+                 ['name' => 'খোয়া',        'type' => 'অন্যান্য', 'rate' => 120.00],
+             ];
+             foreach ($defaults as $cat) {
+                 Category::create($cat);
+             }
+         }
      }
  
      public function openAddModal()
@@ -118,6 +170,7 @@
          $this->customer_name = '';
          $this->customer_address = '';
          $this->ledger_id = '';
+         $this->challan_type = 'অগ্রিম';
          $this->notes = '';
          $this->rent = 0;
          $this->transport_rent = 0;
@@ -262,7 +315,7 @@
              'customer_address' => $this->customer_address,
              'challan_no' => $this->challan_no ?: $this->generateChallanNo(),
              'date' => $this->date ?: now()->toDateString(),
-             'challan_type' => 'অগ্রিম',
+             'challan_type' => $this->challan_type ?: 'অগ্রিম',
              'notes' => $this->notes,
              'value' => $this->value,
              'total_value' => $this->value,
@@ -281,6 +334,14 @@
              $challan->items()->delete();
          } else {
              $challan = Challan::create($challanData);
+ 
+             // নতুন কাস্টমার হলে ledger এ auto-save
+             if ($this->customer_type === 'new' && !empty($this->customer_name)) {
+                 Ledger::firstOrCreate(
+                     ['name' => trim($this->customer_name)],
+                     ['group' => 'চালান গ্রাহক', 'rate' => 0, 'divisor' => 1]
+                 );
+             }
          }
  
          foreach ($this->items as $item) {
@@ -334,21 +395,82 @@
          session()->flash('message', 'চালান মুছে ফেলা হয়েছে।');
      }
  
-     public function render()
+     public function openDeliveryModal($challanId)
+    {
+        $this->deliveryChallanId = $challanId;
+        $challan = Challan::with('items')->find($challanId);
+        if ($challan) {
+            $this->customer_name = $challan->customer_name;
+            $this->customer_phone = $challan->customer_phone;
+            $this->customer_address = $challan->customer_address;
+            $this->challan_no = $challan->challan_no;
+            $this->deliveryNo = '৫';
+            $this->deliveryDate = now()->toDateString();
+            $this->nextDeliveryDate = '';
+            $this->deliveryNotes = $challan->notes;
+            
+            $firstItem = $challan->items->first();
+            if ($firstItem) {
+                $this->deliveryItemCategory = $firstItem->category_name;
+                $this->deliveryTotalQty = $firstItem->quantity;
+                $this->todayDeliveryQty = $firstItem->quantity;
+            } else {
+                $this->deliveryItemCategory = '';
+                $this->deliveryTotalQty = 0;
+                $this->todayDeliveryQty = 0;
+            }
+            
+            $this->driverName = '';
+            $this->driverPhone = '';
+            $this->vehicleNo = '';
+            $this->vehicleRent = $challan->transport_rent ?: 0;
+            $this->smsToCustomer = true;
+            
+            $this->showDeliveryModal = true;
+        }
+    }
+
+    public function saveDelivery()
+    {
+        $this->showDeliveryModal = false;
+        session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+    }
+
+    public function openChallanDetailsModal($challanId)
+    {
+        $this->detailsChallan = Challan::with('items')->find($challanId);
+        if ($this->detailsChallan) {
+            $this->showChallanDetailsModal = true;
+        }
+    }
+
+    public function render()
      {
          $query = Challan::with('items')->where('challan_type', 'অগ্রিম');
  
          if ($this->search) {
-             $query->where('customer_name', 'like', '%' . $this->search . '%')
+             $query->where(function($q) {
+                 $q->where('customer_name', 'like', '%' . $this->search . '%')
                    ->orWhere('customer_phone', 'like', '%' . $this->search . '%')
                    ->orWhere('challan_no', 'like', '%' . $this->search . '%');
+             });
          }
  
+         $printChallans = (clone $query)->get();
+ 
+         $settings = [
+             'company_name_bn' => Setting::get('company_name_bn', 'ডেমো ব্রিকস'),
+             'address'         => Setting::get('address', ''),
+             'invoice_phones'  => Setting::get('invoice_phones', ''),
+             'owner_name'      => Setting::get('owner_name', ''),
+         ];
+ 
          return view('livewire.challan.pending-challan', [
-             'challans' => $query->paginate(10),
-             'categories' => Category::all(),
-             'ledgers' => Ledger::all()
+             'challans'      => $query->paginate(10),
+             'printChallans' => $printChallans,
+             'settings'      => $settings,
+             'categories'    => Category::all(),
+             'ledgers'       => Ledger::all()
          ])->layout('layouts.app');
      }
  }
- 

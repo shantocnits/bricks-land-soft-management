@@ -144,6 +144,34 @@
             if (hasFp) setTimeout(initFlatpickrs, 100);
         });
         fpObserver.observe(document.body, { childList: true, subtree: true });
+
+        // ===== Print Challan Area =====
+        window.printChallanArea = function(printAreaId) {
+            var el = document.getElementById(printAreaId);
+            if (!el) { window.print(); return; }
+            var clone = el.cloneNode(true);
+            clone.id = '__print_clone__';
+            clone.style.cssText = '';
+            clone.removeAttribute('class');
+            var style = document.createElement('style');
+            style.textContent = [
+                '@media print {',
+                '  body * { visibility: hidden !important; }',
+                '  #__print_clone__, #__print_clone__ * { visibility: visible !important; }',
+                '  #__print_clone__ { position:fixed!important;left:0!important;top:0!important;width:100%!important;background:#fff!important;padding:12mm 10mm!important;margin:0!important;z-index:999999!important; }',
+                '  @page { size: A4 portrait; margin:0; }',
+                '}'
+            ].join('\n');
+            document.head.appendChild(style);
+            document.body.appendChild(clone);
+            setTimeout(function() {
+                window.print();
+                setTimeout(function() {
+                    document.body.removeChild(clone);
+                    document.head.removeChild(style);
+                }, 500);
+            }, 100);
+        };
     </script>
 </body>
 </html>
