@@ -1,18 +1,15 @@
 <!DOCTYPE html>
-<html lang="bn" 
-      x-data="{ 
-          darkMode: localStorage.getItem('darkMode') === 'true', 
-          sidebarOpen: false 
-      }" 
-      x-init="sidebarOpen = window.innerWidth >= 768; window.addEventListener('resize', () => { if (window.innerWidth < 768) sidebarOpen = false; }); $watch('darkMode', val => { localStorage.setItem('darkMode', val); if (val) { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } })"
-      :class="{ 'dark': darkMode }">
+<html lang="bn">
 <head>
     <script>
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        try {
+            var stored = localStorage.getItem('_x_darkMode') || localStorage.getItem('darkMode');
+            if (stored === 'true' || stored === '"true"') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        } catch (_) {}
     </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -41,9 +38,22 @@
         .dark .flatpickr-prev-month svg, .dark .flatpickr-next-month svg { fill: #94a3b8 !important; }
         .dark .flatpickr-weekday { color: #64748b !important; }
         .flatpickr-input { cursor: pointer !important; }
+        #nprogress { display: none !important; }
     </style>
 </head>
-<body class="font-sans antialiased bg-gray-50 text-gray-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300">
+<body x-data="{ 
+          darkMode: $persist(false), 
+          sidebarOpen: false 
+      }"
+      x-init="
+          sidebarOpen = window.innerWidth >= 768; 
+          window.addEventListener('resize', () => { if (window.innerWidth < 768) sidebarOpen = false; });
+          if (darkMode) { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); }
+          $watch('darkMode', val => { 
+              if (val) { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } 
+          })
+      "
+      class="font-sans antialiased bg-gray-50 text-gray-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300">
     <div class="flex h-screen overflow-hidden relative">
         
         <!-- Mobile Blur Overlay Backdrop -->
@@ -144,6 +154,13 @@
             if (hasFp) setTimeout(initFlatpickrs, 100);
         });
         fpObserver.observe(document.body, { childList: true, subtree: true });
+
+        // ===== Disable Livewire Navigation Progress Bar =====
+        document.addEventListener("livewire:init", () => {
+            if (window.Alpine && window.Alpine.navigate) {
+                window.Alpine.navigate.disableProgressBar();
+            }
+        });
 
         // ===== Print Challan Area =====
         window.printChallanArea = function(printAreaId) {

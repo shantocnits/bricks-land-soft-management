@@ -26,6 +26,7 @@ class CustomerProfile extends Component
     // Form fields for editing/details if needed
     public $showDeliveryModal = false;
     public $showChallanDetailsModal = false;
+    public $showDeliveryDetailsModal = false;
     public $deliveryChallanId = null;
     public $detailsChallan = null;
 
@@ -42,6 +43,7 @@ class CustomerProfile extends Component
     public $todayDeliveryQty = 0;
     public $deliveryItemCategory = '';
     public $deliveryTotalQty = 0;
+    public $deliveryChallanDue = 0;
 
     protected $paginationTheme = 'tailwind';
 
@@ -76,12 +78,13 @@ class CustomerProfile extends Component
             $this->deliveryDate = now()->toDateString();
             $this->nextDeliveryDate = '';
             $this->deliveryNotes = $challan->notes;
+            $this->deliveryChallanDue = $challan->due;
             
             $firstItem = $challan->items->first();
             if ($firstItem) {
                 $this->deliveryItemCategory = $firstItem->category_name;
                 $this->deliveryTotalQty = $firstItem->quantity;
-                $this->todayDeliveryQty = $firstItem->quantity;
+                $this->todayDeliveryQty = $firstItem->delivered_quantity;
             } else {
                 $this->deliveryItemCategory = '';
                 $this->deliveryTotalQty = 0;
@@ -100,8 +103,17 @@ class CustomerProfile extends Component
 
     public function saveDelivery()
     {
+        $challan = Challan::with('items')->find($this->deliveryChallanId);
+        if ($challan) {
+            $firstItem = $challan->items->first();
+            if ($firstItem) {
+                $firstItem->update([
+                    'delivered_quantity' => intval($this->todayDeliveryQty)
+                ]);
+            }
+        }
         $this->showDeliveryModal = false;
-        session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+        session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
     }
 
     public function openChallanDetailsModal($challanId)
@@ -112,10 +124,18 @@ class CustomerProfile extends Component
         }
     }
 
+    public function openDeliveryDetailsModal($challanId)
+    {
+        $this->detailsChallan = Challan::with('items')->find($challanId);
+        if ($this->detailsChallan) {
+            $this->showDeliveryDetailsModal = true;
+        }
+    }
+
     public function delete($id)
     {
         Challan::destroy($id);
-        session()->flash('message', 'চালান মুছে ফেলা হয়েছে।');
+        session()->flash('message', 'চালান মুছে ফেলা হয়েছে।');
     }
 
     public function render()
@@ -128,10 +148,12 @@ class CustomerProfile extends Component
             })->get();
 
         // Calculate Stats
+        $totalBricks = $allChallans->sum(fn($c) => $c->items->sum('quantity'));
+        $deliveredBricks = $allChallans->sum(fn($c) => $c->items->sum('delivered_quantity'));
         $stats = [
-            'total_bricks' => $allChallans->sum(fn($c) => $c->items->sum('quantity')),
-            'delivered'    => $allChallans->sum(fn($c) => $c->items->sum('quantity')),
-            'remaining'    => 0,
+            'total_bricks' => $totalBricks,
+            'delivered'    => $deliveredBricks,
+            'remaining'    => max(0, $totalBricks - $deliveredBricks),
             'total_value'  => $allChallans->sum('grand_total'),
             'paid'         => $allChallans->sum('cash'),
             'due'          => $allChallans->sum('due'),
@@ -158,11 +180,25 @@ class CustomerProfile extends Component
             });
         }
 
+        $query->orderBy('id', 'desc');
+
         $printChallans = (clone $query)->get();
+
+        // Calculate Print Totals for the view ($printTotal)
+        $printTotal = [
+            'quantity'  => $printChallans->sum(fn($c) => $c->items->sum('quantity')),
+            'value'     => $printChallans->sum('value'),
+            'transport' => $printChallans->sum('transport_rent'),
+            'discount'  => $printChallans->sum('discount'),
+            'grand'     => $printChallans->sum('grand_total'),
+            'cash'      => $printChallans->sum('cash'),
+            'due'       => $printChallans->sum('due'),
+        ];
 
         return view('livewire.challan.customer-profile', [
             'challans'      => $query->paginate(10),
             'printChallans' => $printChallans,
+            'printTotal'    => $printTotal, // Added to resolve undefined variable error
             'stats'         => $stats,
             'categories'    => Category::all(),
             'ledgers'       => Ledger::all()

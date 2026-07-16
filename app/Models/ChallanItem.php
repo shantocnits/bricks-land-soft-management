@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ChallanItem extends Model
 {
     protected $fillable = [
-        'challan_id', 'category_name', 'rate', 'quantity', 'amount'
+        'challan_id', 'category_name', 'rate', 'quantity', 'delivered_quantity', 'amount'
     ];
 
     public function challan()

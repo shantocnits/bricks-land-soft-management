@@ -155,7 +155,7 @@
                                     <template x-teleport="body">
                                         <div x-show="openDropdown" @click.away="openDropdown = false" x-transition
                                              class="fixed w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-2xl p-1.5 z-[9999] text-left text-xs flex flex-col gap-0.5"
-                                             :style="'top: ' + (buttonRect ? (buttonRect.bottom + 4) : 0) + 'px; left: ' + (buttonRect ? (buttonRect.left - 140) : 0) + 'px;'"
+                                             :style="buttonRect ? ('left: ' + (buttonRect.left - 140) + 'px; position: fixed; ' + (window.innerHeight - buttonRect.bottom < 240 ? 'bottom: ' + (window.innerHeight - buttonRect.top + 4) + 'px;' : 'top: ' + (buttonRect.bottom + 4) + 'px;')) : ''"
                                              x-cloak>
                                             <button type="button" wire:click="edit({{ $challan->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-gray-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -339,7 +339,7 @@
              @click.self="open = false; $wire.closeModal()"
              class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
              x-cloak>
-            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full border border-gray-200 dark:border-slate-700 shadow-2xl p-6 relative max-h-[92vh] overflow-y-auto challan-modal-scroll"
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full border border-gray-200 dark:border-slate-700 shadow-2xl p-6 relative max-h-[92vh] overflow-y-auto challan-modal-scroll"
                  @scroll.passive="$dispatch('close-cat-dropdowns')"
                  x-show="open"
                  x-transition:enter="transition ease-out duration-300 transform"
@@ -349,314 +349,364 @@
                  x-transition:leave-start="opacity-100 scale-100"
                  x-transition:leave-end="opacity-0 scale-95 translate-y-4">
 
-                 <!-- Close Button -->
-                 <button type="button" @click="open = false; $wire.closeModal()"
-                         class="absolute top-4 right-4 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer">
-                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                     </svg>
-                 </button>
+                <!-- Close Button -->
+                <button type="button" @click="open = false; $wire.closeModal()"
+                        class="absolute top-4 right-4 bg-gray-100 hover:bg-gray-250 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-400 dark:text-gray-300 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
 
-                 <!-- Modal Heading -->
-                 <h3 class="text-base font-bold text-gray-800 dark:text-white mb-5 border-b border-secondary/20 dark:border-slate-800 pb-3 font-sans flex items-center gap-2">
-                     <span class="w-1.5 h-5 bg-emerald-500 rounded-full inline-block"></span>
-                     {{ $editingId ? 'চালান আপডেট' : 'নতুন চালান' }}
-                 </h3>
+                <!-- Modal Heading -->
+                <h3 class="text-lg font-black text-gray-800 dark:text-white mb-5 pb-3 font-sans flex items-center gap-2">
+                    {{ $editingId ? 'চালান আপডেট' : 'নতুন চালান' }} 
+                </h3>
 
-                 <form wire:submit.prevent="save" class="space-y-4">
+                <form wire:submit.prevent="save" class="space-y-4 max-w-full">
+                    <!-- Top controls row (Tabs + Challan No + Date) -->
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-800 pb-4 mb-6">
+                        <!-- Tab Buttons -->
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="$wire.set('customer_type', 'new')"
+                                    class="px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer font-sans"
+                                    :class="$wire.customer_type === 'new' ? 'bg-[#009E74] text-white shadow-sm' : 'border border-[#009E74] text-[#009E74] hover:bg-emerald-50 dark:hover:bg-emerald-950/20'">
+                                নতুন কাস্টমার
+                            </button>
+                            <button type="button" @click="$wire.set('customer_type', 'old')"
+                                    class="px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer font-sans"
+                                    :class="$wire.customer_type === 'old' ? 'bg-white border border-orange-500 text-orange-500 shadow-sm' : 'border border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20'">
+                                পুরাতন কাস্টমার
+                            </button>
+                        </div>
 
-                     <!-- Tabs Selection -->
-                     <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
-                         <button type="button" @click="$wire.set('customer_type', 'new')"
-                                 class="px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer font-sans"
-                                 :class="$wire.customer_type === 'new' ? 'bg-primary text-white shadow-sm' : 'border border-primary text-primary dark:text-secondary dark:border-secondary hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20'">
-                             নতুন কাস্টমার
-                         </button>
-                         <button type="button" @click="$wire.set('customer_type', 'old')"
-                                 class="px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer font-sans"
-                                 :class="$wire.customer_type === 'old' ? 'bg-orange-500 text-white shadow-sm' : 'border border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20'">
-                             পুরাতন কাস্টমার
-                         </button>
-                         <!-- চালানের ধরন -->
-                         <div class="flex items-center gap-1.5">
-                             <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 font-sans whitespace-nowrap">চালানের ধরন:</span>
-                             <select wire:model="challan_type" class="py-1.5 px-2 text-xs rounded-xl border border-secondary/25 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-semibold">
-                                 <option value="আজকের">আজকের</option>
-                                 <option value="অগ্রিম">অগ্রিম</option>
-                             </select>
-                         </div>
-                         <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-950 border border-secondary/25 dark:border-slate-800 rounded-xl px-3 py-1.5">
-                             <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 font-sans">চালান নম্বর:</span>
-                             <input type="text" wire:model="challan_no" class="w-12 bg-transparent text-xs font-bold text-gray-800 dark:text-white focus:outline-none border-none p-0">
-                         </div>
-                         <div class="relative flex items-center">
-                             <input type="text"
-                                    data-flatpickr
-                                    data-wire-prop="date"
-                                    data-default="{{ $date }}"
-                                    wire:model="date"
-                                    placeholder="তারিখ"
-                                    readonly
-                                    class="pl-3 pr-8 py-1.5 text-xs rounded-xl border border-secondary/25 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all w-36 font-sans font-semibold cursor-pointer">
-                             <span class="absolute right-2 top-1.5 text-secondary pointer-events-none">
-                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                             </span>
-                         </div>
-                     </div>
+                        <!-- Challan No & Date -->
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2 bg-white dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg px-3 py-1.5 w-36">
+                                <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 font-sans whitespace-nowrap">চালান নম্বর:</span>
+                                <input type="text" wire:model="challan_no" class="w-full bg-transparent text-xs font-bold text-gray-800 dark:text-white focus:outline-none border-none p-0 text-center font-sans">
+                            </div>
+                            <div class="relative flex items-center">
+                                <input type="text"
+                                       data-flatpickr
+                                       data-wire-prop="date"
+                                       data-default="{{ $date }}"
+                                       wire:model="date"
+                                       placeholder="তারিখ"
+                                       readonly
+                                       class="pl-3 pr-8 py-1.5 text-xs rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-505/10 transition-all w-32 font-sans font-semibold cursor-pointer text-center">
+                                <span class="absolute right-2.5 top-2 text-gray-450 pointer-events-none">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
 
-                     <!-- Customer fields (new) -->
-                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" x-show="$wire.customer_type === 'new'">
-                         <div>
-                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">ফোন নম্বর - ০</label>
-                             <div class="relative">
-                                 <input type="text" wire:model="customer_phone" placeholder="ফোন নম্বর" maxlength="11"
-                                        class="w-full py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold">
-                                 <span class="absolute right-2 top-3 text-[10px] text-gray-400 font-sans" x-text="($wire.customer_phone || '').length + '/11'"></span>
-                             </div>
-                         </div>
-                         <div>
-                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">কাস্টমারের নাম</label>
-                             <input type="text" wire:model="customer_name" placeholder="কাস্টমারের নাম" class="w-full py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold">
-                         </div>
-                         <div>
-                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">কাস্টমারের ঠিকানা</label>
-                             <input type="text" wire:model="customer_address" placeholder="কাস্টমারের ঠিকানা" class="w-full py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold">
-                         </div>
-                     </div>
+                    <!-- Customer Selection Row (Only for old customer) -->
+                    <div x-show="$wire.customer_type === 'old'" class="mb-4" x-cloak>
+                        <label class="block text-xs font-bold text-gray-505 dark:text-gray-400 mb-1.5 font-sans">পুরাতন খতিয়ান গ্রাহক</label>
+                        <div class="relative" x-data="{ openLedger: false, triggerRect: null, searchLedger: '' }">
+                            <button type="button" @click="openLedger = !openLedger; triggerRect = $el.getBoundingClientRect()"
+                                    class="w-full flex items-center justify-between py-2 px-3 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 cursor-pointer text-left">
+                                @php
+                                    $selectedLedgerName = '';
+                                    if ($ledger_id) {
+                                        $selectedLedger = $ledgers->firstWhere('id', $ledger_id);
+                                        if ($selectedLedger) {
+                                            $selectedLedgerName = $selectedLedger->name;
+                                        }
+                                    }
+                                @endphp
+                                <span>{{ $selectedLedgerName ?: 'গ্রাহক নির্বাচন করুন...' }}</span>
+                                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': openLedger }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <template x-teleport="body">
+                                <div x-show="openLedger" @click.away="openLedger = false" @close-cat-dropdowns.window="openLedger = false" x-transition
+                                     class="absolute w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 z-[9999] overflow-hidden text-left"
+                                     :style="'top: ' + (triggerRect ? (triggerRect.bottom + window.scrollY + 2) : 0) + 'px; left: ' + (triggerRect ? (triggerRect.left + window.scrollX) : 0) + 'px;'"
+                                     x-cloak>
+                                    <div class="p-2 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950">
+                                        <input type="text" x-model="searchLedger" placeholder="সার্চ করুন..."
+                                               class="w-full py-1.5 px-3 text-xs rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 font-sans">
+                                    </div>
+                                    <div class="max-h-48 overflow-y-auto py-1">
+                                        <button type="button" @click="$wire.set('ledger_id', ''); $wire.updatedLedgerId(''); openLedger = false; searchLedger = ''"
+                                                class="w-full text-left px-3 py-2 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 text-xs font-semibold text-gray-400 dark:text-gray-505 font-sans cursor-pointer block">
+                                            গ্রাহক নির্বাচন করুন...
+                                        </button>
+                                        @php
+                                            $orderedLedgers = $ledgers->sortBy('name');
+                                        @endphp
+                                        @foreach($orderedLedgers as $ledger)
+                                            <button type="button"
+                                                    x-show="searchLedger === '' || '{{ $ledger->name }}'.toLowerCase().includes(searchLedger.toLowerCase())"
+                                                    @click="$wire.set('ledger_id', '{{ $ledger->id }}'); $wire.updatedLedgerId('{{ $ledger->id }}'); openLedger = false; searchLedger = ''"
+                                                    class="w-full text-left px-3 py-2 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 text-xs font-semibold text-gray-808 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans cursor-pointer block">
+                                                {{ $ledger->name }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
 
-                     <!-- Customer fields (old) -->
-                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" x-show="$wire.customer_type === 'old'" x-cloak>
-                         <div>
-                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">পুরাতন খতিয়ান গ্রাহক</label>
-                             <div class="relative" x-data="{ openLedger: false, triggerRect: null, searchLedger: '' }">
-                                 <button type="button" @click="openLedger = !openLedger; triggerRect = $el.getBoundingClientRect()"
-                                         class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-350 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none focus:border-primary cursor-pointer text-left">
-                                     @php
-                                         $selectedLedgerName = '';
-                                         if ($ledger_id) {
-                                             $selectedLedger = $ledgers->firstWhere('id', $ledger_id);
-                                             if ($selectedLedger) {
-                                                 $selectedLedgerName = $selectedLedger->name;
-                                             }
-                                         }
-                                     @endphp
-                                     <span>{{ $selectedLedgerName ?: 'গ্রাহক নির্বাচন করুন...' }}</span>
-                                     <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': openLedger }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                     </svg>
-                                 </button>
-                                 <template x-teleport="body">
-                                     <div x-show="openLedger" @click.away="openLedger = false" @close-cat-dropdowns.window="openLedger = false" x-transition
-                                          class="absolute w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 z-[9999] overflow-hidden text-left"
-                                          :style="'top: ' + (triggerRect ? (triggerRect.bottom + window.scrollY + 2) : 0) + 'px; left: ' + (triggerRect ? (triggerRect.left + window.scrollX) : 0) + 'px;'"
-                                          x-cloak>
-                                         <div class="p-2 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950">
-                                             <input type="text" x-model="searchLedger" placeholder="সার্চ করুন..."
-                                                    class="w-full py-1.5 px-3 text-xs rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-white focus:outline-none focus:border-primary font-sans">
-                                         </div>
-                                         <div class="max-h-48 overflow-y-auto py-1">
-                                             <button type="button" @click="$wire.set('ledger_id', ''); $wire.updatedLedgerId(''); openLedger = false; searchLedger = ''"
-                                                     class="w-full text-left px-3 py-2 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 text-xs font-semibold text-gray-400 dark:text-gray-500 font-sans cursor-pointer block">
-                                                 গ্রাহক নির্বাচন করুন...
-                                             </button>
-                                             @foreach($ledgers as $ledger)
-                                                 <button type="button" 
-                                                         x-show="searchLedger === '' || '{{ $ledger->name }}'.toLowerCase().includes(searchLedger.toLowerCase())"
-                                                         @click="$wire.set('ledger_id', '{{ $ledger->id }}'); $wire.updatedLedgerId('{{ $ledger->id }}'); openLedger = false; searchLedger = ''"
-                                                         class="w-full text-left px-3 py-2 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 text-xs font-semibold text-gray-800 dark:text-white hover:text-primary dark:hover:text-secondary transition-all font-sans cursor-pointer block">
-                                                     {{ $ledger->name }}
-                                                 </button>
-                                             @endforeach
-                                         </div>
-                                     </div>
-                                 </template>
-                             </div>
-                         </div>
-                         <div>
-                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">গ্রাহক ফোন নম্বর</label>
-                             <input type="text" wire:model="customer_phone" placeholder="ফোন নম্বর" class="w-full py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold">
-                         </div>
-                     </div>
+                    <!-- Customer fields (Phone, Name, Address) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-505 dark:text-gray-400 mb-1.5 font-sans">ফোন নম্বর - ০</label>
+                            <div class="relative">
+                                <input type="text" wire:model="customer_phone" placeholder="ফোন নম্বর" maxlength="11"
+                                       class="w-full py-2 px-3 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-505/10 transition-all font-sans font-semibold pr-12">
+                                <span class="absolute right-2.5 top-2.5 text-[10px] text-gray-400 font-sans" x-text="($wire.customer_phone || '').length + ' / 11'"></span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-550 dark:text-gray-400 mb-1.5 font-sans">কাস্টমারের নাম</label>
+                            <input type="text" wire:model="customer_name" placeholder="কাস্টমারের নাম" 
+                                   class="w-full py-2 px-3 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-505/10 transition-all font-sans font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-550 dark:text-gray-400 mb-1.5 font-sans">কাস্টমারের ঠিকানা</label>
+                            <input type="text" wire:model="customer_address" placeholder="কাস্টমারের ঠিকানা" 
+                                   class="w-full py-2 px-3 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-505/10 transition-all font-sans font-semibold">
+                        </div>
+                    </div>
 
-                     <!-- Row 2: Delivery date + Note -->
-                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                         <div>
-                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">ডেলিভারি তারিখ</label>
-                             <div class="relative flex items-center">
-                                 <input type="text"
-                                        data-flatpickr
-                                        data-wire-prop="date"
-                                        data-default="{{ $date }}"
-                                        wire:model="date"
-                                        placeholder="তারিখ নির্বাচন করুন"
-                                        readonly
-                                        class="w-full py-2.5 pl-3 pr-10 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans font-semibold cursor-pointer">
-                                 <span class="absolute right-3 top-2.5 text-emerald-500 pointer-events-none">
-                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                 </span>
-                             </div>
-                         </div>
-                         <div>
-                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">নোট</label>
-                             <input type="text" wire:model="notes" placeholder="নোট..." class="w-full py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold">
-                         </div>
-                     </div>
+                    <!-- Row 2: Challan type, Delivery date, Notes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-550 dark:text-gray-400 mb-1.5 font-sans">চালানের ধরণ</label>
+                            <!-- Custom dropdown matching category selector -->
+                            <div class="relative" x-data="{ openType: false, triggerRect: null }">
+                                <button type="button" @click="openType = !openType; triggerRect = $el.getBoundingClientRect()"
+                                        class="w-full flex items-center justify-between py-2 px-3 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 cursor-pointer text-left">
+                                    <span>{{ $challan_type === 'অগ্রিম' ? 'অগ্রিম চালান' : 'রেগুলার চালান' }}</span>
+                                    <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': openType }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                <template x-teleport="body">
+                                    <div x-show="openType" @click.away="openType = false" @close-cat-dropdowns.window="openType = false" x-transition
+                                         class="absolute w-48 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 z-[9999] overflow-hidden text-left"
+                                         :style="'top: ' + (triggerRect ? (triggerRect.bottom + window.scrollY + 2) : 0) + 'px; left: ' + (triggerRect ? (triggerRect.left + window.scrollX) : 0) + 'px;'"
+                                         x-cloak>
+                                        <div class="py-1">
+                                            <button type="button" @click="$wire.set('challan_type', 'আজকের'); openType = false;"
+                                                    class="w-full text-left px-3.5 py-2 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 text-xs font-semibold text-gray-808 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans cursor-pointer block">
+                                                রেগুলার চালান
+                                            </button>
+                                            <button type="button" @click="$wire.set('challan_type', 'অগ্রিম'); openType = false;"
+                                                    class="w-full text-left px-3.5 py-2 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 text-xs font-semibold text-gray-808 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans cursor-pointer block">
+                                                অগ্রিম চালান
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-550 dark:text-gray-400 mb-1.5 font-sans">ডেলিভারি তারিখ</label>
+                            <div class="relative flex items-center">
+                                <input type="text"
+                                       data-flatpickr
+                                       data-wire-prop="date"
+                                       data-default="{{ $date }}"
+                                       wire:model="date"
+                                       placeholder="ডেলিভারি তারিখ"
+                                       readonly
+                                       class="w-full py-2 pl-3 pr-10 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-505/10 transition-all font-sans font-semibold cursor-pointer text-center">
+                                <span class="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-550 dark:text-gray-400 mb-1.5 font-sans">নোট</label>
+                            <input type="text" wire:model="notes" placeholder="নোট" 
+                                   class="w-full py-2 px-3 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-505/10 transition-all font-sans font-semibold">
+                        </div>
+                    </div>
 
-                     <!-- Dynamic Table of Items -->
-                     <div class="mt-6 border border-gray-200 dark:border-slate-700 rounded-2xl overflow-visible shadow-sm">
-                         <table class="w-full text-left border-collapse">
-                             <thead>
-                                 <tr class="bg-gray-50 dark:bg-slate-950 border-b border-gray-200 dark:border-slate-700 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase font-sans">
-                                     <th class="px-3 py-2.5 text-center w-12 border-r border-gray-200 dark:border-slate-700">#</th>
-                                     <th class="px-3 py-2.5 border-r border-gray-200 dark:border-slate-700">শ্রেণি</th>
-                                     <th class="px-3 py-2.5 text-right border-r border-gray-200 dark:border-slate-700 w-28">রেট</th>
-                                     <th class="px-3 py-2.5 text-right border-r border-gray-200 dark:border-slate-700 w-28">পরিমাণ</th>
-                                     <th class="px-3 py-2.5 text-right border-r border-gray-200 dark:border-slate-700 w-32">মূল্য</th>
-                                     <th class="px-3 py-2.5 text-center w-12">মুছুন</th>
-                                 </tr>
-                             </thead>
-                             <tbody class="divide-y divide-gray-100 dark:divide-slate-800 font-sans">
-                                 @foreach($items as $index => $item)
-                                     <tr class="text-xs">
-                                         <td class="px-3 py-2.5 text-center border-r border-gray-100 dark:border-slate-800 font-bold">
-                                             @if($loop->first)
-                                                 <button type="button" wire:click="addItem" class="w-6 h-6 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center cursor-pointer transition-all border border-emerald-200">+</button>
-                                             @else
-                                                 {{ $loop->iteration }}
-                                             @endif
-                                         </td>
+                    <!-- Items Card Wrapper -->
+                    <div class="mt-6 bg-slate-50/50 dark:bg-slate-950/20 border border-gray-200 dark:border-slate-800 rounded-2xl p-4">
+                        <div class="hidden md:grid grid-cols-12 gap-3 text-[10px] font-bold text-gray-500 uppercase font-sans border-b border-gray-200 dark:border-slate-800 pb-2 mb-3">
+                            <div class="col-span-1 text-center">#</div>
+                            <div class="col-span-4">শ্রেণি</div>
+                            <div class="col-span-2 text-right">রেট</div>
+                            <div class="col-span-2 text-right">পরিমাণ</div>
+                            <div class="col-span-2 text-right">মূল্য</div>
+                            <div class="col-span-1 text-center">মুছুন</div>
+                        </div>
 
-                                         <!-- Category Dropdown — teleported to fix z-index clipping inside modal -->
-                                         <td class="px-3 py-2.5 border-r border-gray-100 dark:border-slate-800 relative" x-data="{ openCat: false, triggerRect: null }">
-                                            <button type="button" @click="openCat = !openCat; triggerRect = $el.getBoundingClientRect()"
-                                                     class="w-full flex items-center justify-between py-1 px-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none focus:border-primary cursor-pointer">
-                                                 <span x-text="$wire.items[{{ $index }}]['category_name'] || 'শ্রেণি নির্বাচন করুন...'"></span>
-                                                 <svg class="w-3.5 h-3.5 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': openCat }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                                 </svg>
-                                             </button>
-                                             <template x-teleport="body">
-                                                 <div x-show="openCat" @click.away="openCat = false" @close-cat-dropdowns.window="openCat = false" x-transition
-                                                      class="absolute w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 z-[9999] overflow-hidden text-left"
-                                                      :style="'top: ' + (triggerRect ? (triggerRect.bottom + window.scrollY + 2) : 0) + 'px; left: ' + (triggerRect ? (triggerRect.left + window.scrollX) : 0) + 'px;'"
-                                                      x-cloak>
-                                                     <div class="p-2 border-b border-gray-100 dark:border-slate-800 flex gap-1.5 bg-gray-50 dark:bg-slate-950">
-                                                         <input type="text" wire:model="newCategoryInput" placeholder="ফিল্টার বা নতুন শ্রেণি..."
-                                                                class="flex-1 py-1 px-2 text-[10px] rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-white focus:outline-none focus:border-primary font-sans"
-                                                                @keydown.enter.prevent="$wire.addCategoryOption()">
-                                                         <button type="button" wire:click="addCategoryOption"
-                                                                 class="px-2 py-1 bg-primary hover:bg-primary-dark text-white rounded-lg text-xs font-bold transition-all cursor-pointer">
-                                                             +
-                                                         </button>
-                                                     </div>
-                                                     <div class="max-h-40 overflow-y-auto py-1">
-                                                         @foreach($categories as $cat)
-                                                             <div class="flex items-center justify-between px-3 py-1.5 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 transition-all text-xs"
-                                                                  x-show="$wire.newCategoryInput === '' || '{{ $cat->name }}'.toLowerCase().includes($wire.newCategoryInput.toLowerCase())">
-                                                                 <button type="button" @click="$wire.selectCategory({{ $index }}, '{{ $cat->name }}'); openCat = false; $wire.set('newCategoryInput', '')"
-                                                                         class="flex-1 text-left font-semibold text-gray-800 dark:text-white hover:text-primary dark:hover:text-secondary transition-all font-sans">
-                                                                     {{ $cat->name }} <span class="text-gray-400">(৳{{ floatval($cat->rate) }})</span>
-                                                                 </button>
-                                                                 <button type="button" wire:click="deleteCategoryOption({{ $cat->id }})"
-                                                                         onclick="confirm('এই শ্রেণিটি মুছবেন?') || event.stopImmediatePropagation()"
-                                                                         class="ml-2 text-gray-400 hover:text-red-500 transition-all rounded cursor-pointer">
-                                                                     ×
-                                                                 </button>
-                                                             </div>
-                                                         @endforeach
-                                                     </div>
-                                                 </div>
-                                             </template>
-                                         </td>
+                        <div class="space-y-3">
+                            @foreach($items as $index => $item)
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center text-xs bg-white dark:bg-slate-900 md:bg-transparent p-3 md:p-0 rounded-xl border border-gray-100 dark:border-slate-800 md:border-none">
+                                    <!-- Mobile header row: item label + add/delete button -->
+                                    <div class="flex md:hidden items-center justify-between mb-1 pb-1.5 border-b border-gray-100 dark:border-slate-800">
+                                        <span class="font-bold text-gray-600 dark:text-gray-400 text-[11px]">
+                                            @if($loop->first)
+                                                আইটেম ১
+                                            @else
+                                                আইটেম {{ $loop->iteration }}
+                                            @endif
+                                        </span>
+                                        <div class="flex items-center gap-2">
+                                            @if($loop->first)
+                                                <button type="button" wire:click="addItem" class="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center cursor-pointer transition-all border border-emerald-200 text-base leading-none shrink-0">+</button>
+                                            @else
+                                                <button type="button" wire:click="removeItem({{ $index }})" class="p-1.5 text-gray-400 hover:text-red-500 transition-all cursor-pointer bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 rounded-lg shrink-0">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <!-- Desktop: # column -->
+                                    <div class="col-span-1 hidden md:flex justify-center items-center">
+                                        @if($loop->first)
+                                            <button type="button" wire:click="addItem" class="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center cursor-pointer transition-all border border-emerald-200">+</button>
+                                        @else
+                                            <span class="font-bold text-gray-600 dark:text-gray-400 font-sans">{{ $loop->iteration }}</span>
+                                        @endif
+                                    </div>
 
-                                         <td class="px-3 py-2.5 border-r border-gray-100 dark:border-slate-800">
-                                             <input type="number" step="0.01" wire:model.live="items.{{ $index }}.rate" placeholder="৳ ০" @focus="$el.select()"
-                                                    class="w-full py-1 px-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-right text-xs font-semibold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-gray-800 dark:text-white">
-                                         </td>
-                                         <td class="px-3 py-2.5 border-r border-gray-100 dark:border-slate-800">
-                                             <input type="number" wire:model.live="items.{{ $index }}.quantity" placeholder="০" @focus="$el.select()"
-                                                    class="w-full py-1 px-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-right text-xs font-semibold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-gray-800 dark:text-white">
-                                         </td>
-                                         <td class="px-3 py-2.5 border-r border-gray-100 dark:border-slate-800 text-right text-gray-500 font-bold select-none">
-                                             ৳{{ number_format(floatval($item['amount'] ?? 0), 2) }}
-                                         </td>
-                                         <td class="px-3 py-2.5 text-center">
-                                             @if(!$loop->first)
-                                                 <button type="button" wire:click="removeItem({{ $index }})" class="text-gray-400 hover:text-red-500 transition-all cursor-pointer">
-                                                     <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                 </button>
-                                             @endif
-                                         </td>
-                                     </tr>
-                                 @endforeach
-                             </tbody>
-                         </table>
-                     </div>
+                                    <div class="col-span-4 relative" x-data="{ openCat: false, triggerRect: null }">
+                                        <span class="md:hidden block font-bold text-gray-505 mb-1 text-[11px]">শ্রেণিঃ</span>
+                                        <button type="button" @click="openCat = !openCat; triggerRect = $el.getBoundingClientRect()"
+                                                class="w-full flex items-center justify-between py-2 px-3 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 cursor-pointer">
+                                            <span x-text="$wire.items[$index]['category_name'] || 'শ্রেণি নির্বাচন করুন...'"></span>
+                                            <svg class="w-3.5 h-3.5 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': openCat }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                            </svg>
+                                        </button>
+                                        <template x-teleport="body">
+                                            <div x-show="openCat" @click.away="openCat = false" @close-cat-dropdowns.window="openCat = false" x-transition
+                                                 class="absolute w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 z-[9999] overflow-hidden text-left"
+                                                 :style="'top: ' + (triggerRect ? (triggerRect.bottom + window.scrollY + 2) : 0) + 'px; left: ' + (triggerRect ? (triggerRect.left + window.scrollX) : 0) + 'px;'"
+                                                 x-cloak>
+                                                <div class="p-2 border-b border-gray-100 dark:border-slate-800 flex gap-1.5 bg-gray-50 dark:bg-slate-950">
+                                                    <input type="text" wire:model="newCategoryInput" placeholder="ফিল্টার বা নতুন শ্রেণি..."
+                                                           class="flex-1 py-1 px-2 text-[10px] rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-808 dark:text-white focus:outline-none focus:border-emerald-500 font-sans"
+                                                           @keydown.enter.prevent="$wire.addCategoryOption()">
+                                                    <button type="button" wire:click="addCategoryOption"
+                                                            class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer">
+                                                        +
+                                                    </button>
+                                                </div>
+                                                <div class="max-h-40 overflow-y-auto py-1">
+                                                    @foreach($categories as $cat)
+                                                        <div class="flex items-center justify-between px-3 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all text-xs"
+                                                             x-show="$wire.newCategoryInput === '' || '{{ $cat->name }}'.toLowerCase().includes($wire.newCategoryInput.toLowerCase())">
+                                                            <button type="button" @click="$wire.selectCategory({{ $index }}, '{{ $cat->name }}'); openCat = false; $wire.set('newCategoryInput', '')"
+                                                                    class="flex-1 text-left font-semibold text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans">
+                                                                {{ $cat->name }} <span class="text-emerald-600 dark:text-emerald-400 font-normal">(৳{{ floatval($cat->rate) }})</span>
+                                                            </button>
+                                                            <button type="button" wire:click="deleteCategoryOption({{ $cat->id }})"
+                                                                    onclick="confirm('এই শ্রেণিটি মুছবেন?') || event.stopImmediatePropagation()"
+                                                                    class="ml-2 text-gray-405 hover:text-red-505 transition-all rounded cursor-pointer">
+                                                                ×
+                                                            </button>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
 
-                     <!-- Calculations -->
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 items-end">
-                         <div class="flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-3xl gap-4">
-                             <div class="flex items-center gap-2 py-2 px-4 bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-bold rounded-2xl text-sm tracking-wider uppercase">
-                                 DEMO
-                             </div>
-                             <div class="flex items-center justify-between w-full border-t border-gray-200 dark:border-slate-800 pt-3">
-                                 <span class="text-xs font-bold text-gray-700 dark:text-slate-300 font-sans">কাস্টমারকে এসএমএস দিন</span>
-                                 <button type="button" @click="$wire.send_sms = !$wire.send_sms" class="relative flex-shrink-0 focus:outline-none cursor-pointer w-11 h-6">
-                                     <div class="w-11 h-6 rounded-full transition-colors duration-300 absolute inset-0"
-                                          :class="$wire.send_sms ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
-                                     <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
-                                          :class="$wire.send_sms ? 'translate-x-5' : 'translate-x-0'"></div>
-                                 </button>
-                             </div>
-                         </div>
+                                    <div class="col-span-2">
+                                        <span class="md:hidden block font-bold text-gray-505 mb-1 text-[11px]">রেটঃ</span>
+                                        <input type="number" step="0.01" wire:model.live="items.{{ $index }}.rate" placeholder="৮০" @focus="$el.select()"
+                                               class="w-full py-1.5 px-2.5 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-right text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all text-gray-808 dark:text-white font-sans">
+                                    </div>
+                                    <div class="col-span-2">
+                                        <span class="md:hidden block font-bold text-gray-550 mb-1 text-[11px]">পরিমাণঃ</span>
+                                        <input type="number" wire:model.live="items.{{ $index }}.quantity" placeholder="০" @focus="$el.select()"
+                                               class="w-full py-1.5 px-2.5 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-right text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all text-gray-808 dark:text-white font-sans">
+                                    </div>
+                                    <div class="col-span-2 text-right font-sans font-bold text-gray-700 dark:text-slate-300">
+                                        <span class="md:hidden font-bold text-gray-555 float-left text-[11px]">মূল্যঃ</span>
+                                        ৳{{ number_format(floatval($item['amount'] ?? 0), 2) }}
+                                    </div>
+                                    <!-- Desktop delete column only -->
+                                    <div class="col-span-1 text-center hidden md:flex justify-center items-center">
+                                        @if(!$loop->first)
+                                            <button type="button" wire:click="removeItem({{ $index }})" class="p-1 text-gray-408 hover:text-red-500 transition-all cursor-pointer bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 rounded-lg">
+                                                <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
 
-                         <div class="space-y-3 font-sans">
-                             <div class="grid grid-cols-2 items-center gap-2">
-                                 <span class="text-xs font-bold text-gray-600 dark:text-gray-400">মূল্য:</span>
-                                 <div class="py-2 px-3 text-xs bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-xl text-right text-gray-800 dark:text-white font-bold select-none">
-                                     ৳{{ number_format($value, 2) }}
-                                 </div>
-                             </div>
-                             <div class="grid grid-cols-2 items-center gap-2">
-                                 <span class="text-xs font-bold text-gray-600 dark:text-gray-400">গাড়ি ভাড়া:</span>
-                                 <input type="number" wire:model.live="transport_rent" @focus="$el.select()"
-                                        class="py-2 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-xl text-right text-gray-800 dark:text-white font-bold focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
-                             </div>
-                             <div class="grid grid-cols-2 items-center gap-2">
-                                 <span class="text-xs font-bold text-gray-600 dark:text-gray-400">ছাড়:</span>
-                                 <input type="number" wire:model.live="discount" @focus="$el.select()"
-                                        class="py-2 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-xl text-right text-gray-800 dark:text-white font-bold focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
-                             </div>
-                             <div class="grid grid-cols-2 items-center gap-2">
-                                 <span class="text-xs font-bold text-gray-600 dark:text-gray-400">মোট:</span>
-                                 <div class="py-2 px-3 text-xs bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-xl text-right text-emerald-700 dark:text-emerald-400 font-bold select-none">
-                                     ৳{{ number_format($grand_total, 2) }}
-                                 </div>
-                             </div>
-                             <div class="grid grid-cols-2 items-center gap-2">
-                                 <span class="text-xs font-bold text-gray-600 dark:text-gray-400">নগদ:</span>
-                                 <input type="number" wire:model.live="cash" @focus="$el.select()"
-                                        class="py-2 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-xl text-right text-emerald-600 dark:text-emerald-400 font-bold focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
-                             </div>
-                             <div class="grid grid-cols-2 items-center gap-2">
-                                 <span class="text-xs font-bold text-gray-600 dark:text-gray-400">বাকি:</span>
-                                 <div class="py-2 px-3 text-xs bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-xl text-right text-red-500 dark:text-red-400 font-bold select-none">
-                                     ৳{{ number_format($due, 2) }}
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
+                    <!-- Split calculations (Demo/SMS + calculations) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 items-start">
+                        <!-- Left Side: Demo/SMS or Due Date Field -->
+                        <div class="flex flex-col items-center justify-center p-5 bg-gray-50/50 dark:bg-slate-950/20 border border-gray-150 dark:border-slate-800 rounded-2xl gap-4 w-full">
+                            @if($due > 0)
+                                <div class="w-full">
+                                    <label class="block text-xs font-bold text-red-500 dark:text-red-400 mb-1.5 font-sans">বাকি পরিশোধের তারিখ</label>
+                                    <div class="relative flex items-center">
+                                        <input type="text"
+                                               data-flatpickr
+                                               data-wire-prop="due_payment_date"
+                                               data-default="{{ $due_payment_date }}"
+                                               wire:model="due_payment_date"
+                                               placeholder="পরিশোধের সম্ভাব্য তারিখ"
+                                               readonly
+                                               class="w-full py-2 px-3 rounded-lg border border-red-350 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-808 dark:text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-505/20 transition-all font-sans font-semibold cursor-pointer text-center text-red-650 dark:text-red-450 font-bold">
+                                        <span class="absolute right-3 top-2.5 text-red-450 pointer-events-none">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                        </span>
+                                    </div>
+                                </div>
+                            @else
+                                <!-- DEMO banner -->
+                                <div class="flex items-center justify-center gap-2 bg-[#FEE2E2] dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 px-6 py-2.5 rounded-xl font-black text-sm tracking-wider uppercase select-none w-full max-w-[200px] text-center">
+                                    <span>🚨</span> DEMO
+                                </div>
+                            @endif
 
-                     <!-- Modal Actions -->
-                     <div class="flex items-center justify-end gap-2.5 pt-5 border-t border-gray-200 dark:border-slate-700 mt-6">
-                         <button type="button" wire:click="resetForm" class="px-5 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer transition-all font-sans">ক্লিয়ার</button>
-                         <button type="submit" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md active:scale-95 font-sans">সেভ করুন</button>
-                         <button type="button" wire:click="save" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md active:scale-95 font-sans">সেভ + প্রিন্ট</button>
-                     </div>
-                 </form>
+                            <div class="flex items-center justify-between w-full border-t border-gray-150 dark:border-slate-800 pt-4">
+                                <span class="text-xs font-bold text-gray-708 dark:text-slate-350 font-sans">কাস্টমারকে এসএমএস দিন</span>
+                                <button type="button" @click="$wire.send_sms = !$wire.send_sms" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" :class="$wire.send_sms ? 'bg-[#009E74]' : 'bg-gray-200 dark:bg-slate-700'">
+                                    <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="$wire.send_sms ? 'translate-x-5' : 'translate-x-0'"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Calculations (2-column compact grid) -->
+                        <div class="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2 items-center font-sans">
+                            <span class="text-xs font-bold text-gray-600 dark:text-gray-400 whitespace-nowrap">মূল্য:</span>
+                            <input type="text" value="{{ number_format($value) }}" disabled class="py-1.5 px-3 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-gray-700 dark:text-gray-300 font-bold select-none font-sans w-full">
+
+                            <span class="text-xs font-bold text-[#E57E22] dark:text-orange-400 whitespace-nowrap">ছাড়:</span>
+                            <input type="number" wire:model.live="discount" @focus="$el.select()" placeholder="৳" class="py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-[#E57E22] dark:text-orange-400 font-bold focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 transition-all font-sans w-full">
+
+                            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">গাড়ি ভাড়া:</span>
+                            <input type="number" wire:model.live="transport_rent" @focus="$el.select()" placeholder="৳" class="py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-blue-600 dark:text-blue-400 font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-sans w-full">
+
+                            <span class="text-xs font-bold text-gray-800 dark:text-slate-200 whitespace-nowrap">মোট:</span>
+                            <input type="text" value="{{ number_format($grand_total) }}" disabled class="py-1.5 px-3 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-gray-800 dark:text-slate-200 font-extrabold select-none font-sans w-full">
+
+                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">নগদ:</span>
+                            <input type="number" wire:model.live="cash" @focus="$el.select()" @click="$wire.set('cash', $wire.grand_total)" placeholder="৳" class="py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-255 dark:border-slate-700 rounded-lg text-right text-emerald-600 dark:text-emerald-400 font-bold focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-sans w-full">
+
+                            <span class="text-xs font-bold text-red-500 dark:text-red-400 whitespace-nowrap">বাকি:</span>
+                            <input type="text" value="{{ number_format($due) }}" disabled class="py-1.5 px-3 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-red-600 dark:text-red-400 font-bold select-none font-sans w-full">
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="flex items-center justify-end gap-3 pt-5 border-t border-gray-200 dark:border-slate-800 mt-6">
+                        <button type="button" wire:click="resetForm" class="px-6 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-white hover:bg-red-500 border border-gray-255 dark:border-slate-750 rounded-lg cursor-pointer transition-all font-sans font-bold">ক্লিয়ার</button>
+                        <button type="submit" class="px-6 py-2 bg-[#009E74] hover:bg-[#008763] text-white text-xs font-bold rounded-lg cursor-pointer transition-all shadow-md active:scale-95 font-sans flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>সেভ করুন</button>
+                        <button type="button" wire:click="save" class="px-6 py-2 bg-[#009E74] hover:bg-[#008763] text-white text-xs font-bold rounded-lg cursor-pointer transition-all shadow-md active:scale-95 font-sans flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট</button>
+                    </div>
+                </form>
             </div>
         </div>
-    @endif
+@endif
 
     <!-- ====================== PRINT AREA ====================== -->
     <template x-teleport="body">

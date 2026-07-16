@@ -10,7 +10,7 @@ class Challan extends Model
         'customer_type', 'customer_phone', 'customer_name', 'customer_address',
         'challan_no', 'date', 'challan_type', 'notes',
         'value', 'total_value', 'rent', 'transport_rent', 'discount',
-        'grand_total', 'cash', 'due', 'send_sms'
+        'grand_total', 'cash', 'due', 'send_sms', 'due_payment_date'
     ];
 
     protected $casts = [

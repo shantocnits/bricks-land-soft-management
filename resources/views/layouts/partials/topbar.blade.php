@@ -1,4 +1,18 @@
 @php
+    $title = 'ড্যাশবোর্ড';
+    if (request()->routeIs('challan.today')) {
+        $title = 'দৈনিক চালান তালিকা';
+    } elseif (request()->routeIs('challan.pending')) {
+        $title = 'অগ্রিম চালান তালিকা';
+    } elseif (request()->routeIs('challan.all')) {
+        $title = 'সকল চালান তালিকা';
+    } elseif (request()->routeIs('challan.customer-profile')) {
+        $title = 'গ্রাহক প্রোফাইল';
+    } elseif (request()->routeIs('settings')) {
+        $title = 'সেটিংস';
+    } elseif (request()->routeIs('user-management')) {
+        $title = 'ইউজার ম্যানেজমেন্ট';
+    }
     $currentUser = auth()->user();
 @endphp
 <header class="sticky top-0 z-30 flex items-center justify-between px-6 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 transition-colors duration-300 shadow-sm flex-shrink-0">
@@ -19,7 +33,7 @@
         <span class="text-xl select-none leading-none md:hidden">🧱</span>
         
         <!-- Breadcrumb / Title -->
-        <span class="text-lg font-bold text-gray-800 dark:text-white font-sans hidden sm:inline">ড্যাশবোর্ড</span>
+        <span class="text-lg font-bold text-gray-800 dark:text-white font-sans hidden sm:inline">{{ $title }}</span>
     </div>
 
     <!-- Right Section: Actions & Profile -->
@@ -222,7 +236,7 @@
 
                 <!-- Dropdown items -->
                 <div class="py-1">
-                    <a href="{{ route('settings', ['tab' => 'my_profile']) }}" class="flex items-center px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/10 hover:text-[#034C3C] dark:hover:text-emerald-400 font-semibold transition-all">
+                    <a href="{{ route('settings', ['tab' => 'my_profile']) }}" wire:navigate class="flex items-center px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/10 hover:text-[#034C3C] dark:hover:text-emerald-400 font-semibold transition-all">
                         <svg class="w-4 h-4 mr-2.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
                         </svg>

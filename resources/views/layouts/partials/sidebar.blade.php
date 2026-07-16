@@ -58,7 +58,7 @@
         <!-- 1. ড্যাশবোর্ড -->
         @if(auth()->check())
         <div class="mx-2">
-            <a href="{{ route('dashboard') }}" 
+            <a href="{{ route('dashboard') }}" wire:navigate
                @mouseenter="showTooltip('ড্যাশবোর্ড', $el)"
                @mouseleave="hideTooltip()"
                class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('dashboard') ? 'bg-secondary text-white shadow-sm' : 'text-emerald-100 hover:bg-emerald-800/50 hover:text-white' }} transition-all duration-200">
@@ -90,21 +90,21 @@
                 </svg>
             </button>
             <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 -translate-y-2" x-transition:enter-end="transform opacity-100 translate-y-0" class="mt-1 ml-6 space-y-0.5" :class="{ 'hidden': !sidebarOpen }">
-                <a href="{{ route('challan.today') }}" 
+                <a href="{{ route('challan.today') }}" wire:navigate
                    class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('challan.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40' }}">
                     <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                     আজকের চালান
                 </a>
-                <a href="{{ route('challan.pending') }}" 
+                <a href="{{ route('challan.pending') }}" wire:navigate
                    class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('challan.pending') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40' }}">
                     <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     অগ্রিম চালান
                 </a>
-                <a href="{{ route('challan.all') }}" 
+                <a href="{{ route('challan.all') }}" wire:navigate
                    class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('challan.all') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40' }}">
                     <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
@@ -465,7 +465,7 @@
     <!-- Sidebar Bottom Fixed Section (Settings & Profile Info) -->
     <div class="p-3 bg-primary-dark border-t border-emerald-800 flex-shrink-0 flex items-center justify-between transition-all duration-300 overflow-hidden">
         <!-- Settings Gear Button -->
-        <a href="{{ route('settings') }}" 
+        <a href="{{ route('settings') }}" wire:navigate
            @mouseenter="showTooltip('সেটিংস', $el)"
            @mouseleave="hideTooltip()"
            :title="!sidebarOpen ? 'সেটিংস' : ''"

@@ -35,6 +35,7 @@
      public $discount = 0;
      public $cash = 0;
      public $send_sms = false;
+     public $due_payment_date = '';
  
      // Items array
      public $items = [];
@@ -59,6 +60,7 @@
      public $todayDeliveryQty = 0;
      public $deliveryItemCategory = '';
      public $deliveryTotalQty = 0;
+     public $deliveryChallanDue = 0;
  
      // Challan Details Modal States
      public $showChallanDetailsModal = false;
@@ -104,6 +106,7 @@
      public function openAddModal()
      {
          $this->resetForm();
+         $this->due_payment_date = '';
          $this->editingId = null;
          $this->challan_no = $this->generateChallanNo();
          $this->addItem();
@@ -181,6 +184,7 @@
          $this->value = 0;
          $this->grand_total = 0;
          $this->due = 0;
+         $this->due_payment_date = '';
          $this->editingId = null;
          $this->resetValidation();
      }
@@ -237,7 +241,16 @@
              $ledger = Ledger::find($value);
              if ($ledger) {
                  $this->customer_name = $ledger->name;
-                 $this->customer_address = 'খতিয়ান গ্রাহক';
+                 $latestChallan = Challan::where('customer_name', $ledger->name)
+                     ->latest()
+                     ->first();
+                 if ($latestChallan) {
+                     $this->customer_phone = $latestChallan->customer_phone;
+                     $this->customer_address = $latestChallan->customer_address;
+                 } else {
+                     $this->customer_phone = '';
+                     $this->customer_address = 'খতিয়ান গ্রাহক';
+                 }
              }
          }
      }
@@ -326,6 +339,7 @@
              'cash' => $this->cash ?: 0,
              'due' => $this->due,
              'send_sms' => $this->send_sms,
+             'due_payment_date' => $this->due_payment_date ?: null,
          ];
  
          if ($this->editingId) {
@@ -351,6 +365,7 @@
                  'rate' => $item['rate'],
                  'quantity' => $item['quantity'],
                  'amount' => $item['amount'],
+                 'delivered_quantity' => $item['delivered_quantity'] ?? 0,
              ]);
          }
  
@@ -374,6 +389,7 @@
          $this->discount = $challan->discount;
          $this->cash = $challan->cash;
          $this->send_sms = $challan->send_sms;
+         $this->due_payment_date = $challan->due_payment_date ?? '';
  
          $this->items = [];
          foreach ($challan->items as $item) {
@@ -382,6 +398,7 @@
                  'rate' => $item->rate,
                  'quantity' => $item->quantity,
                  'amount' => $item->amount,
+                 'delivered_quantity' => $item->delivered_quantity,
              ];
          }
  
@@ -408,12 +425,13 @@
             $this->deliveryDate = now()->toDateString();
             $this->nextDeliveryDate = '';
             $this->deliveryNotes = $challan->notes;
+            $this->deliveryChallanDue = $challan->due;
             
             $firstItem = $challan->items->first();
             if ($firstItem) {
                 $this->deliveryItemCategory = $firstItem->category_name;
                 $this->deliveryTotalQty = $firstItem->quantity;
-                $this->todayDeliveryQty = $firstItem->quantity;
+                $this->todayDeliveryQty = $firstItem->delivered_quantity;
             } else {
                 $this->deliveryItemCategory = '';
                 $this->deliveryTotalQty = 0;
@@ -432,6 +450,15 @@
 
     public function saveDelivery()
     {
+        $challan = Challan::with('items')->find($this->deliveryChallanId);
+        if ($challan) {
+            $firstItem = $challan->items->first();
+            if ($firstItem) {
+                $firstItem->update([
+                    'delivered_quantity' => intval($this->todayDeliveryQty)
+                ]);
+            }
+        }
         $this->showDeliveryModal = false;
         session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
     }
@@ -456,6 +483,8 @@
              });
          }
  
+         $query->orderBy('id', 'desc');
+
          $printChallans = (clone $query)->get();
  
          $settings = [
