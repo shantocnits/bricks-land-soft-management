@@ -338,8 +338,8 @@
     </template>
 
     <!-- Modal Form (same modal contents) -->
-    <template x-teleport="body">
-        <div x-data="{ open: @entangle('showModal') }"
+    @if($showModal)
+        <div x-data="{ open: true }"
              x-show="open"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0"
@@ -409,7 +409,6 @@
                                  </span>
                              </div>
                         </div>
-                    </div>
 
                     <!-- Customer fields -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" x-show="$wire.customer_type === 'new'">
@@ -653,10 +652,11 @@
                 </form>
             </div>
         </div>
-    </template>
+    @endif
 
     <!-- ====================== PRINT AREA ====================== -->
-    <div id="all-challan-print-area" class="hidden">
+    <template x-teleport="body">
+        <div id="all-challan-print-area" class="hidden">
         @php
             $printTotal = [
                 'quantity'      => $printChallans->sum(fn($c) => $c->items->sum('quantity')),
@@ -774,6 +774,7 @@
             </div>
         </div>
     </div>
+    </template>
 
     <style>
         /* Preview / Print stylesheet classes */

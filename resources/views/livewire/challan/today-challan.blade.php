@@ -327,8 +327,8 @@
     </template>
 
     <!-- Modal: Add/Edit Challan -->
-    <template x-teleport="body">
-        <div x-data="{ open: @entangle('showModal') }"
+    @if($showModal)
+        <div x-data="{ open: true }"
              x-show="open"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0"
@@ -656,7 +656,7 @@
                  </form>
             </div>
         </div>
-    </template>
+    @endif
 
     <!-- ====================== PRINT AREA ====================== -->
     <template x-teleport="body">
