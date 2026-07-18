@@ -172,7 +172,11 @@ class CategoryRate extends Component
             return;
         }
 
-        Category::destroy($id);
+        $category = Category::find($id);
+        if ($category) {
+            \App\Models\ActivityLog::log('শ্রেণি ডিলিট', "{$category->name} শ্রেণিটিকে ডিলিট করা হয়েছে যার মূল্য ছিল {$category->rate} এবং শ্রেণির ধরন ছিল {$category->type}");
+            $category->delete();
+        }
         session()->flash('message', 'শ্রেণি সফলভাবে মুছে ফেলা হয়েছে।');
         $this->resetForm();
     }

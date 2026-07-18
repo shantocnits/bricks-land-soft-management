@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Livewire\Dashboard;
 use App\Livewire\UserManagement;
 use App\Livewire\Settings;
+use App\Livewire\Tutorial;
+use App\Livewire\FeePayment;
+use App\Livewire\PaymentKhata;
 
 // Redirect / to /login
 Route::redirect('/', '/login');
@@ -14,6 +17,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/user-management', UserManagement::class)->name('user-management');
     Route::get('/settings', Settings::class)->name('settings');
+    Route::get('/update-history', \App\Livewire\UpdateHistory::class)->name('update-history');
+    Route::get('/login-history', \App\Livewire\LoginHistory::class)->name('login-history');
+    Route::get('/tutorial', Tutorial::class)->name('tutorial');
+    Route::get('/fee-payment', FeePayment::class)->name('fee-payment');
+    Route::get('/payment-khata', PaymentKhata::class)->name('payment-khata');
 
     // Challan Routes
     Route::get('/challan/today',   \App\Livewire\Challan\TodayChallan::class)->name('challan.today');

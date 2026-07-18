@@ -12,6 +12,16 @@
         $title = 'সেটিংস';
     } elseif (request()->routeIs('user-management')) {
         $title = 'ইউজার ম্যানেজমেন্ট';
+    } elseif (request()->routeIs('update-history')) {
+        $title = 'আপডেট হিস্ট্রি';
+    } elseif (request()->routeIs('login-history')) {
+        $title = 'লগইন রেকর্ড';
+    } elseif (request()->routeIs('tutorial')) {
+        $title = 'ভিডিও টিউটোরিয়াল';
+    } elseif (request()->routeIs('fee-payment')) {
+        $title = 'ফি পেমেন্ট';
+    } elseif (request()->routeIs('payment-khata')) {
+        $title = 'পেমেন্ট খাতা';
     }
     $currentUser = auth()->user();
 @endphp
@@ -65,11 +75,12 @@
         <div class="hidden sm:flex items-center space-x-2">
             <!-- 1. Update Record -->
             <div x-data="{ hover: false }" class="relative flex items-center justify-center">
-                <button @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
+                <a href="{{ route('update-history') }}" wire:navigate @mouseenter="hover = true" @mouseleave="hover = false" 
+                   class="p-1.5 rounded-full transition-all focus:outline-none cursor-pointer {{ request()->routeIs('update-history') ? 'bg-[#034C3C]/10 text-[#034C3C] dark:bg-emerald-500/10 dark:text-emerald-400 ring-2 ring-emerald-500/20 shadow-inner' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
                     </svg>
-                </button>
+                </a>
                 <div 
                     x-show="hover"
                     x-transition:enter="transition ease-out duration-200 transform"
@@ -86,11 +97,12 @@
             
             <!-- 2. Login Record -->
             <div x-data="{ hover: false }" class="relative flex items-center justify-center">
-                <button @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
+                <a href="{{ route('login-history') }}" wire:navigate @mouseenter="hover = true" @mouseleave="hover = false" 
+                   class="p-1.5 rounded-full transition-all focus:outline-none cursor-pointer {{ request()->routeIs('login-history') ? 'bg-[#034C3C]/10 text-[#034C3C] dark:bg-emerald-500/10 dark:text-emerald-400 ring-2 ring-emerald-500/20 shadow-inner' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                </button>
+                </a>
                 <div 
                     x-show="hover"
                     x-transition:enter="transition ease-out duration-200 transform"
@@ -107,12 +119,13 @@
             
             <!-- 3. Video Tutorial -->
             <div x-data="{ hover: false }" class="relative flex items-center justify-center">
-                <button @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
+                <a href="{{ route('tutorial') }}" wire:navigate @mouseenter="hover = true" @mouseleave="hover = false"
+                   class="p-1.5 rounded-full transition-all focus:outline-none cursor-pointer {{ request()->routeIs('tutorial') ? 'bg-[#034C3C]/10 text-[#034C3C] dark:bg-emerald-500/10 dark:text-emerald-400 ring-2 ring-emerald-500/20 shadow-inner' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                </button>
+                </a>
                 <div 
                     x-show="hover"
                     x-transition:enter="transition ease-out duration-200 transform"
@@ -123,17 +136,18 @@
                     x-transition:leave-end="opacity-0 translate-y-1 scale-95"
                     class="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-white text-[10px] font-bold rounded-xl shadow-xl whitespace-nowrap z-50 pointer-events-none border border-emerald-700 font-sans"
                     x-cloak>
-                    ভিডিও টিউটোরিয়াল
+                    ভিডিও টিউটোরিয়াল
                 </div>
             </div>
             
             <!-- 4. Payment Method -->
             <div x-data="{ hover: false }" class="relative flex items-center justify-center">
-                <button @mouseenter="hover = true" @mouseleave="hover = false" class="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer">
+                <a href="{{ route('fee-payment') }}" wire:navigate @mouseenter="hover = true" @mouseleave="hover = false"
+                   class="p-1.5 rounded-full transition-all focus:outline-none cursor-pointer {{ request()->routeIs('fee-payment') ? 'bg-[#034C3C]/10 text-[#034C3C] dark:bg-emerald-500/10 dark:text-emerald-400 ring-2 ring-emerald-500/20 shadow-inner' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
                     </svg>
-                </button>
+                </a>
                 <div 
                     x-show="hover"
                     x-transition:enter="transition ease-out duration-200 transform"
@@ -144,7 +158,7 @@
                     x-transition:leave-end="opacity-0 translate-y-1 scale-95"
                     class="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-white text-[10px] font-bold rounded-xl shadow-xl whitespace-nowrap z-50 pointer-events-none border border-emerald-700 font-sans"
                     x-cloak>
-                    পেমেন্ট মেথড
+                    ফি পেমেন্ট
                 </div>
             </div>
         </div>

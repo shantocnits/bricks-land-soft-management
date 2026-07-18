@@ -352,6 +352,14 @@ class AllChallan extends Component
 
         if ($this->editingId) {
             $challan = Challan::findOrFail($this->editingId);
+            $oldCash = intval($challan->cash);
+            $newCash = intval($this->cash ?: 0);
+            if ($oldCash != $newCash) {
+                \App\Models\ActivityLog::log(
+                    'পেমেন্ট আপডেট',
+                    "পেমেন্ট আপডেট (আইডি: {$challan->id}) • রেট: {$oldCash} -> {$newCash}"
+                );
+            }
             $challan->update($challanData);
             $challan->items()->delete();
         } else {
@@ -463,8 +471,23 @@ class AllChallan extends Component
         if ($challan) {
             $firstItem = $challan->items->first();
             if ($firstItem) {
+                $oldQty = $firstItem->delivered_quantity;
+                $newQty = intval($this->todayDeliveryQty);
+                if ($oldQty != $newQty) {
+                    $oldQtyStr = number_format($oldQty);
+                    $newQtyStr = number_format($newQty);
+                    $en = ['0','1','2','3','4','5','6','7','8','9'];
+                    $bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+                    $oldQtyStrBn = str_replace($en, $bn, $oldQtyStr);
+                    $newQtyStrBn = str_replace($en, $bn, $newQtyStr);
+                    
+                    \App\Models\ActivityLog::log(
+                        'আনলোড আপডেট',
+                        "শ্রেণি {$firstItem->category_name}। পূর্বের আনলোডের পরিমাণঃ {$oldQtyStrBn}। নতুন আনলোডের পরিমাণঃ {$newQtyStrBn}"
+                    );
+                }
                 $firstItem->update([
-                    'delivered_quantity' => intval($this->todayDeliveryQty)
+                    'delivered_quantity' => $newQty
                 ]);
             }
         }

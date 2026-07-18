@@ -1,24 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Hind Siliguri', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --color-primary: #034C3C;
-    --color-primary-dark: #023E31;
+    --font-sans:
+        "Hind Siliguri", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+    --color-primary: #034c3c;
+    --color-primary-dark: #023e31;
     --color-primary-light: #056651;
-    --color-secondary: #068A6B;
-    --color-accent: #009E74;
+    --color-secondary: #068a6b;
+    --color-accent: #009e74;
     --color-accent-hover: #008762;
 }
 
 @variant dark (&:where(.dark, .dark *));
 
 /* Smooth transition for theme toggle */
-*, *::before, *::after {
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+*,
+*::before,
+*::after {
+    transition-property:
+        color, background-color, border-color, text-decoration-color, fill,
+        stroke;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
 }
@@ -49,10 +56,10 @@
 }
 
 /* Force cursor pointer on clickable elements */
-button, 
-a, 
-input[type="button"], 
-input[type="submit"], 
+button,
+a,
+input[type="button"],
+input[type="submit"],
 input[type="reset"],
 select,
 [role="button"],
@@ -71,3 +78,31 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
+/* Custom Global Scrollbar Style (Thin & Emerald themed) */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: #034c3c;
+}
+.dark html {
+    scrollbar-color: #034c3c #0f172a;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #232323;
+}
+.dark ::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #034c3c;
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #023e31;
+}
