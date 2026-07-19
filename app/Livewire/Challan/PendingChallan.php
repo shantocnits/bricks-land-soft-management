@@ -19,6 +19,30 @@
      public $showReport = false;
      public $editingId = null;
  
+     public int $perPage = 10;
+     public string $sortField = 'id';
+     public string $sortDirection = 'desc';
+ 
+     public function sortBy($field)
+     {
+         if ($this->sortField === $field) {
+             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+         } else {
+             $this->sortField = $field;
+             $this->sortDirection = 'desc';
+         }
+     }
+ 
+     public function updatingSearch()
+     {
+         $this->resetPage();
+     }
+ 
+     public function updatingPerPage()
+     {
+         $this->resetPage();
+     }
+ 
      // Form fields
      public $customer_type = 'new'; // new, old
      public $customer_phone = '';
@@ -506,10 +530,12 @@
              });
          }
  
-         $query->orderBy('id', 'desc');
+         $query->orderBy($this->sortField, $this->sortDirection);
 
          $printChallans = (clone $query)->get();
  
+         $totalDue = $printChallans->sum('due');
+
          $settings = [
              'company_name_bn' => Setting::get('company_name_bn', 'ডেমো ব্রিকস'),
              'address'         => Setting::get('address', ''),
@@ -518,8 +544,9 @@
          ];
  
          return view('livewire.challan.pending-challan', [
-             'challans'      => $query->paginate(10),
+             'challans'      => $query->paginate($this->perPage),
              'printChallans' => $printChallans,
+             'totalDue'      => $totalDue,
              'settings'      => $settings,
              'categories'    => Category::all(),
              'ledgers'       => Ledger::all()

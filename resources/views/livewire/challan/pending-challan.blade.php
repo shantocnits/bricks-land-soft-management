@@ -49,9 +49,16 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse border border-gray-200 dark:border-slate-800" style="min-width: 1050px">
                     <thead>
-                        <tr class="bg-emerald-600 text-white text-[11px] font-bold uppercase font-sans">
+                        <tr class="bg-emerald-600 text-white text-[11px] font-bold uppercase font-sans select-none">
                             <th class="px-3 py-3 text-center w-10 border-r border-white/20 last:border-r-0">#</th>
-                            <th class="px-3 py-3 border-r border-white/20 last:border-r-0">খতিয়ান</th>
+                            <th wire:click="sortBy('customer_name')" class="px-3 py-3 border-r border-white/20 last:border-r-0 cursor-pointer hover:bg-emerald-700 transition-colors">
+                                <div class="flex items-center gap-1">
+                                    <span>খতিয়ান</span>
+                                    @if ($sortField === 'customer_name')
+                                        <span class="text-[9px]">{{ $sortDirection === 'asc' ? '▲' : '▼' }}</span>
+                                    @endif
+                                </div>
+                            </th>
                             <th class="px-3 py-3 border-r border-white/20 last:border-r-0">ঠিকানা</th>
                             <th class="px-3 py-3 border-r border-white/20 last:border-r-0">শ্রেণি</th>
                             <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">পরিমাণ</th>
@@ -60,9 +67,30 @@
                             <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">মোট মূল্য</th>
                             <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">ছাড়</th>
                             <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">গাড়ি ভাড়া</th>
-                            <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">সর্বমোট</th>
-                            <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">নগদ</th>
-                            <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">বাকি</th>
+                            <th wire:click="sortBy('grand_total')" class="px-3 py-3 text-right border-r border-white/20 last:border-r-0 cursor-pointer hover:bg-emerald-700 transition-colors">
+                                <div class="flex items-center justify-end gap-1">
+                                    <span>সর্বমোট</span>
+                                    @if ($sortField === 'grand_total')
+                                        <span class="text-[9px]">{{ $sortDirection === 'asc' ? '▲' : '▼' }}</span>
+                                    @endif
+                                </div>
+                            </th>
+                            <th wire:click="sortBy('cash')" class="px-3 py-3 text-right border-r border-white/20 last:border-r-0 cursor-pointer hover:bg-emerald-700 transition-colors">
+                                <div class="flex items-center justify-end gap-1">
+                                    <span>নগদ</span>
+                                    @if ($sortField === 'cash')
+                                        <span class="text-[9px]">{{ $sortDirection === 'asc' ? '▲' : '▼' }}</span>
+                                    @endif
+                                </div>
+                            </th>
+                            <th wire:click="sortBy('due')" class="px-3 py-3 text-right border-r border-white/20 last:border-r-0 cursor-pointer hover:bg-emerald-700 transition-colors">
+                                <div class="flex items-center justify-end gap-1">
+                                    <span>বাকি</span>
+                                    @if ($sortField === 'due')
+                                        <span class="text-[9px]">{{ $sortDirection === 'asc' ? '▲' : '▼' }}</span>
+                                    @endif
+                                </div>
+                            </th>
                             <th class="px-3 py-3 text-center">বাটন</th>
                         </tr>
                     </thead>
@@ -193,9 +221,92 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="p-4 border-t border-gray-100 dark:border-slate-800">
-                {{ $challans->links() }}
+            <!-- Dynamic Bottom Footer: Pagination & Per Page selection -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-4 border-t border-gray-100 dark:border-slate-800">
+                <!-- Dynamic Info text -->
+                <div class="text-xs text-gray-500 dark:text-gray-400 font-sans font-semibold">
+                    মোট চালান {{ $challans->total() }} টি
+                </div>
+                
+                <!-- Page navigation & Page Size dropdown -->
+                <div class="flex items-center gap-4">
+                    <!-- Pagination numbers -->
+                    <div class="flex items-center gap-1">
+                        @if ($challans->onFirstPage())
+                            <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-slate-800 text-gray-300 dark:text-slate-700 cursor-not-allowed" disabled>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+                            </button>
+                        @else
+                            <button type="button" wire:click="previousPage" class="p-1.5 rounded-lg border border-gray-200 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-350 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+                            </button>
+                        @endif
+
+                        @php
+                            $startPage = max(1, $challans->currentPage() - 2);
+                            $endPage = min($challans->lastPage(), $challans->currentPage() + 2);
+                        @endphp
+
+                        @if ($startPage > 1)
+                            <button type="button" wire:click="gotoPage(1)" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300 font-bold rounded-lg text-xs border border-gray-200 dark:border-slate-750 font-mono cursor-pointer">1</button>
+                            @if ($startPage > 2)
+                                <span class="px-1 text-gray-400">...</span>
+                            @endif
+                        @endif
+
+                        @for ($page = $startPage; $page <= $endPage; $page++)
+                            @if ($page == $challans->currentPage())
+                                <span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950 text-[#034C3C] dark:text-emerald-400 font-bold rounded-lg text-xs border border-emerald-200 dark:border-emerald-900 font-mono">{{ $page }}</span>
+                            @else
+                                <button type="button" wire:click="gotoPage({{ $page }})" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300 font-bold rounded-lg text-xs border border-gray-200 dark:border-slate-750 font-mono cursor-pointer">{{ $page }}</button>
+                            @endif
+                        @endfor
+
+                        @if ($endPage < $challans->lastPage())
+                            @if ($endPage < $challans->lastPage() - 1)
+                                <span class="px-1 text-gray-400">...</span>
+                            @endif
+                            <button type="button" wire:click="gotoPage({{ $challans->lastPage() }})" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300 font-bold rounded-lg text-xs border border-gray-200 dark:border-slate-750 font-mono cursor-pointer">{{ $challans->lastPage() }}</button>
+                        @endif
+
+                        @if ($challans->hasMorePages())
+                            <button type="button" wire:click="nextPage" class="p-1.5 rounded-lg border border-gray-200 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-350 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                            </button>
+                        @else
+                            <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-slate-800 text-gray-300 dark:text-slate-700 cursor-not-allowed" disabled>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                            </button>
+                        @endif
+                    </div>
+
+                    <!-- Per Page Dropdown -->
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" type="button" 
+                                class="flex items-center justify-between gap-1.5 px-3 py-1.5 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white font-bold rounded-lg text-xs border border-gray-200 dark:border-slate-700 focus:outline-none transition-all cursor-pointer">
+                            <span>{{ $perPage }} চালান / পেজ</span>
+                            <svg class="w-3.5 h-3.5 transition-transform duration-200 text-gray-550" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        
+                        <div x-show="open" 
+                             @click.outside="open = false"
+                             class="absolute bottom-full mb-1.5 right-0 z-[999] w-36 bg-white dark:bg-slate-900 border border-gray-205 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden focus:outline-none"
+                             x-cloak>
+                            <div class="py-1">
+                                @foreach ([10, 20, 30, 50] as $size)
+                                <button type="button" 
+                                        wire:click="$set('perPage', {{ $size }})"
+                                        @click="open = false"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold text-gray-855 dark:text-white hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
+                                    {{ $size }} চালান / পেজ
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -19,6 +19,30 @@ class AllChallan extends Component
     public $dateTo = '';
     public $filterType = 'all'; // all, today, pending
     
+    public int $perPage = 10;
+    public string $sortField = 'id';
+    public string $sortDirection = 'desc';
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'desc';
+        }
+    }
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+    
     public $showModal = false;
     public $showReport = false;
     public $editingId = null;
@@ -528,10 +552,12 @@ class AllChallan extends Component
             });
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy($this->sortField, $this->sortDirection);
 
         // Full (unpaginated) list for print layout
         $printChallans = (clone $query)->get();
+
+        $totalDue = $printChallans->sum('due');
 
         $settings = [
             'company_name_bn' => Setting::get('company_name_bn', 'ব্রিকস'),
@@ -541,8 +567,9 @@ class AllChallan extends Component
         ];
 
         return view('livewire.challan.all-challan', [
-            'challans'       => $query->paginate(10),
+            'challans'       => $query->paginate($this->perPage),
             'printChallans'  => $printChallans,
+            'totalDue'       => $totalDue,
             'settings'       => $settings,
             'categories'     => Category::all(),
             'ledgers'        => Ledger::all(),
