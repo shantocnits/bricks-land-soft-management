@@ -102,12 +102,31 @@
         function initFlatpickrs() {
             document.querySelectorAll('[data-flatpickr]').forEach(function(el) {
                 if (el._flatpickr) {
+                    var expectedVal = el.getAttribute('data-default') || el.value;
+                    if (expectedVal && el.value !== expectedVal) {
+                        el._flatpickr.setDate(expectedVal, false);
+                    }
                     return;
                 }
+
+                // Add wire:ignore to parent dynamically to prevent Livewire from deleting altInput
+                if (el.parentElement) {
+                    el.parentElement.setAttribute('wire:ignore', '');
+                }
+
+                // Sibling check: clean up stale flatpickr-input elements created as altInput
+                var next = el.nextElementSibling;
+                if (next && next.classList.contains('flatpickr-input') && !next.hasAttribute('data-flatpickr')) {
+                    next.remove();
+                }
+
                 var wireProp = el.getAttribute('data-wire-prop');
                 var options = {
                     locale: fpLocale,
                     dateFormat: 'Y-m-d',
+                    altInput: true,
+                    altFormat: 'd-m-Y',
+                    altInputClass: el.className,
                     allowInput: false,
                     disableMobile: true,
                     onChange: function(selectedDates, dateStr, instance) {

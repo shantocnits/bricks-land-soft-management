@@ -44,7 +44,20 @@ class CustomerProfile extends Component
     public $deliveryItemCategory = '';
     public $deliveryTotalQty = 0;
     public $deliveryChallanDue = 0;
+     public $selectedChallanItemId = null;
+     public $deliveredQtySoFar = 0;
+     public $challanItems = [];
 
+     public function updatedSelectedChallanItemId($value)
+     {
+         $item = \App\Models\ChallanItem::find($value);
+         if ($item) {
+             $this->deliveryItemCategory = $item->category_name;
+             $this->deliveryTotalQty = $item->quantity;
+             $this->deliveredQtySoFar = $item->delivered_quantity;
+             $this->todayDeliveryQty = max(0, $item->quantity - $item->delivered_quantity);
+         }
+     }
     protected $paginationTheme = 'tailwind';
 
     public function mount($phone)
@@ -74,27 +87,38 @@ class CustomerProfile extends Component
         $this->deliveryChallanId = $challanId;
         $challan = Challan::with('items')->find($challanId);
         if ($challan) {
-            $this->deliveryNo = '৫';
+            $this->customer_name = $challan->customer_name;
+            $this->customer_phone = $challan->customer_phone;
+            $this->customer_address = $challan->customer_address;
+            $this->challan_no = $challan->challan_no;
+            
+            // Auto increment delivery no
+            $this->deliveryNo = strval(\App\Models\Delivery::count() + 1);
             $this->deliveryDate = now()->toDateString();
             $this->nextDeliveryDate = '';
             $this->deliveryNotes = $challan->notes;
             $this->deliveryChallanDue = $challan->due;
             
+            $this->challanItems = $challan->items;
             $firstItem = $challan->items->first();
             if ($firstItem) {
+                $this->selectedChallanItemId = $firstItem->id;
                 $this->deliveryItemCategory = $firstItem->category_name;
                 $this->deliveryTotalQty = $firstItem->quantity;
-                $this->todayDeliveryQty = $firstItem->delivered_quantity;
+                $this->deliveredQtySoFar = $firstItem->delivered_quantity;
+                $this->todayDeliveryQty = max(0, $firstItem->quantity - $firstItem->delivered_quantity);
             } else {
+                $this->selectedChallanItemId = null;
                 $this->deliveryItemCategory = '';
                 $this->deliveryTotalQty = 0;
+                $this->deliveredQtySoFar = 0;
                 $this->todayDeliveryQty = 0;
             }
             
             $this->driverName = '';
             $this->driverPhone = '';
             $this->vehicleNo = '';
-            $this->vehicleRent = $challan->transport_rent ?: 0;
+            $this->vehicleRent = 0;
             $this->smsToCustomer = true;
             
             $this->showDeliveryModal = true;
@@ -103,17 +127,50 @@ class CustomerProfile extends Component
 
     public function saveDelivery()
     {
-        $challan = Challan::with('items')->find($this->deliveryChallanId);
-        if ($challan) {
-            $firstItem = $challan->items->first();
-            if ($firstItem) {
-                $firstItem->update([
-                    'delivered_quantity' => intval($this->todayDeliveryQty)
-                ]);
-            }
+        $this->validate([
+            'todayDeliveryQty' => 'required|integer|min:1',
+            'deliveryNo' => 'required',
+            'deliveryDate' => 'required|date'
+        ]);
+
+        $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
+        if ($item) {
+            $challan = $item->challan;
+            
+            // Create delivery entry
+            \App\Models\Delivery::create([
+                'delivery_no' => $this->deliveryNo,
+                'challan_id' => $challan->id,
+                'challan_item_id' => $item->id,
+                'category_name' => $item->category_name,
+                'quantity' => intval($this->todayDeliveryQty),
+                'delivery_date' => $this->deliveryDate,
+                'next_delivery_date' => $this->nextDeliveryDate ?: null,
+                'notes' => $this->deliveryNotes,
+                'driver_name' => $this->driverName,
+                'driver_phone' => $this->driverPhone,
+                'vehicle_no' => $this->vehicleNo,
+                'vehicle_rent' => floatval($this->vehicleRent),
+                'sms_sent' => $this->smsToCustomer,
+            ]);
+
+            // Increment delivered quantity
+            $item->increment('delivered_quantity', intval($this->todayDeliveryQty));
+
+            // Log activity
+            $qtyStrBn = str_replace(
+                ['0','1','2','3','4','5','6','7','8','9'],
+                ['০','১','২','৩','৪','৫','৬','৭','৮','৯'],
+                number_format($this->todayDeliveryQty)
+            );
+            \App\Models\ActivityLog::log(
+                'নতুন ডেলিভারি',
+                "চালান নং {$challan->challan_no}। শ্রেণি {$item->category_name}। ডেলিভারি পরিমাণঃ {$qtyStrBn}"
+            );
         }
+
         $this->showDeliveryModal = false;
-        session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+        session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
     }
 
     public function openChallanDetailsModal($challanId)

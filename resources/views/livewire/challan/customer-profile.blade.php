@@ -721,8 +721,12 @@
                     </div>
                     <div class="grid grid-cols-4 gap-3 items-center">
                         <div>
-                            <select disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-200 dark:border-slate-800 rounded-xl text-gray-500 dark:bg-slate-900/50">
-                                <option>{{ $deliveryItemCategory }}</option>
+                            <select wire:model.live="selectedChallanItemId" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-205 dark:border-slate-800 rounded-xl text-gray-800 dark:text-white font-semibold focus:ring-2 focus:ring-emerald-500/20">
+                                @if($challanItems)
+                                    @foreach($challanItems as $chItem)
+                                        <option value="{{ $chItem->id }}">{{ $chItem->category_name }}</option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
                         <div>
@@ -732,7 +736,7 @@
                             <input type="number" wire:model.live="todayDeliveryQty" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl text-center text-gray-800 dark:text-white font-bold font-sans focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div>
-                            <input type="text" value="{{ number_format(max(0, (int)$deliveryTotalQty - (int)$todayDeliveryQty)) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-200 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
+                            <input type="text" value="{{ number_format(max(0, (int)$deliveryTotalQty - (int)$deliveredQtySoFar - (int)$todayDeliveryQty)) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-200 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
                         </div>
                     </div>
                 </div>

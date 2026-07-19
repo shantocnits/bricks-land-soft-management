@@ -133,11 +133,11 @@
 
         <!-- 4. ডেলিভারি (Dropdown) -->
         @if($hasAccess('delivery'))
-        <div class="mx-2" x-data="{ open: false }">
+        <div class="mx-2" x-data="{ open: {{ request()->routeIs('delivery.*') ? 'true' : 'false' }} }">
             <button @click="open = !open" 
                     @mouseenter="showTooltip('ডেলিভারি', $el)"
                     @mouseleave="hideTooltip()"
-                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-emerald-100 hover:bg-emerald-800/50 hover:text-white transition-all duration-200">
+                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ request()->routeIs('delivery.*') ? 'bg-emerald-800/50 text-white' : 'text-emerald-100 hover:bg-emerald-800/50 hover:text-white' }} transition-all duration-200">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -151,8 +151,12 @@
                 </svg>
             </button>
             <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" class="mt-1 ml-6 space-y-1" :class="{ 'hidden': !sidebarOpen }">
-                <a href="#" class="block px-4 py-2 text-xs text-emerald-200 hover:text-white hover:bg-emerald-800/40 rounded transition-all font-sans">নতুন ডেলিভারি</a>
-                <a href="#" class="block px-4 py-2 text-xs text-emerald-200 hover:text-white hover:bg-emerald-800/40 rounded transition-all font-sans">ডেলিভারি তালিকা</a>
+                <a href="{{ route('delivery.today') }}" wire:navigate
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('delivery.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40' }}">আজকের ডেলিভারি</a>
+                <a href="{{ route('delivery.pending') }}" wire:navigate
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('delivery.pending') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40' }}">আজ ডেলিভারি যাবে</a>
+                <a href="{{ route('delivery.all') }}" wire:navigate
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('delivery.all') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40' }}">সব ডেলিভারি লিস্ট</a>
             </div>
         </div>
         @endif

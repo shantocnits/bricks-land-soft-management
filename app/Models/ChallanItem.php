@@ -14,4 +14,9 @@ class ChallanItem extends Model
     {
         return $this->belongsTo(Challan::class);
     }
+
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class);
+    }
 }
