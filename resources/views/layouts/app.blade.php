@@ -42,7 +42,7 @@
     </style>
 </head>
 <body x-data="{ 
-          darkMode: $persist(false), 
+          darkMode: localStorage.getItem('darkMode') === 'true' || localStorage.getItem('_x_darkMode') === 'true', 
           sidebarOpen: false 
       }"
       x-init="
@@ -50,6 +50,8 @@
           window.addEventListener('resize', () => { if (window.innerWidth < 768) sidebarOpen = false; });
           if (darkMode) { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); }
           $watch('darkMode', val => { 
+              localStorage.setItem('darkMode', val);
+              localStorage.setItem('_x_darkMode', val);
               if (val) { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } 
           })
       "
@@ -160,19 +162,32 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', function() { setTimeout(initFlatpickrs, 200); });
-        document.addEventListener('livewire:navigated', function() { setTimeout(initFlatpickrs, 200); });
-        document.addEventListener('livewire:update', function() { setTimeout(initFlatpickrs, 100); });
-        var fpObserver = new MutationObserver(function(mutations) {
-            var hasFp = false;
-            mutations.forEach(function(m) {
-                m.addedNodes.forEach(function(n) {
-                    if (n.nodeType === 1 && (n.querySelector && n.querySelector('[data-flatpickr]') || n.matches && n.matches('[data-flatpickr]'))) hasFp = true;
+        var fpObserver;
+        function setupObserver() {
+            if (fpObserver) {
+                try { fpObserver.disconnect(); } catch(e) {}
+            }
+            fpObserver = new MutationObserver(function(mutations) {
+                var hasFp = false;
+                mutations.forEach(function(m) {
+                    m.addedNodes.forEach(function(n) {
+                        if (n.nodeType === 1 && (n.querySelector && n.querySelector('[data-flatpickr]') || n.matches && n.matches('[data-flatpickr]'))) hasFp = true;
+                    });
                 });
+                if (hasFp) setTimeout(initFlatpickrs, 100);
             });
-            if (hasFp) setTimeout(initFlatpickrs, 100);
+            fpObserver.observe(document.body, { childList: true, subtree: true });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() { 
+            setupObserver();
+            setTimeout(initFlatpickrs, 200); 
         });
-        fpObserver.observe(document.body, { childList: true, subtree: true });
+        document.addEventListener('livewire:navigated', function() { 
+            setupObserver();
+            setTimeout(initFlatpickrs, 200); 
+        });
+        document.addEventListener('livewire:update', function() { setTimeout(initFlatpickrs, 100); });
 
         // ===== Disable Livewire Navigation Progress Bar =====
         document.addEventListener("livewire:init", () => {

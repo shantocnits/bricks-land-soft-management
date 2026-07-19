@@ -11,40 +11,7 @@
             <!-- Search -->
             <div class="relative w-full sm:w-auto">
                 <input type="text" wire:model.live="search" placeholder="সার্চ করুন..."
-                       class="pl-4 pr-4 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all w-full sm:w-48 font-sans font-semibold">
-            </div>
-
-            <!-- Date Fields Grid: 2-column in mobile view -->
-            <div class="grid grid-cols-2 gap-2 w-full sm:flex sm:items-center sm:gap-3 sm:w-auto">
-                <!-- Date Range: From -->
-                <div class="flex items-center gap-2 col-span-1">
-                    <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 font-sans whitespace-nowrap hidden sm:inline">শুরু:</span>
-                    <div class="relative flex items-center w-full">
-                        <input type="text"
-                               data-flatpickr
-                               data-wire-prop="dateFrom"
-                               data-default="{{ $dateFrom }}"
-                               wire:model="dateFrom"
-                               placeholder="শুরু তারিখ"
-                               readonly
-                               class="pl-3 pr-8 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all w-full sm:w-36 font-sans font-semibold cursor-pointer">
-                    </div>
-                </div>
-
-                <!-- Date Range: To -->
-                <div class="flex items-center gap-2 col-span-1">
-                    <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 font-sans whitespace-nowrap hidden sm:inline">শেষ:</span>
-                    <div class="relative flex items-center w-full">
-                        <input type="text"
-                               data-flatpickr
-                               data-wire-prop="dateTo"
-                               data-default="{{ $dateTo }}"
-                               wire:model="dateTo"
-                               placeholder="শেষ তারিখ"
-                               readonly
-                               class="pl-3 pr-8 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all w-full sm:w-36 font-sans font-semibold cursor-pointer">
-                    </div>
-                </div>
+                       class="pl-4 pr-4 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all w-full sm:w-48 font-sans font-semibold">
             </div>
 
             <!-- Buttons Layout: Report & Print in 2 columns on mobile -->
@@ -70,7 +37,7 @@
     @if (session()->has('message'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
              x-transition:leave="transition ease-in duration-300" x-transition:leave-end="opacity-0"
-             class="mx-4 sm:mx-6 mt-4 p-3.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-400 rounded-2xl text-xs font-medium font-sans" x-cloak>
+             class="mx-4 sm:mx-6 mt-4 p-3.5 bg-primary-50 dark:bg-primary-950/20 border border-primary-200 dark:border-primary-900 text-primary-800 dark:text-primary-400 rounded-2xl text-xs font-medium font-sans" x-cloak>
             {{ session('message') }}
         </div>
     @endif
@@ -82,8 +49,8 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse border border-gray-200 dark:border-slate-800" style="min-width: 1100px">
                     <thead>
-                        <tr class="bg-emerald-600 text-white text-[11px] font-bold uppercase font-sans select-none">
-                            <th wire:click="sortBy('challan_no')" class="px-3 py-3 border-r border-white/20 cursor-pointer hover:bg-emerald-700 transition-colors">
+                        <tr class="bg-primary text-white text-[11px] font-bold uppercase font-sans select-none">
+                            <th wire:click="sortBy('challan_no')" class="px-3 py-3 border-r border-white/20 cursor-pointer hover:bg-primary-dark transition-colors">
                                 <div class="flex items-center gap-1">
                                     <span>চালান নং</span>
                                     @if ($sortField === 'challan_no')
@@ -91,7 +58,7 @@
                                     @endif
                                 </div>
                             </th>
-                            <th wire:click="sortBy('customer_name')" class="px-3 py-3 border-r border-white/20 cursor-pointer hover:bg-emerald-700 transition-colors">
+                            <th wire:click="sortBy('customer_name')" class="px-3 py-3 border-r border-white/20 cursor-pointer hover:bg-primary-dark transition-colors">
                                 <div class="flex items-center gap-1">
                                     <span>কাস্টমার</span>
                                     @if ($sortField === 'customer_name')
@@ -106,7 +73,7 @@
                             <th class="px-3 py-3 text-right border-r border-white/20">ডে.বাকি</th>
                             <th class="px-3 py-3 text-right border-r border-white/20">মোট ডে.বাকি</th>
                             <th class="px-3 py-3 text-right border-r border-white/20">টাকা বাকি</th>
-                            <th wire:click="sortBy('delivery_date')" class="px-3 py-3 border-r border-white/20 cursor-pointer hover:bg-emerald-700 transition-colors">
+                            <th wire:click="sortBy('delivery_date')" class="px-3 py-3 border-r border-white/20 cursor-pointer hover:bg-primary-dark transition-colors">
                                 <div class="flex items-center gap-1">
                                     <span>ডে.তারিখ</span>
                                     @if ($sortField === 'delivery_date')
@@ -125,14 +92,14 @@
                                 <td class="px-3 py-3.5 border-r border-gray-100 dark:border-slate-800 text-gray-900 dark:text-white font-bold">{{ $dl->challan->customer_name ?? '' }}</td>
                                 <td class="px-3 py-3.5 text-gray-500 border-r border-gray-100 dark:border-slate-800">{{ $dl->challan->customer_address ?? '' }}</td>
                                 <td class="px-3 py-3.5 border-r border-gray-100 dark:border-slate-800">
-                                    <span class="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-[10px]">{{ $dl->category_name }}</span>
+                                    <span class="px-2 py-0.5 rounded bg-primary-50 dark:bg-primary-950/30 text-primary-dark dark:text-primary-400 text-[10px]">{{ $dl->category_name }}</span>
                                 </td>
                                 <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800">{{ number_format($dl->challanItem->quantity ?? 0) }}</td>
                                 <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800 text-blue-600 dark:text-blue-450">{{ number_format($dl->quantity) }}</td>
                                 <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800 text-amber-600 dark:text-amber-450 font-bold">
                                     {{ number_format(max(0, ($dl->challanItem->quantity ?? 0) - ($dl->challanItem->delivered_quantity ?? 0))) }}
                                 </td>
-                                <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800 text-emerald-600 dark:text-emerald-450">
+                                <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800 text-primary dark:text-primary-light">
                                     @php
                                         $totalChPending = 0;
                                         if ($dl->challan) {
@@ -152,23 +119,23 @@
                                 <td class="px-3 py-3.5 text-gray-500 border-r border-gray-100 dark:border-slate-800 max-w-[150px] truncate">{{ $dl->notes }}</td>
                                 <td class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">
                                     <button @click="openDropdown = !openDropdown; buttonRect = $el.getBoundingClientRect()" type="button" class="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-all cursor-pointer">
-                                        <svg class="w-5 h-5 mx-auto text-gray-500 hover:text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/></svg>
+                                        <svg class="w-5 h-5 mx-auto text-gray-500 hover:text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/></svg>
                                     </button>
                                     <template x-teleport="body">
                                         <div x-show="openDropdown" @click.away="openDropdown = false" x-transition
                                              class="fixed w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-2xl p-1.5 z-[9999] text-left text-xs flex flex-col gap-0.5"
                                              :style="buttonRect ? ('left: ' + (buttonRect.left - 140) + 'px; position: fixed; ' + (window.innerHeight - buttonRect.bottom < 240 ? 'bottom: ' + (window.innerHeight - buttonRect.top + 4) + 'px;' : 'top: ' + (buttonRect.bottom + 4) + 'px;')) : ''"
                                              x-cloak>
-                                            <button type="button" wire:click="openChangeDateModal({{ $dl->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-gray-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                            <button type="button" wire:click="openChangeDateModal({{ $dl->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                                                 তারিখ পরিবর্তন
                                             </button>
                                             @if($dl->challan)
-                                            <button type="button" wire:click="openDeliveryModal({{ $dl->challan->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-gray-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                            <button type="button" wire:click="openDeliveryModal({{ $dl->challan->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                                                 ডেলিভারি দিন
                                             </button>
-                                            <a href="{{ route('challan.customer-profile', $dl->challan->customer_phone) }}" class="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-gray-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2 block">
+                                            <a href="{{ route('challan.customer-profile', $dl->challan->customer_phone) }}" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2 block">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                                 প্রোফাইলে যান
                                             </a>
@@ -219,7 +186,7 @@
 
                         @for ($page = $startPage; $page <= $endPage; $page++)
                             @if ($page == $deliveries->currentPage())
-                                <span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950 text-[#034C3C] dark:text-emerald-400 font-bold rounded-lg text-xs border border-emerald-200 dark:border-emerald-900 font-mono">{{ $page }}</span>
+                                <span class="px-2.5 py-1 bg-primary-50 dark:bg-primary-950 text-[#034C3C] dark:text-primary-400 font-bold rounded-lg text-xs border border-primary-200 dark:border-primary-900 font-mono">{{ $page }}</span>
                             @else
                                 <button type="button" wire:click="gotoPage({{ $page }})" class="px-2.5 py-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300 font-bold rounded-lg text-xs border border-gray-200 dark:border-slate-750 font-mono cursor-pointer">{{ $page }}</button>
                             @endif
@@ -255,7 +222,7 @@
                         <div x-show="open" @click.outside="open = false" class="absolute bottom-full mb-1.5 right-0 z-[999] w-36 bg-white dark:bg-slate-900 border border-gray-255 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden focus:outline-none" x-cloak>
                             <div class="py-1">
                                 @foreach ([10, 20, 30, 50] as $size)
-                                <button type="button" wire:click="$set('perPage', {{ $size }})" @click="open = false" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-855 dark:text-white hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
+                                <button type="button" wire:click="$set('perPage', {{ $size }})" @click="open = false" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-855 dark:text-white hover:bg-primary-50 dark:hover:bg-slate-800 hover:text-primary-dark dark:hover:text-primary-400 transition-colors font-sans">
                                     {{ $size }} ডেলিভারি / পেজ
                                 </button>
                                 @endforeach
@@ -330,7 +297,7 @@
                     </div>
                     <div class="grid grid-cols-4 gap-3 items-center">
                         <div>
-                            <select wire:model.live="selectedChallanItemId" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-205 dark:border-slate-800 rounded-xl text-gray-800 dark:text-white font-semibold focus:ring-2 focus:ring-emerald-500/20">
+                            <select wire:model.live="selectedChallanItemId" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-205 dark:border-slate-800 rounded-xl text-gray-800 dark:text-white font-semibold focus:ring-2 focus:ring-primary-500/20">
                                 @foreach($challanItems as $chItem)
                                     <option value="{{ $chItem->id }}">{{ $chItem->category_name }}</option>
                                 @endforeach
@@ -340,7 +307,7 @@
                             <input type="text" value="{{ number_format((int)$deliveryTotalQty) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-205 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
                         </div>
                         <div>
-                            <input type="number" wire:model.live="todayDeliveryQty" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl text-center text-gray-800 dark:text-white font-bold font-sans focus:ring-2 focus:ring-emerald-500/20">
+                            <input type="number" wire:model.live="todayDeliveryQty" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl text-center text-gray-800 dark:text-white font-bold font-sans focus:ring-2 focus:ring-primary-500/20">
                         </div>
                         <div>
                             <input type="text" value="{{ number_format(max(0, (int)$deliveryTotalQty - (int)$deliveredQtySoFar - (int)$todayDeliveryQty)) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-205 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
@@ -372,7 +339,7 @@
                         </div>
                         <div class="flex items-center justify-between pt-4">
                             <span>কাস্টমারকে এসএমএস দিন</span>
-                            <button type="button" @click="$wire.smsToCustomer = !$wire.smsToCustomer" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" :class="$wire.smsToCustomer ? 'bg-emerald-600' : 'bg-gray-200 dark:bg-slate-800'">
+                            <button type="button" @click="$wire.smsToCustomer = !$wire.smsToCustomer" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" :class="$wire.smsToCustomer ? 'bg-primary' : 'bg-gray-200 dark:bg-slate-800'">
                                 <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="$wire.smsToCustomer ? 'translate-x-5' : 'translate-x-0'"></span>
                             </button>
                         </div>
@@ -381,9 +348,9 @@
 
                 <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-150 dark:border-slate-800 mt-4">
                     <button type="button" wire:click="$set('showDeliveryModal', false)" class="px-5 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer transition-all">ক্লিয়ার</button>
-                    <button type="submit" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>সেভ করুন</button>
-                    <button type="button" wire:click="saveDelivery" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md">সেভ + নতুন ডেলিভারি</button>
-                    <button type="button" onclick="window.print()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট ডেলিভারি</button>
+                    <button type="submit" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>সেভ করুন</button>
+                    <button type="button" wire:click="saveDelivery" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md">সেভ + নতুন ডেলিভারি</button>
+                    <button type="button" onclick="window.print()" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট ডেলিভারি</button>
                 </div>
             </form>
         </div>
@@ -407,11 +374,11 @@
                     <label class="block text-gray-400">অপশন নির্বাচন</label>
                     <div class="flex items-center gap-6">
                         <label class="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="radio" wire:model.live="changeOption" value="all" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 dark:border-slate-700 dark:bg-slate-950 accent-emerald-600">
+                            <input type="radio" wire:model.live="changeOption" value="all" class="w-4 h-4 text-primary focus:ring-primary-500 border-gray-300 dark:border-slate-700 dark:bg-slate-950 accent-primary">
                             <span>পুরো চালান</span>
                         </label>
                         <label class="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="radio" wire:model.live="changeOption" value="category" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 dark:border-slate-700 dark:bg-slate-950 accent-emerald-600">
+                            <input type="radio" wire:model.live="changeOption" value="category" class="w-4 h-4 text-primary focus:ring-primary-500 border-gray-300 dark:border-slate-700 dark:bg-slate-950 accent-primary">
                             <span>শ্রেণি অনুযায়ী</span>
                         </label>
                     </div>
@@ -421,7 +388,7 @@
                 @if($changeOption === 'category')
                 <div class="space-y-2">
                     <label class="block text-gray-400">শ্রেণি নির্বাচন</label>
-                    <select wire:model.live="selectedDeliveryId" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-205 dark:border-slate-800 rounded-xl text-gray-800 dark:text-white font-semibold focus:ring-2 focus:ring-emerald-500/20 focus:outline-none cursor-pointer">
+                    <select wire:model.live="selectedDeliveryId" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-205 dark:border-slate-800 rounded-xl text-gray-800 dark:text-white font-semibold focus:ring-2 focus:ring-primary-500/20 focus:outline-none cursor-pointer">
                         @foreach($changeDeliveries as $cd)
                             <option value="{{ $cd['id'] }}">{{ $cd['category_name'] }}</option>
                         @endforeach
@@ -438,7 +405,7 @@
                 <div class="relative">
                     <label class="block mb-1.5 text-gray-400">নতুন ডেলিভারি তারিখ</label>
                     <div class="relative flex items-center">
-                        <input type="text" data-flatpickr data-wire-prop="newDeliveryDate" data-default="{{ $newDeliveryDate }}" wire:model="newDeliveryDate" readonly class="w-full py-2.5 pl-3 pr-10 bg-white dark:bg-slate-950 border border-gray-255 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-gray-800 dark:text-white cursor-pointer">
+                        <input type="text" data-flatpickr data-wire-prop="newDeliveryDate" data-default="{{ $newDeliveryDate }}" wire:model="newDeliveryDate" readonly class="w-full py-2.5 pl-3 pr-10 bg-white dark:bg-slate-950 border border-gray-255 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-gray-800 dark:text-white cursor-pointer">
                         <span class="absolute right-3 text-gray-400 pointer-events-none">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         </span>
@@ -457,7 +424,7 @@
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-150 dark:border-slate-800 mt-4">
                     <button type="button" wire:click="$set('showChangeDateModal', false)" class="px-5 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer transition-all">বাতিল</button>
-                    <button type="submit" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95">পরিবর্তন</button>
+                    <button type="submit" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95">পরিবর্তন</button>
                 </div>
             </form>
         </div>
@@ -478,7 +445,7 @@
             <div class="space-y-4">
                 <table class="w-full text-left border-collapse border border-gray-200 dark:border-slate-800">
                     <thead>
-                        <tr class="bg-emerald-600 text-white text-[10px] font-bold uppercase font-sans">
+                        <tr class="bg-primary text-white text-[10px] font-bold uppercase font-sans">
                             <th class="px-4 py-2 border-r border-white/20">শ্রেণি</th>
                             <th class="px-4 py-2 text-right">মোট পরিমাণ</th>
                         </tr>
@@ -487,7 +454,7 @@
                         @forelse($reportData as $row)
                             <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-850/30">
                                 <td class="px-4 py-2.5 border-r border-gray-100 dark:border-slate-800">{{ $row->category_name }}</td>
-                                <td class="px-4 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-450 font-bold">{{ number_format($row->total_qty) }} টি</td>
+                                <td class="px-4 py-2.5 text-right font-mono text-primary dark:text-primary-light font-bold">{{ number_format($row->total_qty) }} টি</td>
                             </tr>
                         @empty
                             <tr>
@@ -498,7 +465,7 @@
                     <tfoot>
                         <tr class="bg-blue-50/40 dark:bg-blue-950/10 border-t border-gray-200 dark:border-slate-800 font-bold text-xs text-gray-800 dark:text-white">
                             <td class="px-4 py-2.5 border-r border-gray-100 dark:border-slate-800">সর্বমোট</td>
-                            <td class="px-4 py-2.5 text-right font-mono text-emerald-700 dark:text-emerald-400">{{ number_format($totalQty) }} টি</td>
+                            <td class="px-4 py-2.5 text-right font-mono text-primary-dark dark:text-primary-400">{{ number_format($totalQty) }} টি</td>
                         </tr>
                     </tfoot>
                 </table>

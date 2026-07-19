@@ -9,12 +9,30 @@
         "Hind Siliguri", ui-sans-serif, system-ui, sans-serif,
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
-    --color-primary: #034c3c;
-    --color-primary-dark: #023e31;
-    --color-primary-light: #056651;
+    
+    /* Primary brand colors (emerald shades) */
+    --color-primary: #059669;         /* emerald-600 */
+    --color-primary-dark: #047857;    /* emerald-700 */
+    --color-primary-light: #10b981;   /* emerald-500 */
     --color-secondary: #068a6b;
     --color-accent: #009e74;
     --color-accent-hover: #008762;
+
+    /* Sidebar dark green theme colors */
+    --color-primary-sidebar: #034c3c;
+    --color-primary-sidebar-dark: #023e31;
+    --color-primary-sidebar-light: #056651;
+
+    /* Primary palette matching shades */
+    --color-primary-50: #ecfdf5;
+    --color-primary-100: #d1fae5;
+    --color-primary-150: #e6fbf2;
+    --color-primary-200: #a7f3d0;
+    --color-primary-300: #6ee7b7;
+    --color-primary-400: #34d399;
+    --color-primary-800: #065f46;
+    --color-primary-900: #064e3b;
+    --color-primary-950: #022c22;
 }
 
 @variant dark (&:where(.dark, .dark *));
