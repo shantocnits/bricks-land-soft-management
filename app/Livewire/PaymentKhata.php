@@ -188,6 +188,29 @@ class PaymentKhata extends Component
 
         // ডিফল্ট কোনো টাইপ ম্যাপ করা নেই
         $this->explicitTypesMap = [];
+
+        // Seed default payments to database if empty
+        if (\App\Models\Payment::count() === 0) {
+            foreach ($this->paymentsList as $p) {
+                \App\Models\Payment::create([
+                    'date' => $p['date'],
+                    'ledger' => $p['ledger'],
+                    'desc' => $p['desc'],
+                    'qty' => $p['qty'],
+                    'rate' => $p['rate'],
+                    'total' => $p['total'],
+                    'advance' => $p['advance'],
+                    'deduction' => $p['deduction'],
+                    'payment' => $p['payment'],
+                    'purchase_receive' => $p['purchase_receive'],
+                    'doc_url' => $p['doc_url'],
+                    'has_doc' => $p['has_doc']
+                ]);
+            }
+        }
+
+        // Load payments list from database
+        $this->paymentsList = \App\Models\Payment::all()->toArray();
     }
 
     public function updatedQuantity()
@@ -323,6 +346,8 @@ class PaymentKhata extends Component
                     $pay['ledger'] = $name;
                 }
             }
+            \App\Models\Payment::where('ledger', $oldName)->update(['ledger' => $name]);
+            $this->paymentsList = \App\Models\Payment::all()->toArray();
 
             // Update groups map
             unset($this->ledgerGroupsMap[$oldName]);
@@ -460,29 +485,27 @@ class PaymentKhata extends Component
         }
 
         if ($this->editingId) {
-            foreach ($this->paymentsList as &$item) {
-                if ($item['id'] === $this->editingId) {
-                    $item['date'] = $formattedDate;
-                    $item['ledger'] = $this->selectedLedger;
-                    $item['desc'] = $this->paymentDesc;
-                    $item['qty'] = $this->quantity;
-                    $item['rate'] = $this->rate;
-                    $item['total'] = $this->totalBill;
-                    $item['advance'] = $this->advance;
-                    $item['deduction'] = $this->deduction;
-                    $item['payment'] = $this->paymentAmount;
-                    $item['purchase_receive'] = $this->purchaseReceive;
-                    if ($this->documentFile) {
-                        $item['has_doc'] = $hasDoc;
-                        $item['doc_url'] = $docUrl;
-                    }
-                    break;
+            $paymentModel = \App\Models\Payment::find($this->editingId);
+            if ($paymentModel) {
+                $paymentModel->date = $formattedDate;
+                $paymentModel->ledger = $this->selectedLedger;
+                $paymentModel->desc = $this->paymentDesc;
+                $paymentModel->qty = $this->quantity;
+                $paymentModel->rate = $this->rate;
+                $paymentModel->total = $this->totalBill;
+                $paymentModel->advance = $this->advance;
+                $paymentModel->deduction = $this->deduction;
+                $paymentModel->payment = $this->paymentAmount;
+                $paymentModel->purchase_receive = $this->purchaseReceive;
+                if ($this->documentFile) {
+                    $paymentModel->has_doc = $hasDoc;
+                    $paymentModel->doc_url = $docUrl;
                 }
+                $paymentModel->save();
             }
             $this->dispatch('show-toast', message: 'পেমেন্ট সফলভাবে আপডেট করা হয়েছে।', type: 'success');
         } else {
-            $this->paymentsList[] = [
-                'id' => count($this->paymentsList) + 1,
+            \App\Models\Payment::create([
                 'date' => $formattedDate,
                 'ledger' => $this->selectedLedger,
                 'desc' => $this->paymentDesc,
@@ -495,9 +518,12 @@ class PaymentKhata extends Component
                 'purchase_receive' => $this->purchaseReceive,
                 'doc_url' => $docUrl,
                 'has_doc' => $hasDoc
-            ];
+            ]);
             $this->dispatch('show-toast', message: 'পেমেন্ট সফলভাবে সংরক্ষণ করা হয়েছে।', type: 'success');
         }
+
+        // Reload paymentsList from database
+        $this->paymentsList = \App\Models\Payment::all()->toArray();
 
         $this->resetForm();
         $this->showPaymentModal = false;
@@ -515,9 +541,8 @@ class PaymentKhata extends Component
 
     public function deletePayment(int $id)
     {
-        $this->paymentsList = array_values(array_filter($this->paymentsList, function ($item) use ($id) {
-            return $item['id'] !== $id;
-        }));
+        \App\Models\Payment::destroy($id);
+        $this->paymentsList = \App\Models\Payment::all()->toArray();
         $this->dispatch('show-toast', message: 'পেমেন্ট ডিলিট করা হয়েছে।', type: 'success');
     }
 

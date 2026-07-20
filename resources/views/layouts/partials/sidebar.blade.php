@@ -163,14 +163,14 @@
 
         <!-- 5. বাকি খাতা (Dropdown) -->
         @if($hasAccess('due_ledger'))
-        <div class="mx-2" x-data="{ open: false }">
+        <div class="mx-2" x-data="{ open: {{ request()->routeIs('due-ledger.*') ? 'true' : 'false' }} }">
             <button @click="open = !open" 
                     @mouseenter="showTooltip('বাকি খাতা', $el)"
                     @mouseleave="hideTooltip()"
-                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ request()->routeIs('due-ledger.*') ? 'bg-primary-800/50 text-white' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
                           :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">বাকি খাতা</span>
@@ -180,8 +180,12 @@
                 </svg>
             </button>
             <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" class="mt-1 ml-6 space-y-1" :class="{ 'hidden': !sidebarOpen }">
-                <a href="#" class="block px-4 py-2 text-xs text-primary-200 hover:text-white hover:bg-primary-800/40 rounded transition-all font-sans">বাকি লিস্ট</a>
-                <a href="#" class="block px-4 py-2 text-xs text-primary-200 hover:text-white hover:bg-primary-800/40 rounded transition-all font-sans">বাকি কালেকশন</a>
+                <a href="{{ route('due-ledger.today') }}" wire:navigate
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('due-ledger.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজকের জমা</a>
+                <a href="{{ route('due-ledger.due-today') }}" wire:navigate
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('due-ledger.due-today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজ জমা দেবে</a>
+                <a href="{{ route('due-ledger.all-due') }}" wire:navigate
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('due-ledger.all-due') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">সব বাকি লিস্ট</a>
             </div>
         </div>
         @endif

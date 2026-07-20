@@ -201,8 +201,12 @@
                 @if($currentUser && $currentUser->profile_photo)
                     <img src="{{ asset('storage/' . $currentUser->profile_photo) }}" class="h-8 w-8 rounded-full object-cover shadow-sm ring-2 ring-primary-100 dark:ring-primary-950">
                 @else
-                    <div class="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-primary-100 dark:ring-primary-950">
-                        {{ strtoupper(substr($currentUser->name ?? 'D', 0, 1)) }}
+                    <div class="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center relative shadow-inner ring-2 ring-primary-100 dark:ring-primary-950 bg-gray-50 dark:bg-slate-950">
+                        <div class="absolute inset-y-0 left-0 right-1/2 bg-[#F59E0B]"></div>
+                        <div class="absolute inset-y-0 right-0 left-1/2 bg-[#009E74]"></div>
+                        <svg class="w-5 h-5 text-white relative z-10 filter drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M21.25,12.75 C20,12 18,12 16.5,12.5 C15.5,12.83 14,14 13.5,15.5 C13,17 13.5,19 14.5,20 C14,20 12,18 11.5,16.5 C11,15 11.25,13.25 12,11.5 C12.25,11 11,11 10.5,11.5 C9.5,12.5 8,14.5 7,16.5 C6,18.5 5.5,20 5.5,20 C5.5,20 5.8,18 6,16 C6.2,14 6,11.5 5.5,10 C5.2,9.1 4.5,8.2 4.1,8 C3.8,7.9 3.5,8.1 3.5,8.5 C3.5,9.5 4,11.5 4,13.5 C4,15.5 3.5,17 3.5,17 C3.5,17 3.25,15.5 3,14 C2.75,12.5 2.25,11.5 2.25,11 C2.25,10.5 2.5,10 3,9.5 C4.5,8 7.5,6.5 10.5,6.5 C11.5,6.5 12.5,6.75 13.5,7 C14,7.1 14.5,6.9 14.5,6.5 C14.5,6.1 14,5.9 13.5,5.8 C11.5,5.4 9,6.2 7,7.2 C8.5,5.8 10.5,5 12.5,5 C15.5,5 18,6.5 19.5,8.5 C20,9.2 20.5,10 20.8,10.8 C21,11.3 21.25,11.8 21.25,12.25 C21.25,12.5 21,12.6 21.25,12.75 Z"/>
+                        </svg>
                     </div>
                 @endif
             </button>
@@ -257,12 +261,12 @@
                         <span class="font-sans">আমার প্রোফাইল</span>
                     </a>
 
-                    <a href="#" class="flex items-center px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-950/10 hover:text-[#034C3C] dark:hover:text-primary-400 font-semibold transition-all">
+                    <a href="{{ route('faq') }}" wire:navigate class="flex items-center px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-950/10 hover:text-[#034C3C] dark:hover:text-primary-400 font-semibold transition-all">
                         <span class="w-5 text-center font-extrabold text-sm mr-2 select-none">?</span>
                         <span class="font-sans">সাধারণ জিজ্ঞাসা</span>
                     </a>
                     
-                    <a href="#" class="flex items-center px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-950/10 hover:text-[#034C3C] dark:hover:text-primary-400 font-semibold transition-all">
+                    <a href="{{ route('about-us') }}" wire:navigate class="flex items-center px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-950/10 hover:text-[#034C3C] dark:hover:text-primary-400 font-semibold transition-all">
                         <span class="w-5 text-center mr-2 flex items-center justify-center select-none">
                             <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
