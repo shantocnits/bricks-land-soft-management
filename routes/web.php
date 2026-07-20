@@ -40,6 +40,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/due-ledger/all-due',     \App\Livewire\DueLedger\AllDueList::class)->name('due-ledger.all-due');
 
     // General & Support Routes
+    Route::get('/cash-khata',             \App\Livewire\CashKhata::class)->name('cash-khata');
+    Route::get('/load-khata',             \App\Livewire\LoadKhata::class)->name('load-khata');
     Route::get('/about-us',               \App\Livewire\AboutUs::class)->name('about-us');
     Route::get('/faq',                    \App\Livewire\Faq::class)->name('faq');
     

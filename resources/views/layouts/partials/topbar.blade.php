@@ -22,6 +22,20 @@
         $title = 'ফি পেমেন্ট';
     } elseif (request()->routeIs('payment-khata')) {
         $title = 'পেমেন্ট খাতা';
+    } elseif (request()->routeIs('cash-khata')) {
+        $title = 'ক্যাশ খাতা';
+    } elseif (request()->routeIs('load-khata')) {
+        $title = 'লোড খাতা';
+    } elseif (request()->routeIs('about-us')) {
+        $title = 'আমাদের সম্পর্কে';
+    } elseif (request()->routeIs('faq')) {
+        $title = 'সাধারণ জিজ্ঞাসা';
+    } elseif (request()->routeIs('due-ledger.today')) {
+        $title = 'আজকের জমা';
+    } elseif (request()->routeIs('due-ledger.due-today')) {
+        $title = 'আজ জমা দেবে';
+    } elseif (request()->routeIs('due-ledger.all-due')) {
+        $title = 'সব বাকি লিস্ট';
     }
     $currentUser = auth()->user();
 @endphp

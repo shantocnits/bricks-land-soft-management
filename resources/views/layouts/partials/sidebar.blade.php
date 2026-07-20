@@ -193,10 +193,10 @@
         <!-- 6. ক্যাশ খাতা -->
         @if($hasAccess('cash_ledger'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('cash-khata') }}" wire:navigate
                @mouseenter="showTooltip('ক্যাশ খাতা', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('cash-khata') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
@@ -209,10 +209,10 @@
         <!-- 7. লোড খাতা -->
         @if($hasAccess('load_ledger'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('load-khata') }}" wire:navigate
                @mouseenter="showTooltip('লোড খাতা', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('load-khata') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                 </svg>
