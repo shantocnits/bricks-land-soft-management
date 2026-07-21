@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Category;
 use App\Models\LoadEntry;
 use App\Models\LoadRound;
 use Livewire\Component;
@@ -24,7 +25,8 @@ class LoadKhata extends Component
     public ?int  $editingId   = null;
     public string $date        = '';
     public string $round       = '';
-    public string $description = 'ইট থেকে লোড হয়েছে';
+    public string $description = 'মাঠ থেকে লোড হয়েছে';
+    public string $category    = '';
     public string $quantity    = '';
 
     // Round management
@@ -32,7 +34,12 @@ class LoadKhata extends Component
     public bool $showAddRound  = false;
 
     // Selector options
-    public array $descriptions = ['ইট থেকে লোড হয়েছে', 'পাকা ইট লোড হয়েছে (১ নং)', 'মাঠ থেকে লোড হয়েছে'];
+    public array $descriptions = [
+        'মাঠ থেকে লোড হয়েছে',
+        'স্টক থেকে লোড হয়েছে',
+        'পাকা ইট লোড হয়েছে',
+        'স্টক লোড হয়েছে'
+    ];
 
     protected $listeners = ['refreshComponent' => '$refresh'];
 
@@ -41,6 +48,17 @@ class LoadKhata extends Component
         // Set default round to first in DB
         $firstRound = LoadRound::orderBy('sort_order')->first();
         $this->round = $firstRound ? $firstRound->name : '';
+
+        // Ensure target brick categories exist (same as unload page)
+        $targetNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং গরিয়া', '৩ নং ছালট', 'এলোট', '3 no it'];
+        foreach ($targetNames as $name) {
+            Category::firstOrCreate(
+                ['name' => $name],
+                ['type' => 'ইট', 'rate' => 0.00]
+            );
+        }
+
+        $this->category = '১ নং';
 
         // Seed default entries if table is empty
         if (LoadEntry::count() === 0) {
@@ -74,7 +92,8 @@ class LoadKhata extends Component
         $this->editingId    = null;
         $this->date         = '';
         $this->round        = '';
-        $this->description  = 'ইট থেকে লোড হয়েছে';
+        $this->description  = 'মাঠ থেকে লোড হয়েছে';
+        $this->category     = '';
         $this->quantity     = '';
         $this->newRoundName = '';
         $this->showAddRound = false;
@@ -84,17 +103,25 @@ class LoadKhata extends Component
     // ── CRUD ────────────────────────────────────────────────────────────────
     public function save()
     {
-        $this->validate([
+        $rules = [
             'date'        => 'required|date',
             'round'       => 'required|string',
             'description' => 'required|string',
+            'category'    => 'nullable|string',
             'quantity'    => 'required|integer|min:1',
-        ]);
+        ];
+
+        $isPakaIt = ($this->description === 'পাকা ইট লোড হয়েছে' || $this->description === 'পাকা ইট লোড হয়েছে');
+
+        $this->validate($rules);
+
+        $categoryToSave = $isPakaIt ? $this->category : '';
 
         $data = [
             'date'        => $this->date,
             'round'       => $this->round,
             'description' => $this->description,
+            'category'    => $categoryToSave,
             'quantity'    => intval($this->quantity),
         ];
 
@@ -118,6 +145,16 @@ class LoadKhata extends Component
         $this->round       = $entry->round;
         $this->description = $entry->description;
         $this->quantity    = strval($entry->quantity);
+        $this->category    = $entry->category ?? '';
+
+        // Handle legacy description formats
+        if ($this->description === 'পাকা ইট লোড হয়েছে (১ নং)' || $this->description === 'পাকা ইট লোড হয়েছে' || $this->description === 'পাকা ইট লোড হয়েছে') {
+            $this->description = 'পাকা ইট লোড হয়েছে';
+            if (!$this->category && str_contains($entry->description, '(১ নং)')) {
+                $this->category = '১ নং';
+            }
+        }
+
         $this->showModal   = true;
     }
 
@@ -185,21 +222,30 @@ class LoadKhata extends Component
         $totalQuantity = LoadEntry::sum('quantity');
 
         // Report: per-round breakdown (কাঁচা vs পাকা)
-        $reportRows = LoadEntry::selectRaw('`round`, description, SUM(quantity) as total')
-            ->groupBy('round', 'description')
+        $reportRows = LoadEntry::selectRaw('`round`, description, category, SUM(quantity) as total')
+            ->groupBy('round', 'description', 'category')
             ->get()
             ->groupBy('round')
             ->map(function ($rows, $round) {
-                $raw    = $rows->whereNotIn('description', ['পাকা ইট লোড হয়েছে (১ নং)'])->sum('total');
-                $cooked = $rows->where('description', 'পাকা ইট লোড হয়েছে (১ নং)')->sum('total');
+                // If description contains "পাকা", count as cooked. Otherwise raw.
+                $raw    = $rows->filter(fn($r) => !str_contains($r->description, 'পাকা'))->sum('total');
+                $cooked = $rows->filter(fn($r) => str_contains($r->description, 'পাকা'))->sum('total');
                 return ['round' => $round, 'raw' => $raw, 'cooked' => $cooked, 'total' => $raw + $cooked];
             })->values();
 
+        // Ordered brick category names — CASE WHEN works in both MySQL and SQLite
+        $categoryNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং গরিয়া', '৩ নং ছালট', 'এলোট', '3 no it'];
+        $whenClauses = implode(' ', array_map(fn($i) => "WHEN name = ? THEN $i", array_keys($categoryNames)));
+        $categories = Category::whereIn('name', $categoryNames)
+            ->orderByRaw("CASE {$whenClauses} ELSE 999 END", array_values($categoryNames))
+            ->get();
+
         return view('livewire.load-khata', [
-            'entries'      => $entries,
-            'rounds'       => $rounds,
+            'entries'       => $entries,
+            'rounds'        => $rounds,
             'totalQuantity' => $totalQuantity,
-            'reportRows'   => $reportRows,
+            'reportRows'    => $reportRows,
+            'categories'    => $categories,
         ])->layout('layouts.app');
     }
 }

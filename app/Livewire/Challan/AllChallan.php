@@ -130,7 +130,7 @@ class AllChallan extends Component
             );
             $defaults = [
                 ['name' => '১ নং',       'type' => 'ইট',       'rate' => 8.10],
-                ['name' => 'পিকটি',       'type' => 'ইট',       'rate' => 9.00],
+                ['name' => 'পিকেট',       'type' => 'ইট',       'rate' => 9.00],
                 ['name' => '২ নং (ক)',    'type' => 'ইট',       'rate' => 8.50],
                 ['name' => '২ নং (খ)',    'type' => 'ইট',       'rate' => 7.50],
                 ['name' => '৩ নং ছালট',  'type' => 'ইট',       'rate' => 4.50],

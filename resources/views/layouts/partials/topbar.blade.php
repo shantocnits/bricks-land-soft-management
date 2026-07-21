@@ -26,6 +26,20 @@
         $title = 'ক্যাশ খাতা';
     } elseif (request()->routeIs('load-khata')) {
         $title = 'লোড খাতা';
+    } elseif (request()->routeIs('unload-khata')) {
+        $title = 'আনলোড';
+    } elseif (request()->routeIs('stock-khata')) {
+        $title = 'স্টক খাতা';
+    } elseif (request()->routeIs('khotian')) {
+        $title = 'খতিয়ান';
+    } elseif (request()->routeIs('customer')) {
+        $title = 'কাস্টমার';
+    } elseif (request()->routeIs('delivery.today')) {
+        $title = 'আজকের ডেলিভারি';
+    } elseif (request()->routeIs('delivery.pending')) {
+        $title = 'বাকি ডেলিভারি';
+    } elseif (request()->routeIs('delivery.all')) {
+        $title = 'সকল ডেলিভারি';
     } elseif (request()->routeIs('about-us')) {
         $title = 'আমাদের সম্পর্কে';
     } elseif (request()->routeIs('faq')) {

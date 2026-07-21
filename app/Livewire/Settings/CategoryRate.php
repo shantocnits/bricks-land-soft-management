@@ -57,7 +57,7 @@ class CategoryRate extends Component
         // Preseed defaults if empty
         if (Category::count() === 0) {
             Category::create(['name' => '১ নং', 'type' => 'ইট', 'rate' => 8.10]);
-            Category::create(['name' => 'পিকটি', 'type' => 'ইট', 'rate' => 9.00]);
+            Category::create(['name' => 'পিকেট', 'type' => 'ইট', 'rate' => 9.00]);
             Category::create(['name' => '২ নং (ক)', 'type' => 'ইট', 'rate' => 8.50]);
             Category::create(['name' => '২ নং (খ)', 'type' => 'ইট', 'rate' => 7.50]);
             Category::create(['name' => '৩ নং ছালট', 'type' => 'ইট', 'rate' => 4.50]);

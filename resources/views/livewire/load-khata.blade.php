@@ -97,7 +97,7 @@ if (!function_exists('toBanglaNum')) {
         </div>
 
         {{-- ─── Table Card ─────────────────────────────────────────────────── --}}
-        <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse text-left border border-gray-200 dark:border-slate-800">
                     <thead>
@@ -123,8 +123,8 @@ if (!function_exists('toBanglaNum')) {
                                     {{ $entry->round }}
                                 </td>
                                 <td class="py-3.5 px-4 font-semibold border-r border-gray-150 dark:border-slate-800
-                                    {{ $entry->description === 'পাকা ইট লোড হয়েছে (১ নং)' ? 'text-amber-600 dark:text-amber-400' : 'text-gray-800 dark:text-white' }}">
-                                    {{ $entry->description }}
+                                    {{ str_contains($entry->description, 'পাকা') ? 'text-amber-600 dark:text-amber-400' : 'text-gray-800 dark:text-white' }}">
+                                    {{ $entry->description }}@if($entry->category) ({{ $entry->category }})@endif
                                 </td>
                                 <td class="py-3.5 px-4 font-black text-center text-gray-900 dark:text-white border-r border-gray-150 dark:border-slate-800 font-mono">
                                     {{ toBanglaNum(number_format($entry->quantity)) }}
@@ -219,12 +219,13 @@ if (!function_exists('toBanglaNum')) {
                     {{-- Datepicker --}}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">তারিখ <span class="text-red-500">*</span></label>
-                        <div class="relative">
-                            <input type="text" data-flatpickr data-wire-prop="date" data-default="{{ $date }}"
-                                   wire:model="date" placeholder="তারিখ" readonly
-                                   class="w-full pl-3 pr-8 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white font-sans font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                            <span class="absolute right-2.5 top-3 text-emerald-500 pointer-events-none">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <div class="relative" wire:ignore>
+                            <input type="text" data-flatpickr data-wire-prop="date"
+                                   wire:model.lazy="date"
+                                   placeholder="তারিখ নির্বাচন করুন"
+                                   class="w-full pl-3 pr-9 py-2.5 text-xs font-bold rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-sans cursor-pointer transition-all">
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             </span>
                         </div>
                         @error('date')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
@@ -233,129 +234,132 @@ if (!function_exists('toBanglaNum')) {
                     {{-- Round Dropdown --}}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">রাউন্ড <span class="text-red-500">*</span></label>
-                        <div x-data="{
-                                open: false,
-                                dropTop: 0, dropLeft: 0, dropWidth: 0,
-                                toggle(btn) {
-                                    const r = btn.getBoundingClientRect();
-                                    this.dropTop   = r.bottom + window.scrollY + 4;
-                                    this.dropLeft  = r.left + window.scrollX;
-                                    this.dropWidth = r.width;
-                                    this.open = !this.open;
-                                }
-                            }" class="relative">
-                            <button @click="toggle($el)" type="button"
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open" type="button"
                                     class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none">
                                 <span class="font-sans truncate" x-text="$wire.round ? $wire.round : 'সিলেক্ট করুন'"></span>
                                 <svg class="w-4 h-4 flex-shrink-0 transition-transform text-gray-400" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                             </button>
 
-                            <template x-teleport="body">
-                                <div x-show="open" @click.outside="open=false" x-cloak
-                                     :style="`position:fixed; top:${dropTop}px; left:${dropLeft}px; width:${dropWidth}px; z-index:99999;`"
-                                     class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden">
-                                    
-                                    {{-- Add new round --}}
-                                    <div class="border-b border-gray-150 dark:border-slate-800 p-2 bg-gray-50/50 dark:bg-slate-950/20">
-                                        @if($showAddRound)
-                                            <div class="flex gap-1.5">
-                                                <div class="relative flex items-center flex-1">
-                                                    <input type="text" wire:model="newRoundName" placeholder="রাউন্ড নম্বর"
-                                                           class="w-full pl-3 pr-20 py-2 text-xs rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white font-sans font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                                    <span class="absolute right-2 text-[10px] text-gray-400 dark:text-gray-500 font-sans font-bold select-none pointer-events-none">রাউন্ড</span>
-                                                </div>
-                                                <button type="button" wire:click="addRound()"
-                                                        class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg transition-all cursor-pointer">
-                                                    যোগ
-                                                </button>
-                                                <button type="button" wire:click="$set('showAddRound',false)"
-                                                        class="px-1.5 py-2 text-gray-400 hover:text-gray-600 cursor-pointer">
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                </button>
+                            <div x-show="open" @click.outside="open=false" x-cloak
+                                 class="absolute left-0 right-0 z-[9999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden font-sans">
+                                
+                                {{-- Add new round --}}
+                                <div class="border-b border-gray-150 dark:border-slate-800 p-2 bg-gray-50/50 dark:bg-slate-950/20">
+                                    @if($showAddRound)
+                                        <div class="flex gap-1.5">
+                                            <div class="relative flex items-center flex-1">
+                                                <input type="text" wire:model="newRoundName" placeholder="রাউন্ড নম্বর"
+                                                       class="w-full pl-3 pr-20 py-2 text-xs rounded-lg border border-gray-200 dark:border-slate-707 bg-white dark:bg-slate-800 text-gray-808 dark:text-white font-sans font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                                <span class="absolute right-2 text-[10px] text-gray-400 dark:text-gray-550 font-sans font-bold select-none pointer-events-none">রাউন্ড</span>
                                             </div>
-                                            @error('newRoundName')<p class="text-red-500 text-[10px] mt-1 font-sans px-1">{{ $message }}</p>@enderror
-                                        @else
-                                            <button type="button" wire:click="$set('showAddRound',true)"
-                                                    class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer font-sans">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                                                নতুন রাউন্ড যোগ করুন
+                                            <button type="button" wire:click="addRound()"
+                                                    class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg transition-all cursor-pointer">
+                                                যোগ
                                             </button>
-                                        @endif
-                                    </div>
-
-                                    {{-- Rounds List --}}
-                                    <div class="py-1 max-h-52 overflow-y-auto">
-                                        @foreach($rounds as $rnd)
-                                            <div class="flex items-center justify-between group px-1">
-                                                <button type="button"
-                                                        wire:click="$set('round','{{ $rnd->name }}')"
-                                                        @click="open=false"
-                                                        class="flex-1 text-left px-3 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer">
-                                                    {{ $rnd->name }}
-                                                </button>
-                                                <button type="button"
-                                                        wire:click="deleteRound({{ $rnd->id }})"
-                                                        wire:confirm="'{{ $rnd->name }}' রাউন্ড মুছে ফেলবেন?"
-                                                        class="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 opacity-0 group-hover:opacity-100 transition-all cursor-pointer focus:outline-none flex-shrink-0 mr-1.5">
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                </button>
-                                            </div>
-                                        @endforeach
-                                    </div>
+                                            <button type="button" wire:click="$set('showAddRound',false)"
+                                                    class="px-1.5 py-2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                        @error('newRoundName')<p class="text-red-500 text-[10px] mt-1 font-sans px-1">{{ $message }}</p>@enderror
+                                    @else
+                                        <button type="button" wire:click="$set('showAddRound',true)"
+                                                class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer font-sans">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                                            নতুন রাউন্ড যোগ করুন
+                                        </button>
+                                    @endif
                                 </div>
-                            </template>
+
+                                {{-- Rounds List --}}
+                                <div class="py-1 max-h-52 overflow-y-auto">
+                                    @foreach($rounds as $rnd)
+                                        <div class="flex items-center justify-between group px-1">
+                                            <button type="button"
+                                                    wire:click="$set('round','{{ $rnd->name }}')"
+                                                    @click="open=false"
+                                                    class="flex-1 text-left px-3 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer font-sans">
+                                                {{ $rnd->name }}
+                                            </button>
+                                            <button type="button"
+                                                    wire:click="deleteRound({{ $rnd->id }})"
+                                                    wire:confirm="'{{ $rnd->name }}' রাউন্ড মুছে ফেলবেন?"
+                                                    class="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 opacity-0 group-hover:opacity-100 transition-all cursor-pointer focus:outline-none flex-shrink-0 mr-1.5">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                         @error('round')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {{-- Load Type Dropdown (root-level, full-width) --}}
+                <div>
+                    <label class="block text-xs font-bold text-gray-505 dark:text-slate-400 mb-1.5 font-sans">লোডের ধরণ <span class="text-red-500">*</span></label>
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" type="button"
+                                class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-808 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-707 cursor-pointer focus:outline-none"
+                                :class="{ 'border-emerald-505 ring-2 ring-emerald-500/20': open }">
+                            <span class="font-sans truncate" x-text="$wire.description ? $wire.description : 'সিলেক্ট করুন'"></span>
+                            <svg class="w-4 h-4 flex-shrink-0 transition-transform text-gray-400" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
 
-                    {{-- Load Type Dropdown (root-level via teleport) --}}
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">লোডের ধরণ <span class="text-red-500">*</span></label>
-                        <div x-data="{
-                                open: false,
-                                dropTop: 0, dropLeft: 0, dropWidth: 0,
-                                toggle(btn) {
-                                    const r = btn.getBoundingClientRect();
-                                    this.dropTop   = r.bottom + window.scrollY + 4;
-                                    this.dropLeft  = r.left + window.scrollX;
-                                    this.dropWidth = r.width;
-                                    this.open = !this.open;
-                                }
-                            }" class="relative">
-                            <button @click="toggle($el)" type="button"
-                                    class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none">
-                                <span class="font-sans truncate" x-text="$wire.description ? $wire.description : 'সিলেক্ট করুন'"></span>
+                        <div x-show="open" @click.outside="open=false" x-cloak
+                             class="absolute left-0 right-0 z-[9999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-808 rounded-xl shadow-2xl overflow-hidden font-sans">
+                            <div class="py-1">
+                                @foreach($descriptions as $desc)
+                                    <button type="button"
+                                            wire:click="$set('description','{{ $desc }}')"
+                                            @click="open=false"
+                                            class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-202 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer font-sans">
+                                        {{ $desc }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @error('description')<p class="text-red-505 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{-- Category (শ্রেণি) Dropdown --}}
+                    <div x-data="{ open: false }" class="relative"
+                        x-show="$wire.description === 'পাকা ইট লোড হয়েছে'" x-transition x-cloak>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">শ্রেণি <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <button @click="open = !open" type="button"
+                                    class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-808 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                    :class="{ 'border-emerald-500 ring-2 ring-emerald-500/20': open }">
+                                <span class="font-sans truncate text-gray-800 dark:text-white" x-text="$wire.category ? $wire.category : 'শ্রেণি'"></span>
                                 <svg class="w-4 h-4 flex-shrink-0 transition-transform text-gray-400" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                             </button>
 
-                            <template x-teleport="body">
-                                <div x-show="open" @click.outside="open=false" x-cloak
-                                     :style="`position:fixed; top:${dropTop}px; left:${dropLeft}px; width:${dropWidth}px; z-index:99999;`"
-                                     class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden">
-                                    <div class="py-1">
-                                        @foreach($descriptions as $desc)
-                                            <button type="button"
-                                                    wire:click="$set('description','{{ $desc }}')"
-                                                    @click="open=false"
-                                                    class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer">
-                                                {{ $desc }}
-                                            </button>
-                                        @endforeach
-                                    </div>
+                            <div x-show="open" @click.outside="open=false" x-cloak
+                                 class="absolute left-0 right-0 z-[9999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-808 rounded-xl shadow-2xl overflow-hidden font-sans">
+                                <div class="py-1 max-h-52 overflow-y-auto font-sans">
+                                    @foreach($categories as $cat)
+                                        <button type="button"
+                                                wire:click="$set('category','{{ $cat->name }}')"
+                                                @click="open=false"
+                                                class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer font-sans">
+                                            {{ $cat->name }}
+                                        </button>
+                                    @endforeach
                                 </div>
-                            </template>
+                            </div>
                         </div>
-                        @error('description')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
+                        @error('category')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
                     </div>
 
                     {{-- Quantity --}}
-                    <div>
+                    <div :class="$wire.description === 'পাকা ইট লোড হয়েছে' ? '' : 'sm:col-span-2'">
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পরিমাণ <span class="text-red-500">*</span></label>
                         <input type="number" wire:model="quantity" placeholder="লোডের পরিমাণ"
-                               class="w-full px-3 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                               class="w-full px-3 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-707 bg-gray-50 dark:bg-slate-800 text-gray-808 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
                         @error('quantity')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
                     </div>
                 </div>

@@ -21,7 +21,7 @@ class UserPermission extends Component
         'cash_ledger' => 'ক্যাশ খাতা',
         'load_ledger' => 'লোড খাতা',
         'unload' => 'আনলোড',
-        'brick_ledger' => 'ইট খাতা',
+        'brick_ledger' => 'স্টক খাতা',
         'ledger' => 'খতিয়ান',
         'customer' => 'কাস্টমার',
         'sales_report' => 'বিক্রি রিপোর্ট',

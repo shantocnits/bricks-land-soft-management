@@ -8,9 +8,23 @@
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">কাস্টমারের বিস্তারিত বিবরণ এবং চালানের ইতিহাস দেখুন</p>
         </div>
         <div class="flex items-center gap-2.5">
-            <a href="{{ route('challan.all') }}" class="px-4 py-2 bg-gray-150 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl cursor-pointer transition-all">
-                পিছনে যান
-            </a>
+            @if(request('from') === 'customer')
+                <a href="{{ route('customer') }}" wire:navigate
+                   class="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl cursor-pointer transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    কাস্টমার তালিকা
+                </a>
+            @else
+                <a href="{{ route('challan.all') }}" wire:navigate
+                   class="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl cursor-pointer transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    পিছনে যান
+                </a>
+            @endif
         </div>
     </div>
 

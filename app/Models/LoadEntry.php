@@ -10,6 +10,7 @@ class LoadEntry extends Model
         'date',
         'round',
         'description',
+        'category',
         'quantity'
     ];
 

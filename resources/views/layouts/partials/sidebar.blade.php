@@ -73,11 +73,14 @@
 
         <!-- 2. চালান (Dropdown) -->
         @if($hasAccess('challan'))
-        <div class="mx-2" x-data="{ open: {{ request()->routeIs('challan.*') ? 'true' : 'false' }} }">
+        @php
+            $challanActive = request()->routeIs('challan.*') && !(request()->routeIs('challan.customer-profile') && request('from') === 'customer');
+        @endphp
+        <div class="mx-2" x-data="{ open: {{ $challanActive ? 'true' : 'false' }} }">
             <button @click="open = !open" 
                     @mouseenter="showTooltip('চালান', $el)"
                     @mouseleave="hideTooltip()"
-                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ request()->routeIs('challan.*') ? 'bg-primary-800/50 text-white' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
+                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ $challanActive ? 'bg-primary-800/50 text-white' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -225,10 +228,10 @@
         <!-- 8. আনলোড -->
         @if($hasAccess('unload'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('unload-khata') }}" wire:navigate
                @mouseenter="showTooltip('আনলোড', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('unload-khata') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
@@ -238,18 +241,18 @@
         </div>
         @endif
 
-        <!-- 9. ইট খাতা -->
+        <!-- 9. স্টক খাতা -->
         @if($hasAccess('brick_ledger'))
         <div class="mx-2">
-            <a href="#" 
-               @mouseenter="showTooltip('ইট খাতা', $el)"
+            <a href="{{ route('stock-khata') }}" wire:navigate
+               @mouseenter="showTooltip('স্টক খাতা', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('stock-khata') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                 </svg>
                 <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
-                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">ইট খাতা</span>
+                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">স্টক খাতা</span>
             </a>
         </div>
         @endif
@@ -257,10 +260,10 @@
         <!-- 10. খতিয়ান -->
         @if($hasAccess('ledger'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('khotian') }}" wire:navigate
                @mouseenter="showTooltip('খতিয়ান', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('khotian') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                 </svg>
@@ -273,10 +276,10 @@
         <!-- 11. কাস্টমার -->
         @if($hasAccess('customer'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('customer') }}" wire:navigate
                @mouseenter="showTooltip('কাস্টমার', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ (request()->routeIs('customer') || (request()->routeIs('challan.customer-profile') && request('from') === 'customer')) ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>

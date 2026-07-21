@@ -8,6 +8,8 @@ use App\Livewire\Settings;
 use App\Livewire\Tutorial;
 use App\Livewire\FeePayment;
 use App\Livewire\PaymentKhata;
+use App\Livewire\Khotian;
+use App\Livewire\Customer;
 
 // Redirect / to /login
 Route::redirect('/', '/login');
@@ -22,6 +24,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tutorial', Tutorial::class)->name('tutorial');
     Route::get('/fee-payment', FeePayment::class)->name('fee-payment');
     Route::get('/payment-khata', PaymentKhata::class)->name('payment-khata');
+    Route::get('/khotian', Khotian::class)->name('khotian');
+    Route::get('/customer', Customer::class)->name('customer');
 
     // Challan Routes
     Route::get('/challan/today',   \App\Livewire\Challan\TodayChallan::class)->name('challan.today');
@@ -42,6 +46,8 @@ Route::middleware(['auth'])->group(function () {
     // General & Support Routes
     Route::get('/cash-khata',             \App\Livewire\CashKhata::class)->name('cash-khata');
     Route::get('/load-khata',             \App\Livewire\LoadKhata::class)->name('load-khata');
+    Route::get('/unload-khata',           \App\Livewire\UnloadKhata::class)->name('unload-khata');
+    Route::get('/stock-khata',            \App\Livewire\StockKhata::class)->name('stock-khata');
     Route::get('/about-us',               \App\Livewire\AboutUs::class)->name('about-us');
     Route::get('/faq',                    \App\Livewire\Faq::class)->name('faq');
     
