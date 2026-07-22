@@ -292,10 +292,10 @@
         <!-- 12. বিক্রি রিপোর্ট -->
         @if($hasAccess('sales_report'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('sales-report') }}" wire:navigate
                @mouseenter="showTooltip('বিক্রি রিপোর্ট', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('sales-report') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
@@ -305,18 +305,18 @@
         </div>
         @endif
 
-        <!-- 13. ইনভেন্টরি -->
-        @if($hasAccess('inventory'))
+        <!-- 13. ইনভেস্টমেন্ট -->
+        @if($hasAccess('inventory') || $hasAccess('investment'))
         <div class="mx-2">
-            <a href="#" 
-               @mouseenter="showTooltip('ইনভেন্টরি', $el)"
+            <a href="{{ route('investment') }}" wire:navigate 
+               @mouseenter="showTooltip('ইনভেস্টমেন্ট', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('investment') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                 </svg>
                 <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
-                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">ইনভেন্টরি</span>
+                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">ইনভেস্টমেন্ট</span>
             </a>
         </div>
         @endif
@@ -324,10 +324,10 @@
         <!-- 14. ডকুমেন্টস -->
         @if($hasAccess('documents'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('documents') }}" wire:navigate 
                @mouseenter="showTooltip('ডকুমেন্টস', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('documents') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                 </svg>
@@ -337,18 +337,18 @@
         </div>
         @endif
 
-        <!-- 15. কাচামাল স্টক -->
-        @if($hasAccess('raw_material'))
+        <!-- 15. মালামাল স্টক -->
+        @if($hasAccess('raw_material') || $hasAccess('malamal_stock'))
         <div class="mx-2">
-            <a href="#" 
-               @mouseenter="showTooltip('কাচামাল স্টক', $el)"
+            <a href="{{ route('malamal-stock') }}" wire:navigate 
+               @mouseenter="showTooltip('মালামাল স্টক', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('malamal-stock') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                 </svg>
                 <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
-                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">কাচামাল স্টক</span>
+                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">মালামাল স্টক</span>
             </a>
         </div>
         @endif

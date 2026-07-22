@@ -34,6 +34,14 @@
         $title = 'খতিয়ান';
     } elseif (request()->routeIs('customer')) {
         $title = 'কাস্টমার';
+    } elseif (request()->routeIs('sales-report')) {
+        $title = 'বিক্রি রিপোর্ট';
+    } elseif (request()->routeIs('investment')) {
+        $title = 'ইনভেস্টমেন্ট';
+    } elseif (request()->routeIs('documents')) {
+        $title = 'ডকুমেন্টস';
+    } elseif (request()->routeIs('malamal-stock')) {
+        $title = 'মালামাল স্টক';
     } elseif (request()->routeIs('delivery.today')) {
         $title = 'আজকের ডেলিভারি';
     } elseif (request()->routeIs('delivery.pending')) {

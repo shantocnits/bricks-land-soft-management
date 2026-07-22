@@ -1,0 +1,37 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('document_folders', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->foreignId('parent_id')->nullable()->constrained('document_folders')->onDelete('cascade');
+            $table->string('color')->nullable()->default('emerald');
+            $table->timestamps();
+        });
+
+        Schema::create('document_files', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('folder_id')->nullable()->constrained('document_folders')->onDelete('cascade');
+            $table->string('title');
+            $table->string('file_path');
+            $table->string('file_name');
+            $table->string('file_type')->nullable(); // pdf, image, doc, zip, etc.
+            $table->unsignedBigInteger('file_size')->default(0); // in bytes
+            $table->text('description')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('document_files');
+        Schema::dropIfExists('document_folders');
+    }
+};

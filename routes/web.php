@@ -10,6 +10,7 @@ use App\Livewire\FeePayment;
 use App\Livewire\PaymentKhata;
 use App\Livewire\Khotian;
 use App\Livewire\Customer;
+use App\Livewire\SalesReport;
 
 // Redirect / to /login
 Route::redirect('/', '/login');
@@ -26,6 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payment-khata', PaymentKhata::class)->name('payment-khata');
     Route::get('/khotian', Khotian::class)->name('khotian');
     Route::get('/customer', Customer::class)->name('customer');
+    Route::get('/sales-report', SalesReport::class)->name('sales-report');
 
     // Challan Routes
     Route::get('/challan/today',   \App\Livewire\Challan\TodayChallan::class)->name('challan.today');
@@ -44,6 +46,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/due-ledger/all-due',     \App\Livewire\DueLedger\AllDueList::class)->name('due-ledger.all-due');
 
     // General & Support Routes
+    Route::get('/investment',             \App\Livewire\Investment::class)->name('investment');
+    Route::get('/documents',              \App\Livewire\DocumentManager::class)->name('documents');
+    Route::get('/documents/stream/{file}', function ($fileId) {
+        $doc = \App\Models\DocumentFile::findOrFail($fileId);
+        $path = storage_path('app/public/' . $doc->file_path);
+        if (!file_exists($path)) {
+            abort(404, 'ফাইল পাওয়া যায়নি।');
+        }
+        $mime = mime_content_type($path) ?: 'application/octet-stream';
+        return response()->file($path, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' . rawurlencode($doc->file_name) . '"'
+        ]);
+    })->name('documents.stream');
+    Route::get('/malamal-stock',          \App\Livewire\MalamalStock::class)->name('malamal-stock');
     Route::get('/cash-khata',             \App\Livewire\CashKhata::class)->name('cash-khata');
     Route::get('/load-khata',             \App\Livewire\LoadKhata::class)->name('load-khata');
     Route::get('/unload-khata',           \App\Livewire\UnloadKhata::class)->name('unload-khata');
