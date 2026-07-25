@@ -353,32 +353,27 @@
         </div>
         @endif
 
-        <!-- Divider -->
-        <div class="h-[1px] bg-primary-800/40 my-4 mx-4"></div>
-
-        <!-- 16. স্টাফ ম্যানেজার -->
-        @if($hasAccess('staff'))
-        <div class="mx-2">
-            <a href="#" 
-               @mouseenter="showTooltip('স্টাফ ম্যানেজার', $el)"
+        <!-- 15b. টাস্ক ম্যানেজার -->
+        <div class="mx-2 mt-1">
+            <a href="{{ route('task-manager') }}" wire:navigate 
+               @mouseenter="showTooltip('টাস্ক ম্যানেজার', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('task-manager') ? 'bg-primary-800 text-white font-bold shadow-xs' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 014 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M21 12h-6m6 4h-6"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                 </svg>
                 <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
-                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">স্টাফ ম্যানেজার</span>
+                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">টাস্ক ম্যানেজার</span>
             </a>
         </div>
-        @endif
 
         <!-- 17. গাড়ির হিসাব -->
         @if($hasAccess('vehicle_acc'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('vehicle-account') }}" wire:navigate
                @mouseenter="showTooltip('গাড়ির হিসাব', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('vehicle-account') ? 'bg-primary-800 text-white font-bold shadow-xs' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                 </svg>

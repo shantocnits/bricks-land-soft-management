@@ -42,6 +42,8 @@
         $title = 'ডকুমেন্টস';
     } elseif (request()->routeIs('malamal-stock')) {
         $title = 'মালামাল স্টক';
+    } elseif (request()->routeIs('task-manager')) {
+        $title = 'টাস্ক ম্যানেজার';
     } elseif (request()->routeIs('delivery.today')) {
         $title = 'আজকের ডেলিভারি';
     } elseif (request()->routeIs('delivery.pending')) {
@@ -58,6 +60,8 @@
         $title = 'আজ জমা দেবে';
     } elseif (request()->routeIs('due-ledger.all-due')) {
         $title = 'সব বাকি লিস্ট';
+    } elseif (request()->routeIs('vehicle-account')) {
+        $title = 'গাড়ির হিসাব';
     }
     $currentUser = auth()->user();
 @endphp

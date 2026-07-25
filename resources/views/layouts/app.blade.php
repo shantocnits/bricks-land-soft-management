@@ -25,7 +25,9 @@
     @livewireStyles
     <!-- Flatpickr Datepicker & Chart.js -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
     <style>
         .flatpickr-calendar { border-radius: 1rem !important; box-shadow: 0 20px 60px rgba(0,0,0,0.18) !important; border: 1px solid #e5e7eb !important; font-family: 'Inter', sans-serif !important; overflow: hidden; }
         .dark .flatpickr-calendar { background: #0f172a !important; border-color: #1e293b !important; color: #e2e8f0 !important; }
@@ -38,6 +40,10 @@
         .dark .numInputWrapper input { color: #e2e8f0 !important; }
         .dark .flatpickr-prev-month svg, .dark .flatpickr-next-month svg { fill: #94a3b8 !important; }
         .dark .flatpickr-weekday { color: #64748b !important; }
+        .dark .flatpickr-monthSelect-month { color: #cbd5e1 !important; }
+        .dark .flatpickr-monthSelect-month:hover { background: #1e293b !important; }
+        .dark .flatpickr-monthSelect-month.selected { background: #059669 !important; color: #fff !important; }
+        .flatpickr-monthSelect-month.selected { background: #059669 !important; }
         .flatpickr-input { cursor: pointer !important; }
         #nprogress { display: none !important; }
     </style>
@@ -105,9 +111,16 @@
         function initFlatpickrs() {
             document.querySelectorAll('[data-flatpickr]').forEach(function(el) {
                 if (el._flatpickr) {
-                    var expectedVal = el.getAttribute('data-default') || el.value;
-                    if (expectedVal && el.value !== expectedVal) {
-                        el._flatpickr.setDate(expectedVal, false);
+                    var expectedVal = el.hasAttribute('data-default') ? el.getAttribute('data-default') : el.value;
+                    if (!expectedVal) {
+                        if (el._flatpickr.selectedDates.length > 0 || (el._flatpickr.altInput && el._flatpickr.altInput.value !== '')) {
+                            el._flatpickr.clear();
+                        }
+                    } else {
+                        var currentFormatted = el._flatpickr.input ? el._flatpickr.input.value : '';
+                        if (expectedVal !== currentFormatted || el._flatpickr.selectedDates.length === 0) {
+                            el._flatpickr.setDate(expectedVal, false);
+                        }
                     }
                     return;
                 }
@@ -133,31 +146,66 @@
                     allowInput: false,
                     disableMobile: true,
                     onChange: function(selectedDates, dateStr, instance) {
-                        if (!wireProp || !dateStr) return;
-                        var node = el;
-                        while (node && node !== document.body) {
-                            if (node.__livewire || (node.dataset && node.dataset.component)) break;
-                            node = node.parentElement;
-                        }
+                        if (!wireProp) return;
                         try {
-                            var event = new CustomEvent('flatpickr-change', {
-                                detail: { prop: wireProp, value: dateStr },
-                                bubbles: true
-                            });
-                            el.dispatchEvent(event);
                             var closestWire = el.closest('[wire\\:id]');
                             if (closestWire) {
                                 var wireId = closestWire.getAttribute('wire:id');
                                 var comp = Livewire.find(wireId);
                                 if (comp) { comp.set(wireProp, dateStr); return; }
                             }
-                            Livewire.all().forEach(function(c) {
-                                try { if (c.get(wireProp) !== undefined) c.set(wireProp, dateStr); } catch(e) {}
-                            });
                         } catch(e) { console.warn('Flatpickr Livewire set error:', e); }
                     }
                 };
-                var defaultDate = el.getAttribute('data-default') || el.value;
+                var defaultDate = el.hasAttribute('data-default') ? el.getAttribute('data-default') : el.value;
+                if (defaultDate) options.defaultDate = defaultDate;
+                flatpickr(el, options);
+            });
+
+            document.querySelectorAll('[data-flatpickr-month]').forEach(function(el) {
+                if (el._flatpickr) {
+                    var expectedVal = el.hasAttribute('data-default') ? el.getAttribute('data-default') : el.value;
+                    if (!expectedVal) {
+                        if (el._flatpickr.selectedDates.length > 0 || (el._flatpickr.altInput && el._flatpickr.altInput.value !== '')) {
+                            el._flatpickr.clear();
+                        }
+                    } else {
+                        if (el._flatpickr.selectedDates.length === 0) {
+                            el._flatpickr.setDate(expectedVal, false);
+                        }
+                    }
+                    return;
+                }
+
+                if (el.parentElement) {
+                    el.parentElement.setAttribute('wire:ignore', '');
+                }
+
+                var wireProp = el.getAttribute('data-wire-prop') || 'filterMonth';
+                var options = {
+                    locale: fpLocale,
+                    plugins: [
+                        new monthSelectPlugin({
+                            shorthand: true,
+                            dateFormat: 'Y-m',
+                            altFormat: 'F Y'
+                        })
+                    ],
+                    allowInput: false,
+                    disableMobile: true,
+                    onChange: function(selectedDates, dateStr, instance) {
+                        if (!wireProp) return;
+                        try {
+                            var closestWire = el.closest('[wire\\:id]');
+                            if (closestWire) {
+                                var wireId = closestWire.getAttribute('wire:id');
+                                var comp = Livewire.find(wireId);
+                                if (comp) { comp.set(wireProp, dateStr); return; }
+                            }
+                        } catch(e) { console.warn('Flatpickr Livewire set error:', e); }
+                    }
+                };
+                var defaultDate = el.hasAttribute('data-default') ? el.getAttribute('data-default') : el.value;
                 if (defaultDate) options.defaultDate = defaultDate;
                 flatpickr(el, options);
             });

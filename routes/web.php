@@ -61,6 +61,8 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('documents.stream');
     Route::get('/malamal-stock',          \App\Livewire\MalamalStock::class)->name('malamal-stock');
+    Route::get('/task-manager',           \App\Livewire\TaskManager::class)->name('task-manager');
+    Route::get('/vehicle-account',        \App\Livewire\VehicleAccount::class)->name('vehicle-account');
     Route::get('/cash-khata',             \App\Livewire\CashKhata::class)->name('cash-khata');
     Route::get('/load-khata',             \App\Livewire\LoadKhata::class)->name('load-khata');
     Route::get('/unload-khata',           \App\Livewire\UnloadKhata::class)->name('unload-khata');

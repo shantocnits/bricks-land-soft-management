@@ -115,67 +115,67 @@ if (!function_exists('toBanglaNum')) {
 
         <!-- Dashboard Summary Cards -->
         @if($activeTab === 'dashboard')
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-5 shadow-sm cursor-pointer hover:border-emerald-500 transition-all"
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm cursor-pointer hover:border-emerald-500 transition-all"
                      wire:click="$set('activeTab', 'stock_list')">
                     <div class="flex items-center justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-500 uppercase">মোট অ্যাসেট (স্টক তালিকা)</span>
-                            <h3 class="text-xl sm:text-2xl font-black text-[#034C3C] dark:text-emerald-400 font-mono mt-1">
+                            <span class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase leading-tight block">মোট অ্যাসেট (স্টক)</span>
+                            <h3 class="text-lg sm:text-2xl font-black text-[#034C3C] dark:text-emerald-400 font-mono mt-1">
                                 {{ toBanglaNum($totalAssetCount) }}
                             </h3>
-                            <span class="text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($totalAssetCount) }} টি</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($totalAssetCount) }} টি</span>
                         </div>
-                        <div class="p-3 bg-sky-50 dark:bg-sky-950/40 text-sky-600 rounded-2xl">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <div class="p-2.5 sm:p-3 bg-sky-50 dark:bg-sky-950/40 text-sky-600 rounded-xl sm:rounded-2xl">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-5 shadow-sm cursor-pointer hover:border-emerald-500 transition-all"
+                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm cursor-pointer hover:border-emerald-500 transition-all"
                      wire:click="$set('activeTab', 'stock_list')">
                     <div class="flex items-center justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-500 uppercase">বর্তমান রেডি স্টক</span>
-                            <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1">
+                            <span class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase leading-tight block">বর্তমান রেডি স্টক</span>
+                            <h3 class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1">
                                 {{ toBanglaNum($currentStockCount) }}
                             </h3>
-                            <span class="text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($currentStockCount) }} টি</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($currentStockCount) }} টি</span>
                         </div>
-                        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 rounded-2xl">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div class="p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 rounded-xl sm:rounded-2xl">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-5 shadow-sm cursor-pointer hover:border-amber-500 transition-all"
+                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm cursor-pointer hover:border-amber-500 transition-all"
                      wire:click="$set('activeTab', 'damaged_items')">
                     <div class="flex items-center justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-500 uppercase">নষ্ট আইটেম</span>
-                            <h3 class="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1">
+                            <span class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase leading-tight block">নষ্ট আইটেম</span>
+                            <h3 class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1">
                                 {{ toBanglaNum($damagedCount) }}
                             </h3>
-                            <span class="text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($damagedCount) }} টি</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($damagedCount) }} টি</span>
                         </div>
-                        <div class="p-3 bg-amber-50 dark:bg-amber-950/40 text-amber-600 rounded-2xl">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <div class="p-2.5 sm:p-3 bg-amber-50 dark:bg-amber-950/40 text-amber-600 rounded-xl sm:rounded-2xl">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-5 shadow-sm cursor-pointer hover:border-rose-500 transition-all"
+                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm cursor-pointer hover:border-rose-500 transition-all"
                      wire:click="$set('activeTab', 'lost_items')">
                     <div class="flex items-center justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-500 uppercase">হারানো আইটেম</span>
-                            <h3 class="text-xl sm:text-2xl font-black text-rose-500 dark:text-rose-400 font-mono mt-1">
+                            <span class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase leading-tight block">হারানো আইটেম</span>
+                            <h3 class="text-lg sm:text-2xl font-black text-rose-500 dark:text-rose-400 font-mono mt-1">
                                 {{ toBanglaNum($lostCount) }}
                             </h3>
-                            <span class="text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($lostCount) }} টি</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($lostCount) }} টি</span>
                         </div>
-                        <div class="p-3 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-2xl">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        <div class="p-2.5 sm:p-3 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-xl sm:rounded-2xl">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                         </div>
                     </div>
                 </div>
@@ -184,25 +184,25 @@ if (!function_exists('toBanglaNum')) {
 
         <!-- History Log Summary Cards -->
         @if($activeTab === 'history_log')
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div class="bg-sky-50/60 dark:bg-sky-950/30 border border-sky-150 dark:border-sky-900/50 rounded-2xl p-4">
                     <span class="text-xs font-bold text-sky-700 dark:text-sky-400 block mb-1">ফেরত এসেছে</span>
-                    <h3 class="text-2xl font-black text-sky-800 dark:text-sky-300 font-mono">{{ toBanglaNum($returnedCount) }}</h3>
+                    <h3 class="text-xl sm:text-2xl font-black text-sky-800 dark:text-sky-300 font-mono">{{ toBanglaNum($returnedCount) }}</h3>
                 </div>
 
                 <div class="bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-150 dark:border-emerald-900/50 rounded-2xl p-4">
                     <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mb-1">ভালো</span>
-                    <h3 class="text-2xl font-black text-emerald-800 dark:text-emerald-300 font-mono">{{ toBanglaNum($goodCount) }}</h3>
+                    <h3 class="text-xl sm:text-2xl font-black text-emerald-800 dark:text-emerald-300 font-mono">{{ toBanglaNum($goodCount) }}</h3>
                 </div>
 
                 <div class="bg-amber-50/60 dark:bg-amber-950/30 border border-amber-150 dark:border-amber-900/50 rounded-2xl p-4">
                     <span class="text-xs font-bold text-amber-700 dark:text-amber-400 block mb-1">নষ্ট</span>
-                    <h3 class="text-2xl font-black text-amber-800 dark:text-amber-300 font-mono">{{ toBanglaNum($damagedLogCount) }}</h3>
+                    <h3 class="text-xl sm:text-2xl font-black text-amber-800 dark:text-amber-300 font-mono">{{ toBanglaNum($damagedLogCount) }}</h3>
                 </div>
 
                 <div class="bg-rose-50/60 dark:bg-rose-950/30 border border-rose-150 dark:border-rose-900/50 rounded-2xl p-4">
                     <span class="text-xs font-bold text-rose-700 dark:text-rose-400 block mb-1">হারানো</span>
-                    <h3 class="text-2xl font-black text-rose-800 dark:text-rose-300 font-mono">{{ toBanglaNum($lostLogCount) }}</h3>
+                    <h3 class="text-xl sm:text-2xl font-black text-rose-800 dark:text-rose-300 font-mono">{{ toBanglaNum($lostLogCount) }}</h3>
                 </div>
             </div>
         @endif
@@ -649,82 +649,230 @@ if (!function_exists('toBanglaNum')) {
 
             <!-- Root Dropdown Pagination toolbar -->
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-4 border-t border-gray-150 dark:border-slate-800 bg-white dark:bg-slate-900">
-                <div class="text-xs text-gray-500 dark:text-gray-400 font-semibold">
-                    মোট রেকর্ড: <strong class="text-gray-800 dark:text-white">{{ toBanglaNum($records->total()) }} টি</strong>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    {{ $records->links() }}
-
+                <!-- Left: Sort/PerPage Dropdown + Total Records Count with Gap -->
+                <div class="flex items-center gap-3 sm:gap-4">
                     <div x-data="{ open: false }" class="relative text-xs">
                         <button @click="open = !open" type="button"
-                                class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-gray-800 dark:text-white font-bold rounded-lg border border-gray-200 dark:border-slate-700 cursor-pointer">
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-gray-800 dark:text-white font-bold rounded-lg border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs hover:border-emerald-500 transition-colors">
                             <span>{{ toBanglaNum($perPage) }} / পেজ</span>
                             <svg class="w-3.5 h-3.5 transition-transform" :class="{'rotate-180': open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div x-show="open" @click.outside="open = false" x-cloak
-                             class="absolute bottom-full mb-1.5 right-0 z-[999] w-32 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden py-1">
+                             class="absolute bottom-full mb-1.5 left-0 z-[999] w-32 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden py-1">
                             @foreach([5, 10, 15, 20, 50] as $size)
                                 <button type="button" wire:click="selectPerPage({{ $size }})" @click="open = false"
-                                        class="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer">
+                                        class="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer transition-colors">
                                     {{ toBanglaNum($size) }} / পেজ
                                 </button>
                             @endforeach
                         </div>
                     </div>
+
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
+                        মোট রেকর্ড: <strong class="text-gray-800 dark:text-white font-bold">{{ toBanglaNum($records->total()) }} টি</strong>
+                    </div>
+                </div>
+
+                <!-- Right: Pagination Links with gap after "Showing X to Y" -->
+                <div class="flex items-center [&_p]:mr-4 sm:[&_p]:mr-6 [&_p]:font-semibold">
+                    {{ $records->links() }}
                 </div>
             </div>
         </div>
 
-        <!-- Mobile Box-Type Card View -->
-        <div class="block md:hidden space-y-4">
-            @forelse($records as $rec)
-                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
+        <!-- Mobile Box-Type Card View (Shows ALL Data) -->
+        <div class="block md:hidden space-y-3">
+            @forelse($records as $index => $rec)
+                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 shadow-xs space-y-3">
                     @if($activeTab === 'stock_list')
-                        <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-2">
-                            <h4 class="font-extrabold text-gray-900 dark:text-white text-xs">{{ $rec->name }}</h4>
-                            <span class="text-[10px] font-mono text-gray-400">{{ $rec->code }}</span>
+                        <!-- Stock List Mobile Card -->
+                        <div class="flex items-start justify-between gap-3 border-b border-gray-100 dark:border-slate-800 pb-2.5">
+                            <div class="flex items-center gap-2.5">
+                                @if($rec->image)
+                                    <div class="relative group w-10 h-10 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer"
+                                         wire:click="openQuickView('{{ Storage::url($rec->image) }}', '{{ $rec->name }}')">
+                                        <img src="{{ Storage::url($rec->image) }}" class="w-10 h-10 object-cover rounded-xl border border-gray-200 dark:border-slate-700">
+                                    </div>
+                                @else
+                                    <div class="w-10 h-10 flex-shrink-0 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                    </div>
+                                @endif
+                                <div>
+                                    <h4 class="font-extrabold text-gray-900 dark:text-white text-xs leading-tight">{{ $rec->name }}</h4>
+                                    <span class="text-[10px] font-mono text-gray-400 block">{{ $rec->code ?: '—' }}</span>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">
+                                {{ $rec->category ? $rec->category->name : '—' }}
+                            </span>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 text-xs font-mono">
-                            <div><span class="text-gray-400 text-[10px]">একক মূল্য:</span> <span class="font-bold text-emerald-600">৳{{ toBanglaNum(number_format($rec->unit_price)) }}</span></div>
-                            <div><span class="text-gray-400 text-[10px]">বর্তমান স্টক:</span> <span class="font-black text-[#034C3C] dark:text-emerald-400">{{ toBanglaNum($rec->current_qty) }} টি</span></div>
+
+                        <!-- Quantities Breakdown Grid -->
+                        <div class="grid grid-cols-5 gap-1 text-center bg-gray-50 dark:bg-slate-950 p-2 rounded-xl text-[10px] font-mono">
+                            <div>
+                                <span class="text-gray-400 block">মোট</span>
+                                <span class="font-bold text-gray-800 dark:text-slate-200">{{ toBanglaNum($rec->total_qty) }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">বর্তমান</span>
+                                <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ toBanglaNum($rec->current_qty) }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">ইস্যু</span>
+                                <span class="font-bold text-sky-600">{{ toBanglaNum($rec->issued_qty) }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">নষ্ট</span>
+                                <span class="font-bold text-amber-600">{{ toBanglaNum($rec->damaged_qty) }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">হারা</span>
+                                <span class="font-bold text-rose-500">{{ toBanglaNum($rec->lost_qty) }}</span>
+                            </div>
                         </div>
+
+                        <!-- Price Info -->
+                        <div class="flex items-center justify-between text-xs font-mono pt-1">
+                            <div>
+                                <span class="text-gray-400 text-[10px]">একক মূল্য:</span>
+                                <span class="font-bold text-emerald-600">৳{{ toBanglaNum(number_format($rec->unit_price, 0)) }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[10px]">মোট মূল্য:</span>
+                                <span class="font-black text-[#034C3C] dark:text-emerald-400">৳{{ toBanglaNum(number_format($rec->total_qty * $rec->unit_price, 0)) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
                         <div class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">
-                            <button type="button" wire:click="viewAssetModal({{ $rec->id }})" class="flex-1 py-1.5 bg-sky-50 dark:bg-slate-800 text-sky-600 font-bold rounded-lg text-xs">ভিউ</button>
-                            <button type="button" wire:click="openAssetModal({{ $rec->id }})" class="flex-1 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-700 font-bold rounded-lg text-xs">এডিট</button>
+                            <button type="button" wire:click="viewAssetModal({{ $rec->id }})"
+                                    class="flex-1 py-1.5 bg-sky-50 dark:bg-slate-800 text-sky-600 dark:text-sky-400 font-bold rounded-xl text-xs hover:bg-sky-600 hover:text-white transition-all">
+                                👁️ ভিউ
+                            </button>
+                            <button type="button" wire:confirm="আপনি কি নিশ্চিতভাবে এই প্রোডাক্ট মুছে ফেলতে চান?" wire:click="deleteAsset({{ $rec->id }})"
+                                    class="py-1.5 px-3 bg-rose-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl text-xs hover:bg-rose-600 hover:text-white transition-all">
+                                🗑️ ডিলিট
+                            </button>
                         </div>
+
                     @elseif($activeTab === 'issue_list')
+                        <!-- Issue List Mobile Card -->
+                        <div class="flex items-start justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-2">
+                            <div class="flex items-center gap-2.5">
+                                @if($rec->asset && $rec->asset->image)
+                                    <img src="{{ Storage::url($rec->asset->image) }}" class="w-9 h-9 object-cover rounded-xl border border-gray-200 dark:border-slate-700">
+                                @else
+                                    <div class="w-9 h-9 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                    </div>
+                                @endif
+                                <div>
+                                    <h4 class="font-extrabold text-gray-900 dark:text-white text-xs">{{ $rec->asset ? $rec->asset->name : '—' }}</h4>
+                                    <span class="text-[10px] text-gray-400">{{ $rec->asset && $rec->asset->category ? $rec->asset->category->name : '—' }}</span>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-lg bg-sky-50 dark:bg-sky-950 text-sky-600 font-bold text-[10px]">
+                                {{ toBanglaNum($rec->quantity) }} টি
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div><span class="text-gray-400 text-[10px] block mb-1">কার কাছে:</span> <span class="font-bold text-gray-800 dark:text-slate-200 block">{{ $rec->issued_to }}</span></div>
+                            <div><span class="text-gray-400 text-[10px] block mb-1">লোকেশন:</span> <span class="font-semibold text-gray-600 dark:text-slate-300 block">{{ $rec->location ?: '—' }}</span></div>
+                            <div><span class="text-gray-400 text-[10px] block mb-1">ইস্যু তারিখ:</span> <span class="font-mono font-semibold text-gray-700 dark:text-slate-300 block">{{ \Carbon\Carbon::parse($rec->issue_date)->format('d-m-Y') }}</span></div>
+                        </div>
+
+                        <button type="button" wire:click="openReturnModal({{ $rec->id }})" class="w-full py-2 bg-[#034C3C] text-white font-bold rounded-xl text-xs hover:bg-emerald-800 transition-all shadow-xs">
+                            ↩️ ফেরত নেওয়া
+                        </button>
+
+                    @elseif($activeTab === 'damaged_items')
+                        <!-- Damaged Items Mobile Card -->
                         <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-2">
-                            <h4 class="font-extrabold text-gray-900 dark:text-white text-xs">{{ $rec->asset ? $rec->asset->name : '—' }}</h4>
-                            <span class="text-[10px] font-bold text-sky-600">কার কাছে: {{ $rec->issued_to }}</span>
+                            <div>
+                                <h4 class="font-extrabold text-gray-900 dark:text-white text-xs">{{ $rec->name }}</h4>
+                                <span class="text-[10px] text-gray-400 font-mono">{{ $rec->code }}</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 font-bold text-[10px]">
+                                নষ্ট: {{ toBanglaNum($rec->damaged_qty) }} টি
+                            </span>
                         </div>
                         <div class="flex items-center justify-between text-xs font-mono">
-                            <span class="text-gray-500 font-semibold">{{ \Carbon\Carbon::parse($rec->issue_date)->format('d-m-Y') }}</span>
-                            <span class="font-black text-emerald-600">{{ toBanglaNum($rec->quantity) }} টি</span>
+                            <span class="text-gray-400 text-[10px]">ক্ষতি (টাকা):</span>
+                            <span class="font-black text-rose-600">৳{{ toBanglaNum(number_format($rec->damaged_qty * $rec->unit_price, 0)) }}</span>
                         </div>
-                        <button type="button" wire:click="openReturnModal({{ $rec->id }})" class="w-full py-2 bg-[#034C3C] text-white font-bold rounded-xl text-xs">
-                            ফেরত নেওয়া
+                        <button type="button" wire:click="openRepairModal({{ $rec->id }})" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-xs">
+                            🔧 মেরামত করুন
                         </button>
-                    @elseif($activeTab === 'damaged_items')
-                        <div class="flex items-center justify-between">
-                            <h4 class="font-extrabold text-gray-900 dark:text-white text-xs">{{ $rec->name }}</h4>
-                            <span class="font-black text-amber-600 font-mono text-xs">নষ্ট: {{ toBanglaNum($rec->damaged_qty) }} টি</span>
-                        </div>
-                        <button type="button" wire:click="openRepairModal({{ $rec->id }})" class="w-full py-2 bg-amber-600 text-white font-bold rounded-xl text-xs">
-                            🔧 মেরামত
-                        </button>
+
                     @elseif($activeTab === 'lost_items')
-                        <div class="flex items-center justify-between">
-                            <h4 class="font-extrabold text-gray-900 dark:text-white text-xs">{{ $rec->name }}</h4>
-                            <span class="font-black text-rose-500 font-mono text-xs">হারানো: {{ toBanglaNum($rec->lost_qty) }} টি</span>
+                        <!-- Lost Items Mobile Card -->
+                        <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-2">
+                            <div>
+                                <h4 class="font-extrabold text-gray-900 dark:text-white text-xs">{{ $rec->name }}</h4>
+                                <span class="text-[10px] text-gray-400 font-mono">{{ $rec->code }}</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 font-bold text-[10px]">
+                                হারানো: {{ toBanglaNum($rec->lost_qty) }} টি
+                            </span>
                         </div>
-                        <button type="button" wire:click="openFoundModal({{ $rec->id }})" class="w-full py-2 bg-[#034C3C] text-white font-bold rounded-xl text-xs">
+                        <div class="flex items-center justify-between text-xs font-mono">
+                            <span class="text-gray-400 text-[10px]">ক্ষতি (টাকা):</span>
+                            <span class="font-black text-rose-600">৳{{ toBanglaNum(number_format($rec->lost_qty * $rec->unit_price, 0)) }}</span>
+                        </div>
+                        <button type="button" wire:click="openFoundModal({{ $rec->id }})" class="w-full py-2 bg-[#034C3C] hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition-all shadow-xs">
                             ✓ পাওয়া গেছে
                         </button>
+
                     @else
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-bold text-gray-900 dark:text-white">{{ $rec->asset ? $rec->asset->name : '—' }}</span>
-                            <span class="font-semibold text-gray-500">{{ \Carbon\Carbon::parse($rec->created_at)->format('d-m-Y') }}</span>
+                        <!-- History Log / Dashboard Mobile Card -->
+                        <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-2 text-xs">
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-400 font-bold font-mono">#{{ toBanglaNum($records->firstItem() + $index) }}</span>
+                                <span class="font-extrabold text-gray-900 dark:text-white">{{ $rec->asset ? $rec->asset->name : '—' }}</span>
+                            </div>
+                            <span class="text-[10px] font-mono text-gray-500">{{ \Carbon\Carbon::parse($rec->created_at)->format('d-m-Y') }}</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-gray-400 text-[10px] block mb-1">টাইপ:</span>
+                                @if($rec->action_type === 'add_stock')
+                                    <span class="inline-block px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold text-[10px]">স্টক ইন</span>
+                                @elseif($rec->action_type === 'issue')
+                                    <span class="inline-block px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-bold text-[10px]">ইস্যু</span>
+                                @elseif($rec->action_type === 'return')
+                                    <span class="inline-block px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-bold text-[10px]">ফেরত</span>
+                                @elseif($rec->action_type === 'damaged')
+                                    <span class="inline-block px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold text-[10px]">নষ্ট</span>
+                                @else
+                                    <span class="inline-block px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-bold text-[10px]">হারানো</span>
+                                @endif
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[10px] block mb-1">পরিমাণ:</span>
+                                <span class="font-bold text-gray-800 dark:text-slate-200 font-mono block">{{ toBanglaNum($rec->quantity) }} টি</span>
+                            </div>
+                        </div>
+
+                        @if($rec->notes)
+                            <div class="text-[11px] text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-950 p-2 rounded-xl border border-gray-100 dark:border-slate-800">
+                                {{ $rec->notes }}
+                            </div>
+                        @endif
+
+                        <div class="flex items-center justify-between pt-1">
+                            <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-[10px]">সম্পন্ন</span>
+                            @php
+                                $proofUrl = $rec->proof_image ? Storage::url($rec->proof_image) : ($rec->asset && $rec->asset->image ? Storage::url($rec->asset->image) : null);
+                            @endphp
+                            @if($proofUrl)
+                                <button type="button" wire:click="openQuickView('{{ $proofUrl }}', '{{ $rec->asset ? $rec->asset->name : 'প্রমাণ' }}')"
+                                        class="px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 font-bold rounded-lg text-[10px]">
+                                    📷 প্রমাণ দেখুন
+                                </button>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -734,7 +882,7 @@ if (!function_exists('toBanglaNum')) {
                 </div>
             @endforelse
 
-            <div class="pt-2">
+            <div class="pt-2 flex items-center justify-end [&_p]:mr-4 sm:[&_p]:mr-6">
                 {{ $records->links() }}
             </div>
         </div>
