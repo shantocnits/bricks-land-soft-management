@@ -365,6 +365,17 @@
          }
      }
  
+     public function updatedCustomerAddress($value)
+     {
+         if (!empty($value)) {
+             $rent = \App\Models\VehicleRent::where('address', trim($value))->first();
+             if ($rent && floatval($rent->fare) > 0) {
+                 $this->transport_rent = rtrim(rtrim(number_format($rent->fare, 2, '.', ''), '0'), '.');
+                 $this->calculateTotals();
+             }
+         }
+     }
+
      public function updated($propertyName)
      {
          if (in_array($propertyName, ['rent', 'transport_rent', 'discount', 'cash'])) {
@@ -466,6 +477,17 @@
                  );
              }
          }
+
+         if (!empty($this->customer_address)) {
+             $existingRent = \App\Models\VehicleRent::where('address', trim($this->customer_address))->first();
+             if (!$existingRent) {
+                 \App\Models\VehicleRent::create([
+                     'address' => trim($this->customer_address),
+                     'area' => null,
+                     'fare' => floatval($this->transport_rent ?: 0),
+                 ]);
+             }
+         }
  
          foreach ($this->items as $item) {
              ChallanItem::create([
@@ -478,7 +500,9 @@
              ]);
          }
  
-         session()->flash('message', $this->editingId ? 'চালান সফলভাবে আপডেট করা হয়েছে।' : 'চালান সফলভাবে সংরক্ষিত হয়েছে।');
+         $msg = $this->editingId ? 'চালান সফলভাবে আপডেট করা হয়েছে।' : 'চালান সফলভাবে সংরক্ষিত হয়েছে।';
+         session()->flash('message', $msg);
+         $this->dispatch('show-toast', ['message' => $msg]);
          $this->closeModal();
      }
  
@@ -493,6 +517,7 @@
          $this->challan_no = $challan->challan_no;
          $this->date = $challan->date ? $challan->date->toDateString() : now()->toDateString();
          $this->notes = $challan->notes;
+         $this->challan_type = $challan->challan_type;
          $this->rent = $challan->rent;
          $this->transport_rent = $challan->transport_rent;
          $this->discount = $challan->discount;
@@ -518,7 +543,9 @@
      public function delete($id)
      {
          Challan::destroy($id);
-         session()->flash('message', 'চালান মুছে ফেলা হয়েছে।');
+         $msg = 'চালান মুছে ফেলা হয়েছে।';
+         session()->flash('message', $msg);
+         $this->dispatch('show-toast', ['message' => $msg]);
      }
  
     public function openDeliveryModal($challanId)
@@ -609,7 +636,9 @@
         }
 
         $this->showDeliveryModal = false;
-        session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+        $msg = 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', ['message' => $msg]);
     }
 
     public function openChallanDetailsModal($challanId)
@@ -623,7 +652,6 @@
     public function render()
     {
         $query = Challan::with('items')
-            ->where('challan_type', 'আজকের')
             ->whereDate('date', $this->date ?: now()->toDateString());
 
         if ($this->search) {

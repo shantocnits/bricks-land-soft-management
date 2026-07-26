@@ -62,6 +62,16 @@
         $title = 'সব বাকি লিস্ট';
     } elseif (request()->routeIs('vehicle-account')) {
         $title = 'গাড়ির হিসাব';
+    } elseif (request()->routeIs('vehicle-rent')) {
+        $title = 'গাড়ি ভাড়া';
+    } elseif (request()->routeIs('sms-khata')) {
+        $title = 'এসএমএস';
+    } elseif (request()->routeIs('phone-number')) {
+        $title = 'ফোন নম্বর';
+    } elseif (request()->routeIs('deuna-pauna')) {
+        $title = 'দেনা-পাওনা';
+    } elseif (request()->routeIs('deuna-pauna.profile')) {
+        $title = 'প্রোফাইল';
     }
     $currentUser = auth()->user();
 @endphp

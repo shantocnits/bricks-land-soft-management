@@ -51,14 +51,7 @@
         </div>
     </div>
 
-    <!-- Flash Message -->
-    @if (session()->has('message'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
-             x-transition:leave="transition ease-in duration-300" x-transition:leave-end="opacity-0"
-             class="mx-4 sm:mx-6 mt-4 p-3.5 bg-primary-50 dark:bg-primary-950/20 border border-primary-200 dark:border-primary-900 text-primary-800 dark:text-primary-400 rounded-2xl text-xs font-medium font-sans" x-cloak>
-            {{ session('message') }}
-        </div>
-    @endif
+
 
     <!-- Table Card -->
     <div class="py-4 sm:py-6">
@@ -686,7 +679,7 @@
                                         <span class="md:hidden block font-bold text-gray-505 mb-1 text-[11px]">শ্রেণিঃ</span>
                                         <button type="button" @click="openCat = !openCat; triggerRect = $el.getBoundingClientRect()"
                                                 class="w-full flex items-center justify-between py-2 px-3 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-gray-808 dark:text-white focus:outline-none focus:border-primary-500 cursor-pointer">
-                                            <span x-text="$wire.items[$index]['category_name'] || 'শ্রেণি নির্বাচন করুন...'"></span>
+                                            <span x-text="($wire.items && $wire.items[{{ $index }}] && $wire.items[{{ $index }}].category_name) ? $wire.items[{{ $index }}].category_name : '{{ !empty($item['category_name']) ? $item['category_name'] : 'শ্রেণি নির্বাচন করুন...' }}'"></span>
                                             <svg class="w-3.5 h-3.5 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': openCat }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                                             </svg>
@@ -1125,7 +1118,7 @@
                     <!-- Column 2 -->
                     <div class="bg-gray-55/50 dark:bg-slate-950/20 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 space-y-2">
                         <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>কাস্টমার আইডি</span> <span class="font-sans font-bold text-gray-800 dark:text-white">{{ $detailsChallan->id }}</span></div>
-                        <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>ধরন</span> <span class="text-gray-800 dark:text-white">রেগুলার চালান</span></div>
+                        <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>ধরন</span> <span class="text-gray-800 dark:text-white font-bold">{{ in_array($detailsChallan->challan_type, ['অগ্রিম', 'অগ্রিম চালান']) ? 'অগ্রিম চালান' : 'রেগুলার চালান' }}</span></div>
                         <div class="flex justify-between"><span>ডেলিভারি তারিখ</span> <span class="font-sans text-gray-500">—</span></div>
                     </div>
                     <!-- Column 3 -->

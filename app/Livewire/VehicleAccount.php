@@ -42,6 +42,7 @@ class VehicleAccount extends Component
     public $txDue = null;
     public $txAmount = null;
     public $txDueAmount = null;
+    public $txDueType = 'income';
 
     // Khotian Modal & Search states
     public $searchKhotian = '';
@@ -49,6 +50,7 @@ class VehicleAccount extends Component
     public $selectedKhotianName = null;
     public $khotianStartDate = null;
     public $khotianEndDate = null;
+    public $khotianPerPage = 10;
 
     // Delete Confirmation Modal
     public $showDeleteConfirmModal = false;
@@ -194,11 +196,18 @@ class VehicleAccount extends Component
             $this->txDescription = $tx->description;
             $this->txKhotianName = $tx->khotian_name;
             $this->txQuantity = $tx->quantity;
-            $this->txRent = $tx->rent;
-            $this->txReceived = $tx->received;
+            $this->txDueType = $tx->type ?: 'income';
             $this->txDue = $tx->due_amount;
             $this->txDueAmount = $tx->due_amount;
             $this->txAmount = $tx->amount ?: $tx->received;
+
+            if ($this->activeTab === 'due') {
+                $this->txRent = $tx->due_amount > 0 ? $tx->due_amount : $tx->rent;
+                $this->txReceived = null;
+            } else {
+                $this->txRent = $tx->rent;
+                $this->txReceived = $tx->received;
+            }
         } else {
             $this->editingTransactionId = null;
             $this->txDate = Carbon::today()->format('Y-m-d');
@@ -209,6 +218,7 @@ class VehicleAccount extends Component
             $this->txReceived = null;
             $this->txDue = null;
             $this->txDueAmount = null;
+            $this->txDueType = 'income';
             $this->txAmount = null;
         }
         $this->showTransactionModal = true;
@@ -247,17 +257,27 @@ class VehicleAccount extends Component
             if ($due < 0) $due = 0;
             $amount = floatval($this->txReceived);
         } elseif ($this->activeTab === 'cash') {
-            $amount = floatval($this->txAmount);
+            if (floatval($this->txRent) > 0) {
+                $amount = floatval($this->txRent);
+            } else {
+                $amount = floatval($this->txReceived);
+            }
         } elseif ($this->activeTab === 'due') {
-            $due = floatval($this->txDueAmount ?: $this->txDue);
-            $amount = $due;
+            $due = floatval($this->txRent) - floatval($this->txReceived);
+            if ($due < 0) $due = 0;
+            $amount = floatval($this->txReceived);
+        }
+
+        $typeToSave = $this->activeTab ?: 'income';
+        if ($this->editingTransactionId && $this->activeTab === 'due') {
+            $typeToSave = $this->txDueType ?: 'income';
         }
 
         VehicleTransaction::updateOrCreate(
             ['id' => $this->editingTransactionId],
             [
                 'vehicle_id'   => $this->selectedVehicleId,
-                'type'         => $this->activeTab ?: 'income',
+                'type'         => $typeToSave,
                 'date'         => $this->txDate ?: Carbon::today()->format('Y-m-d'),
                 'description'  => $this->txDescription,
                 'khotian_name' => $this->txKhotianName ?: $this->txDescription,
@@ -281,6 +301,7 @@ class VehicleAccount extends Component
 
     public function notifyCashRestriction()
     {
+        $this->dispatch('show-toast', message: 'এই হিসাব ক্যাশ খাতা থেকে পরিবর্তন করা যাবে না');
         session()->flash('message', 'এই হিসাব ক্যাশ খাতা থেকে পরিবর্তন করা যাবে না');
     }
 
@@ -375,6 +396,16 @@ class VehicleAccount extends Component
         $khotianCards = collect();
         $khotianDetailTransactions = collect();
 
+        $sumQuantity = 0;
+        $sumRent = 0;
+        $sumReceived = 0;
+        $sumDue = 0;
+        $sumCashIn = 0;
+        $sumCashOut = 0;
+        $sumDueGet = 0;
+        $sumDuePay = 0;
+        $sumExpenseAmount = 0;
+
         if ($this->selectedVehicleId) {
             // Vehicle specific calculations for tab top-right badges
             $vehicleTotalIncome  = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId)->where('type', 'income')->sum('received');
@@ -408,11 +439,32 @@ class VehicleAccount extends Component
                     } elseif ($this->activeTab === 'cash') {
                         $vTxQuery->where('type', 'cash');
                     } elseif ($this->activeTab === 'due') {
-                        $vTxQuery->where('type', 'due');
+                        $vTxQuery->where(function($q) {
+                            $q->where('due_amount', '>', 0)->orWhere('type', 'due');
+                        });
                     }
                 }
                 $totalReceivedForVehicle = (clone $vTxQuery)->sum('received');
-                $vehicleTransactions = $vTxQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate($this->perPage);
+
+                // Compute sums for footer summary row
+                $sumQuantity = (clone $vTxQuery)->sum('quantity');
+                $sumRent     = (clone $vTxQuery)->sum('rent');
+                $sumReceived = (clone $vTxQuery)->sum('received');
+                $sumDue      = (clone $vTxQuery)->sum('due_amount');
+
+                // Dynamic Cash In and Cash Out sum calculations
+                $userCashRows = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId)->where('type', 'cash')->get();
+                $userCashIn  = $userCashRows->sum(function($tx) { return $tx->received ?: 0; });
+                $userCashOut = $userCashRows->sum(function($tx) { return $tx->rent ?: ($tx->amount ?: 0); });
+
+                $sumCashIn  = $vehicleTotalIncome + $userCashIn;
+                $sumCashOut = $vehicleTotalExpense + $vehicleDuePay + $userCashOut;
+
+                $sumDueGet   = (clone $vTxQuery)->where('type', 'income')->sum('due_amount');
+                $sumDuePay   = (clone $vTxQuery)->where('type', 'expense')->sum('due_amount');
+                $sumExpenseAmount = (clone $vTxQuery)->where('type', 'expense')->sum('amount');
+
+                $vehicleTransactions = $vTxQuery->orderBy('updated_at', 'desc')->orderBy('id', 'desc')->paginate($this->perPage);
             }
 
             // If Khotian detail modal is open
@@ -432,7 +484,7 @@ class VehicleAccount extends Component
                 $khotianTotalPayment = (clone $kDetailQuery)->sum('received');
                 $khotianNetDue       = (clone $kDetailQuery)->sum('due_amount');
 
-                $khotianDetailTransactions = $kDetailQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate($this->perPage);
+                $khotianDetailTransactions = $kDetailQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate($this->khotianPerPage, ['*'], 'khotianPage');
             }
         }
 
@@ -472,6 +524,15 @@ class VehicleAccount extends Component
             'khotianTotalPayment'       => $khotianTotalPayment ?? 0,
             'khotianNetDue'             => $khotianNetDue ?? 0,
             'khotianList'               => $khotianList,
+            'sumQuantity'               => $sumQuantity,
+            'sumRent'                   => $sumRent,
+            'sumReceived'               => $sumReceived,
+            'sumDue'                    => $sumDue,
+            'sumCashIn'                 => $sumCashIn,
+            'sumCashOut'                => $sumCashOut,
+            'sumDueGet'                 => $sumDueGet,
+            'sumDuePay'                 => $sumDuePay,
+            'sumExpenseAmount'          => $sumExpenseAmount,
         ])->layout('layouts.app');
     }
 }

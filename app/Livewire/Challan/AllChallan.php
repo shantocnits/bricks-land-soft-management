@@ -412,6 +412,17 @@ class AllChallan extends Component
             }
         }
 
+        if (!empty($this->customer_address)) {
+            $existingRent = \App\Models\VehicleRent::where('address', trim($this->customer_address))->first();
+            if (!$existingRent) {
+                \App\Models\VehicleRent::create([
+                    'address' => trim($this->customer_address),
+                    'area' => null,
+                    'fare' => floatval($this->transport_rent ?: 0),
+                ]);
+            }
+        }
+
         foreach ($this->items as $item) {
             ChallanItem::create([
                 'challan_id' => $challan->id,
@@ -423,7 +434,9 @@ class AllChallan extends Component
             ]);
         }
 
-        session()->flash('message', $this->editingId ? 'চালান সফলভাবে আপডেট করা হয়েছে।' : 'চালান সফলভাবে সংরক্ষিত হয়েছে।');
+        $msg = $this->editingId ? 'চালান সফলভাবে আপডেট করা হয়েছে।' : 'চালান সফলভাবে সংরক্ষিত হয়েছে।';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', ['message' => $msg]);
         $this->closeModal();
     }
 
@@ -464,7 +477,9 @@ class AllChallan extends Component
     public function delete($id)
     {
         Challan::destroy($id);
-        session()->flash('message', 'চালান মুছে ফেলা হয়েছে।');
+        $msg = 'চালান মুছে ফেলা হয়েছে।';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', ['message' => $msg]);
     }
 
     public function openDeliveryModal($challanId)
@@ -555,7 +570,9 @@ class AllChallan extends Component
         }
 
         $this->showDeliveryModal = false;
-        session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+        $msg = 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', ['message' => $msg]);
     }
 
     public function openChallanDetailsModal($challanId)

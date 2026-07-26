@@ -838,7 +838,7 @@
                     <!-- Column 2 -->
                     <div class="bg-gray-50/50 dark:bg-slate-950/20 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 space-y-2">
                         <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>কাস্টমার আইডি</span> <span class="font-sans font-bold text-gray-800 dark:text-white">{{ $detailsChallan->id }}</span></div>
-                        <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>ধরন</span> <span class="text-gray-800 dark:text-white">রেগুলার চালান</span></div>
+                        <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>ধরন</span> <span class="text-gray-800 dark:text-white font-bold">{{ in_array($detailsChallan->challan_type, ['অগ্রিম', 'অগ্রিম চালান']) ? 'অগ্রিম চালান' : 'রেগুলার চালান' }}</span></div>
                         <div class="flex justify-between"><span>ডেলিভারি তারিখ</span> <span class="font-sans text-gray-500">—</span></div>
                     </div>
                     <!-- Column 3 -->

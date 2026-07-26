@@ -415,7 +415,9 @@
              ]);
          }
  
-         session()->flash('message', $this->editingId ? 'অগ্রিম চালান সফলভাবে আপডেট করা হয়েছে।' : 'অগ্রিম চালান সফলভাবে সংরক্ষিত হয়েছে।');
+         $msg = $this->editingId ? 'অগ্রিম চালান সফলভাবে আপডেট করা হয়েছে।' : 'অগ্রিম চালান সফলভাবে সংরক্ষিত হয়েছে।';
+         session()->flash('message', $msg);
+         $this->dispatch('show-toast', ['message' => $msg]);
          $this->closeModal();
      }
  
@@ -430,6 +432,7 @@
          $this->challan_no = $challan->challan_no;
          $this->date = $challan->date ? $challan->date->toDateString() : now()->toDateString();
          $this->notes = $challan->notes;
+         $this->challan_type = $challan->challan_type;
          $this->rent = $challan->rent;
          $this->transport_rent = $challan->transport_rent;
          $this->discount = $challan->discount;
@@ -455,7 +458,9 @@
      public function delete($id)
      {
          Challan::destroy($id);
-         session()->flash('message', 'চালান মুছে ফেলা হয়েছে।');
+         $msg = 'চালান মুছে ফেলা হয়েছে।';
+         session()->flash('message', $msg);
+         $this->dispatch('show-toast', ['message' => $msg]);
      }
  
      public function openDeliveryModal($challanId)
@@ -546,7 +551,9 @@
         }
 
         $this->showDeliveryModal = false;
-        session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+        $msg = 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', ['message' => $msg]);
     }
 
     public function openChallanDetailsModal($challanId)

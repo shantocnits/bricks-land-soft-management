@@ -63,13 +63,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/malamal-stock',          \App\Livewire\MalamalStock::class)->name('malamal-stock');
     Route::get('/task-manager',           \App\Livewire\TaskManager::class)->name('task-manager');
     Route::get('/vehicle-account',        \App\Livewire\VehicleAccount::class)->name('vehicle-account');
+    Route::get('/vehicle-rent',           \App\Livewire\VehicleRent::class)->name('vehicle-rent');
+    Route::get('/sms-khata',              \App\Livewire\SmsPage::class)->name('sms-khata');
     Route::get('/cash-khata',             \App\Livewire\CashKhata::class)->name('cash-khata');
     Route::get('/load-khata',             \App\Livewire\LoadKhata::class)->name('load-khata');
     Route::get('/unload-khata',           \App\Livewire\UnloadKhata::class)->name('unload-khata');
     Route::get('/stock-khata',            \App\Livewire\StockKhata::class)->name('stock-khata');
     Route::get('/about-us',               \App\Livewire\AboutUs::class)->name('about-us');
     Route::get('/faq',                    \App\Livewire\Faq::class)->name('faq');
-    
+    Route::get('/phone-number',           \App\Livewire\PhoneNumber::class)->name('phone-number');
+    Route::get('/deuna-pauna',            \App\Livewire\DeunaLedger::class)->name('deuna-pauna');
+    Route::get('/deuna-pauna/{id}',       \App\Livewire\DeunaProfile::class)->name('deuna-pauna.profile');
+
     // Profile Routes (from Breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

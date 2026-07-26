@@ -1,29 +1,49 @@
-@php
+﻿@php
 if (!function_exists('toBanglaNum')) {
     function toBanglaNum($num) {
+        $numStr = (string)$num;
+        if (str_contains($numStr, '.')) {
+            $numStr = rtrim(rtrim($numStr, '0'), '.');
+        }
         $en = ['0','1','2','3','4','5','6','7','8','9'];
         $bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
-        return str_replace($en, $bn, (string)$num);
+        return str_replace($en, $bn, $numStr);
     }
 }
 @endphp
 
 <div class="space-y-6 pb-12">
-    <!-- Toast Notification (Top Center Fixed) -->
-    @if(session()->has('message'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-             x-transition:enter="transition ease-out duration-300 transform"
-             x-transition:enter-start="-translate-y-10 opacity-0 scale-95"
-             x-transition:enter-end="translate-y-0 opacity-100 scale-100"
-             x-transition:leave="transition ease-in duration-200 transform"
-             x-transition:leave-start="translate-y-0 opacity-100 scale-100"
-             x-transition:leave-end="-translate-y-10 opacity-0 scale-95"
-             class="fixed top-5 left-1/2 -translate-x-1/2 z-[99999] px-5 py-3 bg-[#034C3C] text-white rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-xs border border-emerald-400/30">
-            <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-            <span>{{ session('message') }}</span>
-            <button @click="show = false" class="text-white/70 hover:text-white ml-2 cursor-pointer">✕</button>
-        </div>
-    @endif
+    <!-- Toast Notification (Top Center Fixed - Repeatable 2s Toast) -->
+    <div x-data="{ show: false, message: '', timer: null }"
+         x-init="
+            @if(session()->has('message'))
+                message = @js(session('message'));
+                show = true;
+                timer = setTimeout(() => show = false, 2000);
+            @endif
+         "
+         @show-toast.window="
+            message = $event.detail.message;
+            show = false;
+            if (timer) clearTimeout(timer);
+            $nextTick(() => {
+                show = true;
+                timer = setTimeout(() => show = false, 2000);
+            });
+         "
+         x-show="show"
+         x-transition:enter="transition ease-out duration-200 transform"
+         x-transition:enter-start="-translate-y-10 opacity-0 scale-95"
+         x-transition:enter-end="translate-y-0 opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150 transform"
+         x-transition:leave-start="translate-y-0 opacity-100 scale-100"
+         x-transition:leave-end="-translate-y-10 opacity-0 scale-95"
+         x-cloak
+         class="fixed top-5 left-1/2 -translate-x-1/2 z-[99999] px-5 py-3 bg-[#034C3C] text-white rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-xs border border-emerald-400/30">
+        <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span x-text="message"></span>
+        <button @click="show = false" class="text-white/70 hover:text-white ml-2 cursor-pointer">✕</button>
+    </div>
 
     <!-- Show Top Filter Bar and 6 KPI Cards ONLY when on main dashboard (!selectedVehicleId) -->
     @if(!$selectedVehicleId)
@@ -342,10 +362,10 @@ if (!function_exists('toBanglaNum')) {
                                         </div>
                                     @elseif($activeTab === 'cash')
                                         <div class="flex items-center gap-1.5">
-                                            <div class="px-2.5 py-1.5 bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-extrabold rounded-xl border border-purple-200 dark:border-purple-900/50">
+                                            <div class="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-extrabold rounded-xl border border-emerald-300/50 shadow-xs text-xs">
                                                 ক্যাশ: <span class="font-mono">৳ {{ toBanglaNum(number_format($vehicleCash, 0)) }}</span>
                                             </div>
-                                            <div class="px-2.5 py-1.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 font-extrabold rounded-xl border border-indigo-200 dark:border-indigo-900/50">
+                                            <div class="px-3 py-1.5 bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 font-extrabold rounded-xl border border-rose-300/50 shadow-xs text-xs">
                                                 জের: <span class="font-mono">৳ {{ toBanglaNum(number_format($vehicleCashJer, 0)) }}</span>
                                             </div>
                                         </div>
@@ -424,12 +444,12 @@ if (!function_exists('toBanglaNum')) {
                                                 <th class="py-3 px-4 text-center">বাটন</th>
                                             </tr>
                                         @elseif($activeTab === 'cash')
-                                            <tr class="bg-purple-50 dark:bg-slate-800/80 text-purple-800 dark:text-purple-300 font-bold border-b border-gray-150 dark:border-slate-800">
-                                                <th class="py-3 px-4"># sl</th>
+                                            <tr class="bg-[#009669] text-white font-bold">
+                                                <th class="py-3 px-4 text-center w-12">#</th>
                                                 <th class="py-3 px-4">ক্যাশের বিবরণ</th>
-                                                <th class="py-3 px-4 text-emerald-600 text-right">ক্যাশ ++</th>
-                                                <th class="py-3 px-4 text-rose-500 text-right">ক্যাশ --</th>
-                                                <th class="py-3 px-4 text-center">বাটন</th>
+                                                <th class="py-3 px-4 text-right">ক্যাশ ++</th>
+                                                <th class="py-3 px-4 text-right">ক্যাশ --</th>
+                                                <th class="py-3 px-4 text-center w-24">বাটন</th>
                                             </tr>
                                         @elseif($activeTab === 'due')
                                             <tr class="bg-rose-50 dark:bg-slate-800/80 text-rose-800 dark:text-rose-300 font-bold border-b border-gray-150 dark:border-slate-800">
@@ -452,130 +472,269 @@ if (!function_exists('toBanglaNum')) {
                                         @endif
                                     </thead>
                                     <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
-                                        @forelse($vehicleTransactions as $tx)
+                                        @if($activeTab === 'cash')
+                                            <!-- Top Fixed Summary Row 1: মোট আয় -->
                                             <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
-                                                @if($activeTab === 'income')
-                                                    <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">{{ \Carbon\Carbon::parse($tx->date)->format('d-m-Y') }}</td>
-                                                    <td class="py-2.5 px-4 font-bold text-emerald-700 dark:text-emerald-400 font-mono">{{ $selectedVehicle ? $selectedVehicle->name : '—' }}</td>
-                                                    <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</td>
-                                                    <td class="py-2.5 px-4 font-mono text-gray-700 dark:text-slate-300 text-right">{{ $tx->quantity ? toBanglaNum($tx->quantity) : '—' }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400 text-right">৳ {{ toBanglaNum(number_format($tx->rent, 0)) }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($tx->received, 0)) }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($tx->due_amount, 0)) }}</td>
-                                                    <td class="py-2.5 px-4 text-center">
-                                                        <div class="flex items-center justify-center gap-1.5">
-                                                            <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                            </button>
-                                                            <button type="button" wire:click="deleteTransaction({{ $tx->id }})" onclick="return confirm('মুছে ফেলবেন?')" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                @elseif($activeTab === 'expense')
-                                                    <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">{{ \Carbon\Carbon::parse($tx->date)->format('d-m-Y') }}</td>
-                                                    <td class="py-2.5 px-4 font-bold text-amber-700 dark:text-amber-400">{{ $tx->khotian_name ?: '—' }}</td>
-                                                    <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: '—' }}</td>
-                                                    <td class="py-2.5 px-4 font-mono text-gray-700 dark:text-slate-300 text-right">{{ $tx->quantity ? toBanglaNum($tx->quantity) : '—' }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400 text-right">৳ {{ toBanglaNum(number_format($tx->rent, 0)) }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($tx->received, 0)) }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($tx->due_amount, 0)) }}</td>
-                                                    <td class="py-2.5 px-4 text-center">
-                                                        <div class="flex items-center justify-center gap-1.5">
-                                                            <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                            </button>
-                                                            <button type="button" wire:click="deleteTransaction({{ $tx->id }})" onclick="return confirm('মুছে ফেলবেন?')" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                @elseif($activeTab === 'cash')
-                                                    <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">{{ toBanglaNum($loop->iteration) }}</td>
-                                                    <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: '—' }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->type === 'income' || $tx->received > 0 ? '৳ ' . toBanglaNum(number_format($tx->received ?: $tx->amount, 0)) : '—' }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->type === 'expense' || ($tx->amount > 0 && $tx->type !== 'income') ? '৳ ' . toBanglaNum(number_format($tx->amount ?: $tx->rent, 0)) : '—' }}</td>
-                                                    <td class="py-2.5 px-4 text-center">
-                                                        <div class="flex items-center justify-center gap-1.5">
-                                                            <button type="button" wire:click="notifyCashRestriction()" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                            </button>
-                                                            <button type="button" wire:click="notifyCashRestriction()" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                @elseif($activeTab === 'due')
-                                                    <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">{{ \Carbon\Carbon::parse($tx->date)->format('d-m-Y') }}</td>
-                                                    <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->type === 'income' ? '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) : '—' }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->type === 'expense' ? '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) : '—' }}</td>
-                                                    <td class="py-2.5 px-4 text-center">
-                                                        <div class="flex items-center justify-center gap-1.5">
-                                                            <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                            </button>
-                                                            <button type="button" wire:click="deleteTransaction({{ $tx->id }})" onclick="return confirm('মুছে ফেলবেন?')" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                @elseif($activeTab === 'history')
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap">#{{ toBanglaNum($tx->id) }}</td>
-                                                    <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">{{ \Carbon\Carbon::parse($tx->date)->format('d-m-Y') }}</td>
-                                                    <td class="py-2.5 px-4 font-mono text-gray-500 dark:text-slate-400 whitespace-nowrap text-[11px]">{{ \Carbon\Carbon::parse($tx->updated_at)->format('d-m-Y h:i A') }}</td>
-                                                    <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->received ? '৳ ' . toBanglaNum(number_format($tx->received, 0)) : '—' }}</td>
-                                                    <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->type === 'expense' || $tx->amount ? '৳ ' . toBanglaNum(number_format($tx->amount ?: $tx->rent, 0)) : '—' }}</td>
-                                                    <td class="py-2.5 px-4 text-center">
-                                                        <div class="flex items-center justify-center gap-1.5">
-                                                            <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                            </button>
-                                                            <button type="button" wire:click="deleteTransaction({{ $tx->id }})" onclick="return confirm('মুছে ফেলবেন?')" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                @endif
+                                                <td class="py-2.5 px-4 font-mono font-bold text-center text-gray-500">1</td>
+                                                <td class="py-2.5 px-4 font-bold text-[#009669] dark:text-emerald-400">মোট আয়</td>
+                                                <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($vehicleTotalIncome, 0)) }}</td>
+                                                <td class="py-2.5 px-4 font-mono text-gray-400 text-right">0</td>
+                                                 <td class="py-2.5 px-4 text-center text-gray-400 dark:text-slate-600 select-none">&mdash;</td>
                                             </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="8" class="py-12 text-center text-gray-400 font-semibold">কোনো তথ্য পাওয়া যায়নি।</td>
+                                            <!-- Top Fixed Summary Row 2: মোট ব্যয় -->
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
+                                                <td class="py-2.5 px-4 font-mono font-bold text-center text-rose-500">2</td>
+                                                <td class="py-2.5 px-4 font-bold text-rose-600 dark:text-rose-400">মোট ব্যয়</td>
+                                                <td class="py-2.5 px-4 font-mono text-gray-400 text-right">0</td>
+                                                <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($vehicleTotalExpense, 0)) }}</td>
+                                                 <td class="py-2.5 px-4 text-center text-gray-400 dark:text-slate-600 select-none">&mdash;</td>
                                             </tr>
-                                        @endforelse
+                                            <!-- Top Fixed Summary Row 3: মোট কালেকশন -->
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
+                                                <td class="py-2.5 px-4 font-mono font-bold text-center text-emerald-600">3</td>
+                                                <td class="py-2.5 px-4 font-bold text-[#009669] dark:text-emerald-400">মোট কালেকশন</td>
+                                                <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($vehicleTotalIncome, 0)) }}</td>
+                                                <td class="py-2.5 px-4 font-mono text-gray-400 text-right">0</td>
+                                                 <td class="py-2.5 px-4 text-center text-gray-400 dark:text-slate-600 select-none">&mdash;</td>
+                                            </tr>
+                                            <!-- Top Fixed Summary Row 4: বাকি পেমেন্ট -->
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
+                                                <td class="py-2.5 px-4 font-mono font-bold text-center text-rose-500">4</td>
+                                                <td class="py-2.5 px-4 font-bold text-rose-600 dark:text-rose-400">বাকি পেমেন্ট</td>
+                                                <td class="py-2.5 px-4 font-mono text-gray-400 text-right">0</td>
+                                                <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($vehicleDuePay, 0)) }}</td>
+                                                 <td class="py-2.5 px-4 text-center text-gray-400 dark:text-slate-600 select-none">&mdash;</td>
+                                            </tr>
+
+                                            <!-- User Added Dynamic Cash Transactions (Rows 5+) -->
+                                            @foreach($vehicleTransactions as $cIndex => $tx)
+                                                <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors bg-sky-950/10">
+                                                    <td class="py-2.5 px-4 font-mono font-bold text-center text-sky-400">{{ toBanglaNum(5 + $cIndex) }}</td>
+                                                    <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</td>
+                                                    <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->received > 0 ? '৳ ' . toBanglaNum(number_format($tx->received, 0)) : '0' }}</td>
+                                                    <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->rent > 0 ? '৳ ' . toBanglaNum(number_format($tx->rent, 0)) : ($tx->amount > 0 && $tx->received == 0 ? '৳ ' . toBanglaNum(number_format($tx->amount, 0)) : '0') }}</td>
+                                                    <td class="py-2.5 px-4 text-center">
+                                                        <div class="flex items-center justify-center gap-2">
+                                                            <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-sky-500/20 text-sky-400 hover:bg-sky-500/30 hover:text-sky-300 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                            </button>
+                                                            <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 hover:text-rose-300 cursor-pointer transition-all shadow-xs" title="ডিলেট">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @else
+                                            @forelse($vehicleTransactions as $tx)
+                                                <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
+                                                    @if($activeTab === 'income')
+                                                        <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">
+                                                            {{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('d-m-Y') }}
+                                                            <span class="text-[10px] text-gray-400 font-semibold block">({{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('h:i A') }})</span>
+                                                        </td>
+                                                        <td class="py-2.5 px-4 font-bold text-emerald-700 dark:text-emerald-400 font-mono">{{ $selectedVehicle ? $selectedVehicle->name : '—' }}</td>
+                                                        <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</td>
+                                                        <td class="py-2.5 px-4 font-mono text-gray-700 dark:text-slate-300 text-right">{{ $tx->quantity ? toBanglaNum($tx->quantity) : '—' }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400 text-right">৳ {{ toBanglaNum(number_format($tx->rent, 0)) }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($tx->received, 0)) }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($tx->due_amount, 0)) }}</td>
+                                                        <td class="py-2.5 px-4 text-center">
+                                                            <div class="flex items-center justify-center gap-1.5">
+                                                                <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                </button>
+                                                                <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    @elseif($activeTab === 'expense')
+                                                        <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">
+                                                            {{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('d-m-Y') }}
+                                                            <span class="text-[10px] text-gray-400 font-semibold block">({{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('h:i A') }})</span>
+                                                        </td>
+                                                        <td class="py-2.5 px-4 font-bold text-amber-700 dark:text-amber-400">{{ $tx->khotian_name ?: '—' }}</td>
+                                                        <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: '—' }}</td>
+                                                        <td class="py-2.5 px-4 font-mono text-gray-700 dark:text-slate-300 text-right">{{ $tx->quantity ? toBanglaNum($tx->quantity) : '—' }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400 text-right">৳ {{ toBanglaNum(number_format($tx->rent, 0)) }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($tx->received, 0)) }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($tx->due_amount, 0)) }}</td>
+                                                        <td class="py-2.5 px-4 text-center">
+                                                            <div class="flex items-center justify-center gap-1.5">
+                                                                <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                </button>
+                                                                <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    @elseif($activeTab === 'due')
+                                                        <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">
+                                                            {{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('d-m-Y') }}
+                                                            <span class="text-[10px] text-gray-400 font-semibold block">({{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('h:i A') }})</span>
+                                                        </td>
+                                                        <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->type === 'income' ? '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) : '—' }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->type === 'expense' ? '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) : '—' }}</td>
+                                                        <td class="py-2.5 px-4 text-center">
+                                                            <div class="flex items-center justify-center gap-1.5">
+                                                                <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                </button>
+                                                                <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    @elseif($activeTab === 'history')
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap">#{{ toBanglaNum($tx->id) }}</td>
+                                                        <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">
+                                                            {{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('d-m-Y') }}
+                                                            <span class="text-[10px] text-gray-400 font-semibold block">({{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('h:i A') }})</span>
+                                                        </td>
+                                                        <td class="py-2.5 px-4 font-mono text-gray-500 dark:text-slate-400 whitespace-nowrap text-[11px]">{{ \Carbon\Carbon::parse($tx->updated_at)->setTimezone('Asia/Dhaka')->format('d-m-Y h:i A') }}</td>
+                                                        <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->received ? '৳ ' . toBanglaNum(number_format($tx->received, 0)) : '—' }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->type === 'expense' || $tx->amount ? '৳ ' . toBanglaNum(number_format($tx->amount ?: $tx->rent, 0)) : '—' }}</td>
+                                                        <td class="py-2.5 px-4 text-center">
+                                                            <div class="flex items-center justify-center gap-1.5">
+                                                                <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    @endif
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="8" class="py-12 text-center text-gray-400 font-semibold">কোনো তথ্য পাওয়া যায়নি।</td>
+                                                </tr>
+                                            @endforelse
+                                        @endif
                                     </tbody>
+                                    <!-- Summary Row (Bottom Total Row) -->
+                                    <tfoot class="bg-gray-100 dark:bg-slate-800/90 font-black text-gray-900 dark:text-white border-t-2 border-gray-200 dark:border-slate-700">
+                                        @if($activeTab === 'income')
+                                            <tr>
+                                                <td class="py-3 px-4">সর্বমোট:</td>
+                                                <td class="py-3 px-4">—</td>
+                                                <td class="py-3 px-4">—</td>
+                                                <td class="py-3 px-4 text-right font-mono">{{ toBanglaNum($sumQuantity) }}</td>
+                                                <td class="py-3 px-4 text-right font-mono text-amber-600">৳ {{ toBanglaNum(number_format($sumRent, 0)) }}</td>
+                                                <td class="py-3 px-4 text-right font-mono text-emerald-600">৳ {{ toBanglaNum(number_format($sumReceived, 0)) }}</td>
+                                                <td class="py-3 px-4 text-right font-mono text-rose-500">৳ {{ toBanglaNum(number_format($sumDue, 0)) }}</td>
+                                                <td class="py-3 px-4">—</td>
+                                            </tr>
+                                        @elseif($activeTab === 'expense')
+                                            <tr>
+                                                <td class="py-3 px-4">সর্বমোট:</td>
+                                                <td class="py-3 px-4">—</td>
+                                                <td class="py-3 px-4">—</td>
+                                                <td class="py-3 px-4 text-right font-mono">{{ toBanglaNum($sumQuantity) }}</td>
+                                                <td class="py-3 px-4 text-right font-mono text-amber-600">৳ {{ toBanglaNum(number_format($sumRent, 0)) }}</td>
+                                                <td class="py-3 px-4 text-right font-mono text-emerald-600">৳ {{ toBanglaNum(number_format($sumReceived, 0)) }}</td>
+                                                <td class="py-3 px-4 text-right font-mono text-rose-500">৳ {{ toBanglaNum(number_format($sumDue, 0)) }}</td>
+                                                <td class="py-3 px-4">—</td>
+                                            </tr>
+                                        @elseif($activeTab === 'cash')
+                                            <tr>
+                                                <td class="py-3 px-4">সর্বমোট:</td>
+                                                <td class="py-3 px-4">—</td>
+                                                <td class="py-3 px-4 text-right font-mono text-emerald-600">৳ {{ toBanglaNum(number_format($sumCashIn, 0)) }}</td>
+                                                <td class="py-3 px-4 text-right font-mono text-rose-500">৳ {{ toBanglaNum(number_format($sumCashOut, 0)) }}</td>
+                                                <td class="py-3 px-4">—</td>
+                                            </tr>
+                                        @elseif($activeTab === 'due')
+                                            <tr>
+                                                <td class="py-3 px-4">সর্বমোট:</td>
+                                                <td class="py-3 px-4">—</td>
+                                                <td class="py-3 px-4 text-right font-mono text-emerald-600">৳ {{ toBanglaNum(number_format($sumDueGet, 0)) }}</td>
+                                                <td class="py-3 px-4 text-right font-mono text-rose-500">৳ {{ toBanglaNum(number_format($sumDuePay, 0)) }}</td>
+                                                <td class="py-3 px-4">—</td>
+                                            </tr>
+                                        @elseif($activeTab === 'history')
+                                            <tr>
+                                                <td class="py-3 px-4">সর্বমোট:</td>
+                                                <td class="py-3 px-4">—</td>
+                                                <td class="py-3 px-4">—</td>
+                                                <td class="py-3 px-4">—</td>
+                                                <td class="py-3 px-4 text-right font-mono text-emerald-600">৳ {{ toBanglaNum(number_format($sumReceived, 0)) }}</td>
+                                                <td class="py-3 px-4 text-right font-mono text-rose-500">৳ {{ toBanglaNum(number_format($sumExpenseAmount, 0)) }}</td>
+                                                <td class="py-3 px-4">—</td>
+                                            </tr>
+                                        @endif
+                                    </tfoot>
                                 </table>
                             </div>
 
-                            <!-- Mobile Box View -->
+                            <!-- Mobile Box View (Full Data Cards) -->
                             <div class="block sm:hidden p-4 space-y-3">
                                 @forelse($vehicleTransactions as $tx)
-                                    <div class="p-3.5 bg-gray-50 dark:bg-slate-800/60 rounded-2xl border border-gray-200 dark:border-slate-700 space-y-2 text-xs">
-                                        <div class="flex items-center justify-between">
-                                            <span class="font-mono text-gray-500 dark:text-slate-400 text-[11px]">{{ \Carbon\Carbon::parse($tx->date)->format('d-m-Y') }}</span>
-                                            <div class="flex gap-1">
-                                                <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 cursor-pointer">✏️</button>
-                                                <button type="button" wire:click="deleteTransaction({{ $tx->id }})" onclick="return confirm('মুছে ফেলবেন?')" class="p-1 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 cursor-pointer">🗑️</button>
+                                    <div class="p-4 bg-gray-50 dark:bg-slate-800/60 rounded-2xl border border-gray-200 dark:border-slate-700 space-y-2 text-xs">
+                                        <div class="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 pb-2">
+                                            <div>
+                                                <span class="font-mono font-bold text-gray-700 dark:text-slate-300 text-xs">
+                                                    {{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('d-m-Y') }}
+                                                </span>
+                                                <span class="text-[10px] text-gray-400 font-semibold block">
+                                                    ({{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('h:i A') }})
+                                                </span>
+                                            </div>
+                                            <div class="flex gap-1.5">
+                                                @if($activeTab === 'cash')
+                                                    <button type="button" wire:click="notifyCashRestriction()" @click="$dispatch('show-toast', { message: 'এই হিসাব ক্যাশ খাতা থেকে পরিবর্তন করা যাবে না' })" class="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 cursor-pointer">✏️</button>
+                                                    <button type="button" wire:click="notifyCashRestriction()" @click="$dispatch('show-toast', { message: 'এই হিসাব ক্যাশ খাতা থেকে পরিবর্তন করা যাবে না' })" class="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 cursor-pointer">🗑️</button>
+                                                @elseif($activeTab === 'history')
+                                                    <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 cursor-pointer">🗑️</button>
+                                                @else
+                                                    <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 cursor-pointer">✏️</button>
+                                                    <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 cursor-pointer">🗑️</button>
+                                                @endif
                                             </div>
                                         </div>
-                                        <div class="font-bold text-gray-900 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</div>
+
+                                        <div class="space-y-1">
+                                            <div class="font-black text-gray-900 dark:text-white text-xs">
+                                                {{ $tx->description ?: ($tx->khotian_name ?: '—') }}
+                                            </div>
+                                            @if($tx->khotian_name && $tx->khotian_name !== $tx->description)
+                                                <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                                                    খতিয়ান: {{ $tx->khotian_name }}
+                                                </div>
+                                            @endif
+                                        </div>
+
                                         @if($activeTab === 'income')
-                                            <div class="flex justify-between font-mono font-bold">
-                                                <span class="text-amber-600">ভাড়া: ৳{{ toBanglaNum(number_format($tx->rent, 0)) }}</span>
-                                                <span class="text-emerald-600">জমা: ৳{{ toBanglaNum(number_format($tx->received, 0)) }}</span>
-                                                <span class="text-rose-500">বাকি: ৳{{ toBanglaNum(number_format($tx->due_amount, 0)) }}</span>
+                                            <div class="grid grid-cols-2 gap-2 pt-1 font-mono text-xs border-t border-gray-150 dark:border-slate-700/60">
+                                                <div><span class="text-gray-500">পরিমাণ:</span> <span class="font-bold">{{ $tx->quantity ? toBanglaNum($tx->quantity) : '—' }}</span></div>
+                                                <div><span class="text-amber-600 font-bold">ভাড়া:</span> <span class="font-bold text-amber-600">৳{{ toBanglaNum(number_format($tx->rent, 0)) }}</span></div>
+                                                <div><span class="text-emerald-600 font-bold">জমা:</span> <span class="font-bold text-emerald-600">৳{{ toBanglaNum(number_format($tx->received, 0)) }}</span></div>
+                                                <div><span class="text-rose-500 font-bold">বাকি:</span> <span class="font-bold text-rose-500">৳{{ toBanglaNum(number_format($tx->due_amount, 0)) }}</span></div>
                                             </div>
                                         @elseif($activeTab === 'expense')
-                                            <div class="flex justify-between font-mono font-bold">
-                                                <span class="text-amber-600">বিল: ৳{{ toBanglaNum(number_format($tx->rent, 0)) }}</span>
-                                                <span class="text-emerald-600">জমা: ৳{{ toBanglaNum(number_format($tx->received, 0)) }}</span>
-                                                <span class="text-rose-500">বাকি: ৳{{ toBanglaNum(number_format($tx->due_amount, 0)) }}</span>
+                                            <div class="grid grid-cols-2 gap-2 pt-1 font-mono text-xs border-t border-gray-150 dark:border-slate-700/60">
+                                                <div><span class="text-gray-500">পরিমাণ:</span> <span class="font-bold">{{ $tx->quantity ? toBanglaNum($tx->quantity) : '—' }}</span></div>
+                                                <div><span class="text-amber-600 font-bold">বিল:</span> <span class="font-bold text-amber-600">৳{{ toBanglaNum(number_format($tx->rent, 0)) }}</span></div>
+                                                <div><span class="text-emerald-600 font-bold">পেমেন্ট:</span> <span class="font-bold text-emerald-600">৳{{ toBanglaNum(number_format($tx->received, 0)) }}</span></div>
+                                                <div><span class="text-rose-500 font-bold">বাকি:</span> <span class="font-bold text-rose-500">৳{{ toBanglaNum(number_format($tx->due_amount, 0)) }}</span></div>
                                             </div>
                                         @elseif($activeTab === 'cash')
-                                            <div class="font-mono font-bold text-purple-600">পরিমাণ: ৳{{ toBanglaNum(number_format($tx->amount, 0)) }}</div>
+                                            <div class="flex items-center justify-between pt-1 font-mono text-xs border-t border-gray-150 dark:border-slate-700/60 font-bold">
+                                                <span class="text-emerald-600">ক্যাশ ++: {{ $tx->type === 'income' || $tx->received > 0 ? '৳ ' . toBanglaNum(number_format($tx->received ?: $tx->amount, 0)) : '—' }}</span>
+                                                <span class="text-rose-500">ক্যাশ --: {{ $tx->type === 'expense' || ($tx->amount > 0 && $tx->type !== 'income' && $tx->received == 0) ? '৳ ' . toBanglaNum(number_format($tx->amount ?: $tx->rent, 0)) : '—' }}</span>
+                                            </div>
                                         @elseif($activeTab === 'due')
-                                            <div class="font-mono font-bold text-rose-500">বাকি: ৳{{ toBanglaNum(number_format($tx->due_amount, 0)) }}</div>
+                                            <div class="flex items-center justify-between pt-1 font-mono text-xs border-t border-gray-150 dark:border-slate-700/60 font-bold">
+                                                <span class="text-emerald-600">ভাড়া পাবো: {{ $tx->type === 'income' ? '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) : '—' }}</span>
+                                                <span class="text-rose-500">পেমেন্ট পাবে: {{ $tx->type === 'expense' ? '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) : '—' }}</span>
+                                            </div>
+                                        @elseif($activeTab === 'history')
+                                            <div class="flex items-center justify-between pt-1 font-mono text-xs border-t border-gray-150 dark:border-slate-700/60 font-bold">
+                                                <span class="text-emerald-600">পেয়েছি: {{ $tx->received ? '৳ ' . toBanglaNum(number_format($tx->received, 0)) : '—' }}</span>
+                                                <span class="text-rose-500">দিয়েছি: {{ $tx->type === 'expense' || $tx->amount ? '৳ ' . toBanglaNum(number_format($tx->amount ?: $tx->rent, 0)) : '—' }}</span>
+                                            </div>
                                         @endif
                                     </div>
                                 @empty
@@ -743,29 +902,30 @@ if (!function_exists('toBanglaNum')) {
                                         return this.allItems.filter(n => n.toLowerCase().includes(q));
                                     }
                                 }"
+                                @click.outside="open = false"
                                 class="relative">
                                 <div class="relative">
-                                    <span class="absolute left-3.5 top-3 text-gray-400">👤</span>
+                                    <span class="absolute left-3.5 top-3 text-gray-400 pointer-events-none">👤</span>
                                     <input
                                         type="text"
                                         wire:model.live="txKhotianName"
                                         @focus="open = true"
-                                        @click="open = true"
+                                        @click.stop="open = true"
                                         @input="open = true"
                                         placeholder="খতিয়ান নির্বাচন করুন বা নতুন টাইপ করুন..."
-                                        class="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-bold focus:outline-none focus:border-emerald-500 cursor-text text-xs">
-                                    <button type="button" @click="open = !open" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
-                                        <svg class="w-4 h-4 transition-transform" :class="{'rotate-180': open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                        class="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-bold focus:outline-none focus:border-emerald-500 cursor-text text-xs">
+                                    <button type="button" @click.stop="open = !open" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors">
+                                        <svg class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                                     </button>
                                 </div>
                                 <div
                                     x-show="open && filteredItems.length > 0"
-                                    @click.outside="open = false"
                                     x-cloak
                                     class="absolute left-0 right-0 mt-1 z-[9999] max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl py-1">
                                     <template x-for="kName in filteredItems" :key="kName">
                                         <button
                                             type="button"
+                                            @mousedown.prevent
                                             @click="$wire.set('txKhotianName', kName); open = false;"
                                             class="w-full text-left px-4 py-2 text-xs font-bold hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer text-gray-700 dark:text-slate-200 flex items-center justify-between">
                                             <span x-text="kName"></span>
@@ -844,61 +1004,47 @@ if (!function_exists('toBanglaNum')) {
                     </div>
 
                 @elseif($activeTab === 'cash')
-                    <!-- MODAL TYPE 3: ক্যাশ হিসাব -->
+                    <!-- MODAL TYPE 3: ক্যাশ হিসাব (Image 1 Match) -->
                     <div class="flex items-start justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 flex items-center justify-center text-2xl shadow-xs">💵</div>
+                            <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl font-bold flex-shrink-0">💼</div>
                             <div>
-                                <h3 class="text-lg font-black text-gray-900 dark:text-white">ক্যাশ হিসাব</h3>
-                                <p class="text-xs text-gray-400 font-bold">নগদ লেনদেনের তথ্য যোগ করুন</p>
+                                <h3 class="text-base sm:text-lg font-black text-gray-900 dark:text-white">ক্যাশের হিসাব</h3>
+                                <p class="text-xs text-gray-400 font-bold">মালিকের লেনদেন রেকর্ড</p>
                             </div>
                         </div>
-                        <button type="button" wire:click="$set('showTransactionModal', false)" class="text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer p-2 rounded-full bg-gray-100 dark:bg-slate-800 transition-all">✕</button>
+                        <button type="button" wire:click="$set('showTransactionModal', false)" class="text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer p-2 rounded-full bg-gray-100 dark:bg-slate-800 transition-all text-xs font-bold">✕</button>
                     </div>
 
                     <div class="space-y-4 text-xs mt-4">
                         <div>
-                            <label class="block font-bold text-gray-700 dark:text-slate-300 mb-1">বিবরণ</label>
+                            <label class="block font-bold text-gray-700 dark:text-slate-300 mb-1">হিসাবের বিবরণ</label>
                             <div class="relative">
                                 <span class="absolute left-3.5 top-3 text-gray-400">📄</span>
-                                <input type="text" wire:model="txDescription" placeholder="বিবরণ লিখুন"
+                                <input type="text" wire:model="txDescription" placeholder="বিবরণ লিখুন (যেমন: ব্যাংক জমা)"
                                        class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-bold focus:outline-none focus:border-emerald-500">
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block font-bold text-purple-600 dark:text-purple-400 mb-1">পরিমাণ</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-2.5 text-purple-600 font-bold">৳</span>
-                                <input type="number" wire:model.live="txAmount" placeholder="0"
-                                       class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-purple-200 dark:border-purple-900/40 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 font-mono font-bold">
-                            </div>
-                        </div>
+                        <div class="p-4 bg-gray-50/70 dark:bg-slate-950/60 border border-gray-150 dark:border-slate-800 rounded-2xl">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-bold text-emerald-600 dark:text-emerald-400 mb-1">ক্যাশ জমা (++)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-emerald-600 font-bold">৳</span>
+                                        <input type="number" wire:model.live="txReceived" placeholder="0"
+                                               class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-sm focus:outline-none focus:border-emerald-500">
+                                    </div>
+                                </div>
 
-                        <!-- Date -->
-                        <div>
-                            <label class="block font-bold text-gray-700 dark:text-slate-300 mb-1">তারিখ</label>
-                            <div x-data="{
-                                fp: null,
-                                init() {
-                                    this.fp = flatpickr($refs.cashDateInput, {
-                                        locale: fpLocale,
-                                        dateFormat: 'Y-m-d',
-                                        altInput: true,
-                                        altFormat: 'd-m-Y',
-                                        allowInput: false,
-                                        disableMobile: true,
-                                        defaultDate: $wire.txDate || new Date(),
-                                        onChange: (dates, str) => { $wire.set('txDate', str); }
-                                    });
-                                    $wire.watch('txDate', (val) => { val ? this.fp.setDate(val, false) : this.fp.clear(); });
-                                }
-                            }" class="relative" wire:ignore>
-                                <input x-ref="cashDateInput" type="text" placeholder="dd/mm/yy" readonly
-                                       class="w-full pl-4 pr-8 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-mono font-bold text-xs cursor-pointer focus:outline-none">
-                                <span class="absolute right-2.5 top-3 text-gray-400 pointer-events-none">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                </span>
+                                <div>
+                                    <label class="block font-bold text-rose-500 dark:text-rose-400 mb-1">ক্যাশ খরচ (--)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-rose-500 font-bold">৳</span>
+                                        <input type="number" wire:model.live="txRent" placeholder="0"
+                                               class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 font-mono font-bold text-sm focus:outline-none focus:border-rose-500">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -909,27 +1055,27 @@ if (!function_exists('toBanglaNum')) {
                             ক্লিয়ার
                         </button>
                         <button type="button" wire:click="saveTransaction()"
-                                class="flex-1 py-2.5 bg-[#034C3C] hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-xs">
+                                class="flex-1 py-2.5 bg-[#009669] hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-xs">
                             সেভ করুন
                         </button>
                     </div>
 
                 @elseif($activeTab === 'due')
-                    <!-- MODAL TYPE 4: বাকি হিসাব -->
+                    <!-- MODAL TYPE 4: বাকি হিসাব (Images 2 & 3 Match) -->
                     <div class="flex items-start justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center text-2xl shadow-xs">📋</div>
+                            <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl font-bold flex-shrink-0">💵</div>
                             <div>
-                                <h3 class="text-lg font-black text-gray-900 dark:text-white">বাকি হিসাব</h3>
-                                <p class="text-xs text-gray-400 font-bold">দেনা-পাওনার তথ্য যোগ করুন</p>
+                                <h3 class="text-base sm:text-lg font-black text-gray-900 dark:text-white">বাকির হিসাব</h3>
+                                <p class="text-xs text-gray-400 font-bold">বাকি বা দেনা-পাওনা আপডেট</p>
                             </div>
                         </div>
-                        <button type="button" wire:click="$set('showTransactionModal', false)" class="text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer p-2 rounded-full bg-gray-100 dark:bg-slate-800 transition-all">✕</button>
+                        <button type="button" wire:click="$set('showTransactionModal', false)" class="text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer p-2 rounded-full bg-gray-100 dark:bg-slate-800 transition-all text-xs font-bold">✕</button>
                     </div>
 
                     <div class="space-y-4 text-xs mt-4">
                         <div>
-                            <label class="block font-bold text-gray-700 dark:text-slate-300 mb-1">বিবরণ</label>
+                            <label class="block font-bold text-gray-700 dark:text-slate-300 mb-1">হিসাবের বিবরণ</label>
                             <div class="relative">
                                 <span class="absolute left-3.5 top-3 text-gray-400">📄</span>
                                 <input type="text" wire:model="txDescription" placeholder="বিবরণ লিখুন"
@@ -937,40 +1083,76 @@ if (!function_exists('toBanglaNum')) {
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block font-bold text-rose-600 dark:text-rose-400 mb-1">বাকি পরিমাণ</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-2.5 text-rose-600 font-bold">৳</span>
-                                <input type="number" wire:model.live="txDueAmount" placeholder="0"
-                                       class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-mono font-bold">
-                            </div>
-                        </div>
+                        <div class="p-4 bg-gray-50/70 dark:bg-slate-950/60 border border-gray-150 dark:border-slate-800 rounded-2xl space-y-3">
+                            @if($txDueType === 'income')
+                                <!-- Image 2 Layout: ভাড়া পাবো (মোট পাবো vs পেলাম) -->
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block font-bold text-amber-600 dark:text-amber-400 mb-1">মোট পাবো</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-2.5 text-amber-600 font-bold">৳</span>
+                                            <input type="number" wire:model.live="txRent" placeholder="0" readonly
+                                                   class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 text-amber-700 dark:text-amber-400 font-mono font-bold text-sm">
+                                        </div>
+                                    </div>
 
-                        <!-- Date -->
-                        <div>
-                            <label class="block font-bold text-gray-700 dark:text-slate-300 mb-1">তারিখ</label>
-                            <div x-data="{
-                                fp: null,
-                                init() {
-                                    this.fp = flatpickr($refs.dueDateInput, {
-                                        locale: fpLocale,
-                                        dateFormat: 'Y-m-d',
-                                        altInput: true,
-                                        altFormat: 'd-m-Y',
-                                        allowInput: false,
-                                        disableMobile: true,
-                                        defaultDate: $wire.txDate || new Date(),
-                                        onChange: (dates, str) => { $wire.set('txDate', str); }
-                                    });
-                                    $wire.watch('txDate', (val) => { val ? this.fp.setDate(val, false) : this.fp.clear(); });
-                                }
-                            }" class="relative" wire:ignore>
-                                <input x-ref="dueDateInput" type="text" placeholder="dd/mm/yy" readonly
-                                       class="w-full pl-4 pr-8 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-mono font-bold text-xs cursor-pointer focus:outline-none">
-                                <span class="absolute right-2.5 top-3 text-gray-400 pointer-events-none">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                </span>
-                            </div>
+                                    <div>
+                                        <label class="block font-bold text-emerald-600 dark:text-emerald-400 mb-1">পেলাম (জমা)</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-2.5 text-emerald-600 font-bold">৳</span>
+                                            <input type="number" wire:model.live="txReceived" placeholder="0"
+                                                   class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-sm focus:outline-none focus:border-emerald-500">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-rose-600 dark:text-rose-400 mb-1">এখনও বাকি আছে</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-rose-600 font-bold">৳</span>
+                                        @php
+                                            $remDue = floatval($txRent) - floatval($txReceived);
+                                            if ($remDue < 0) $remDue = 0;
+                                        @endphp
+                                        <input type="text" value="{{ toBanglaNum(number_format($remDue, 0)) }}" readonly
+                                               class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-mono font-bold text-sm">
+                                    </div>
+                                </div>
+                            @else
+                                <!-- Image 3 Layout: পেমেন্ট পাবে (মোট পাবে vs দিলাম) -->
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block font-bold text-amber-600 dark:text-amber-400 mb-1">মোট পাবে</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-2.5 text-amber-600 font-bold">৳</span>
+                                            <input type="number" wire:model.live="txRent" placeholder="0" readonly
+                                                   class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 text-amber-700 dark:text-amber-400 font-mono font-bold text-sm">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block font-bold text-emerald-600 dark:text-emerald-400 mb-1">দিলাম (পরিশোধ)</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-2.5 text-emerald-600 font-bold">৳</span>
+                                            <input type="number" wire:model.live="txReceived" placeholder="0"
+                                                   class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-sm focus:outline-none focus:border-emerald-500">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-rose-600 dark:text-rose-400 mb-1">এখনও বাকি আছে</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-rose-600 font-bold">৳</span>
+                                        @php
+                                            $remDue = floatval($txRent) - floatval($txReceived);
+                                            if ($remDue < 0) $remDue = 0;
+                                        @endphp
+                                        <input type="text" value="{{ toBanglaNum(number_format($remDue, 0)) }}" readonly
+                                               class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-mono font-bold text-sm">
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -980,8 +1162,8 @@ if (!function_exists('toBanglaNum')) {
                             বাতিল
                         </button>
                         <button type="button" wire:click="saveTransaction()"
-                                class="flex-1 py-2.5 bg-[#034C3C] hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-xs">
-                            সেভ করুন
+                                class="flex-1 py-2.5 bg-[#009669] hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-xs">
+                            আপডেট করুন
                         </button>
                     </div>
                 @endif
@@ -989,97 +1171,174 @@ if (!function_exists('toBanglaNum')) {
         </div>
     @endif
 
-    <!-- Khotian Detail Modal -->
+    <!-- Delete Confirmation Modal -->
+    @if($showDeleteConfirmModal)
+        <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" wire:click.self="$set('showDeleteConfirmModal', false)">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-4 border border-gray-150 dark:border-slate-800 text-center">
+                <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center text-2xl mx-auto">⚠️</div>
+                <h3 class="text-base font-black text-gray-900 dark:text-white">হিসাব ডিলেট নিশ্চিতকরণ</h3>
+                <p class="text-xs text-gray-500 dark:text-slate-400 font-bold">আপনি কি নিশ্চিত এই হিসাবটি মুছে ফেলতে চান?</p>
+                <div class="flex items-center gap-3 pt-2">
+                    <button type="button" wire:click="$set('showDeleteConfirmModal', false)"
+                            class="flex-1 py-2.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 font-bold rounded-xl text-xs hover:bg-gray-200 dark:hover:bg-slate-700 transition-all cursor-pointer">
+                        না
+                    </button>
+                    <button type="button" wire:click="deleteTransaction()"
+                            class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-all cursor-pointer">
+                        হ্যাঁ
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Khotian Detail Modal (Redesigned to match image) -->
     @if($showKhotianDetailModal && $selectedKhotianName)
         <div class="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" wire:click.self="$set('showKhotianDetailModal', false)">
-            <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl border border-gray-150 dark:border-slate-800 max-h-[90vh] flex flex-col">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl border border-gray-150 dark:border-slate-800 max-h-[90vh] flex flex-col overflow-hidden">
                 <!-- Modal Header -->
-                <div class="flex items-center justify-between p-5 border-b border-gray-100 dark:border-slate-800 flex-shrink-0">
+                <div class="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 dark:border-slate-800 flex-shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl font-bold flex-shrink-0">
+                            🐷
+                        </div>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black text-gray-900 dark:text-white">
+                                {{ $selectedKhotianName }} @ ({{ $selectedVehicle ? $selectedVehicle->name : '' }})
+                            </h3>
+                            <p class="text-xs text-gray-400 font-bold">খতিয়ানের বিস্তারিত হিসাব-নিকাশ</p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="$set('showKhotianDetailModal', false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer p-2 rounded-full bg-slate-100 dark:bg-slate-800 transition-all text-xs font-bold">✕</button>
+                </div>
+
+                <!-- KPI Summary & Date Filter Row -->
+                <div class="p-4 border-b border-gray-100 dark:border-slate-800 flex-shrink-0 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="bg-emerald-100/70 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 font-bold rounded-2xl px-4 py-2.5 text-center border border-emerald-200/50 flex items-center justify-center">
+                            পেমেন্ট বাকি: ৳ {{ toBanglaNum(number_format($khotianNetDue > 0 ? $khotianNetDue : 0, 0)) }}
+                        </div>
+                        <div class="bg-rose-100/70 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 font-bold rounded-2xl px-4 py-2.5 text-center border border-rose-200/50 flex items-center justify-center">
+                            বেশি পেমেন্ট: ৳ {{ toBanglaNum(number_format($khotianNetDue < 0 ? abs($khotianNetDue) : 0, 0)) }}
+                        </div>
+                        <div x-data="{
+                            fpStart: null, fpEnd: null,
+                            init() {
+                                this.fpStart = flatpickr($refs.kStartDate, {
+                                    locale: fpLocale, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd-m-Y',
+                                    allowInput: false, disableMobile: true,
+                                    onChange: (d, s) => $wire.set('khotianStartDate', s)
+                                });
+                                this.fpEnd = flatpickr($refs.kEndDate, {
+                                    locale: fpLocale, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd-m-Y',
+                                    allowInput: false, disableMobile: true,
+                                    onChange: (d, s) => $wire.set('khotianEndDate', s)
+                                });
+                            }
+                        }" class="flex items-center gap-2 border border-gray-200 dark:border-slate-700 rounded-2xl px-3 py-1.5 bg-gray-50 dark:bg-slate-950 text-xs" wire:ignore>
+                            <input x-ref="kStartDate" type="text" placeholder="শুরু তারিখ" readonly class="bg-transparent text-gray-800 dark:text-white font-mono text-xs cursor-pointer focus:outline-none w-20 text-center">
+                            <span class="text-gray-400">➔</span>
+                            <input x-ref="kEndDate" type="text" placeholder="শেষ তারিখ" readonly class="bg-transparent text-gray-800 dark:text-white font-mono text-xs cursor-pointer focus:outline-none w-20 text-center">
+                            <span class="text-gray-400 ml-auto">📅</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Table View inside Modal -->
+                <div class="hidden sm:block p-4 sm:p-5 overflow-y-auto flex-1 max-h-[60vh]">
+                    <div class="border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                        <table class="w-full border-collapse text-left text-xs">
+                            <thead class="sticky top-0">
+                                <tr class="bg-[#009669] text-white font-bold">
+                                    <th class="py-3 px-4">তারিখ</th>
+                                    <th class="py-3 px-4">খতিয়ান</th>
+                                    <th class="py-3 px-4">বিবরণ</th>
+                                    <th class="py-3 px-4 text-right">বিল</th>
+                                    <th class="py-3 px-4 text-right">পেমেন্ট</th>
+                                    <th class="py-3 px-4 text-right">বাকি রইল</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
+                                @forelse($khotianDetailTransactions as $ktx)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
+                                        <td class="py-2.5 px-4 font-mono text-gray-700 dark:text-slate-300 whitespace-nowrap">
+                                            {{ \Carbon\Carbon::parse($ktx->created_at ?: $ktx->date)->format('d-m-Y') }}
+                                            <span class="text-[10px] text-gray-400 font-semibold block">({{ \Carbon\Carbon::parse($ktx->created_at ?: $ktx->date)->format('h:i A') }})</span>
+                                        </td>
+                                        <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $ktx->khotian_name ?: $selectedKhotianName }}</td>
+                                        <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $ktx->description ?: '—' }}</td>
+                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($ktx->rent, 0)) }}</td>
+                                        <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($ktx->received, 0)) }}</td>
+                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($ktx->due_amount, 0)) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="py-10 text-center text-gray-400 font-semibold">কোনো লেনদেন পাওয়া যায়নি।</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Mobile Box View inside Modal -->
+                <div class="block sm:hidden p-4 space-y-3 overflow-y-auto flex-1 max-h-[60vh]">
+                    @forelse($khotianDetailTransactions as $ktx)
+                        <div class="p-3.5 bg-gray-50 dark:bg-slate-800/60 rounded-2xl border border-gray-200 dark:border-slate-700 space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="font-mono text-gray-500 dark:text-slate-400 text-[11px]">
+                                    {{ \Carbon\Carbon::parse($ktx->created_at ?: $ktx->date)->format('d-m-Y (h:i A)') }}
+                                </span>
+                                <span class="font-bold text-emerald-700 dark:text-emerald-400">{{ $ktx->khotian_name ?: $selectedKhotianName }}</span>
+                            </div>
+                            <div class="font-bold text-gray-900 dark:text-white">{{ $ktx->description ?: '—' }}</div>
+                            <div class="flex justify-between font-mono font-bold">
+                                <span class="text-amber-600">বিল: ৳{{ toBanglaNum(number_format($ktx->rent, 0)) }}</span>
+                                <span class="text-emerald-600">পেমেন্ট: ৳{{ toBanglaNum(number_format($ktx->received, 0)) }}</span>
+                                <span class="text-rose-500">বাকি: ৳{{ toBanglaNum(number_format($ktx->due_amount, 0)) }}</span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="py-8 text-center text-gray-400 font-semibold">কোনো লেনদেন পাওয়া যায়নি।</div>
+                    @endforelse
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="p-4 border-t border-gray-100 dark:border-slate-800 flex-shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold text-gray-700 dark:text-slate-300">
                     <div>
-                        <h3 class="text-lg font-black text-gray-900 dark:text-white">{{ $selectedKhotianName }}</h3>
-                        <p class="text-xs text-gray-400 font-bold">খতিয়ানের বিস্তারিত হিসাব</p>
+                        পরিমাণ {{ toBanglaNum($khotianTotalQty) }} | বিল ৳ {{ toBanglaNum(number_format($khotianTotalBill, 0)) }} | পেমেন্ট ৳ {{ toBanglaNum(number_format($khotianTotalPayment, 0)) }}
                     </div>
-                    <button type="button" wire:click="$set('showKhotianDetailModal', false)" class="text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer p-2 rounded-full bg-gray-100 dark:bg-slate-800 transition-all">✕</button>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1.5" x-data="{ openSort: false }" @click.outside="openSort = false">
+                            <span class="text-gray-500 font-bold text-xs">প্রতি পেজে:</span>
+                            <div class="relative">
+                                <button type="button" @click="openSort = !openSort"
+                                        class="px-3 py-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/40 text-emerald-300 font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer hover:border-emerald-400 transition-all">
+                                    <span>{{ toBanglaNum($khotianPerPage) }} / পেজ</span>
+                                    <svg class="w-3.5 h-3.5 text-emerald-400 transition-transform" :class="{'rotate-180': openSort}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                </button>
+                                <div x-show="openSort" x-cloak
+                                     class="absolute right-0 bottom-full mb-1 z-[9999] w-28 bg-[#0B1528] dark:bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden py-1">
+                                    @foreach([5, 10, 20, 40] as $opt)
+                                        <button type="button"
+                                                @click="$wire.set('khotianPerPage', {{ $opt }}); openSort = false;"
+                                                class="w-full text-left px-3 py-2 text-xs font-bold transition-all flex items-center justify-between cursor-pointer {{ $khotianPerPage == $opt ? 'bg-blue-600 text-white' : 'text-slate-200 hover:bg-slate-800' }}">
+                                            <span>{{ toBanglaNum($opt) }} / পেজ</span>
+                                            @if($khotianPerPage == $opt)
+                                                <span class="text-xs">✓</span>
+                                            @endif
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        @if($khotianDetailTransactions instanceof \Illuminate\Pagination\LengthAwarePaginator && $khotianDetailTransactions->hasPages())
+                            <div>
+                                {{ $khotianDetailTransactions->links() }}
+                            </div>
+                        @endif
+                    </div>
                 </div>
-
-                <!-- Summary KPI Row -->
-                <div class="grid grid-cols-3 gap-3 p-5 border-b border-gray-100 dark:border-slate-800 flex-shrink-0 text-xs">
-                    <div class="text-center p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-100 dark:border-amber-900/30">
-                        <div class="text-amber-700 dark:text-amber-400 font-bold mb-0.5">মোট বিল</div>
-                        <div class="font-black font-mono text-sm text-amber-800 dark:text-amber-300">৳ {{ toBanglaNum(number_format($khotianTotalBill ?? 0, 0)) }}</div>
-                    </div>
-                    <div class="text-center p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-100 dark:border-emerald-900/30">
-                        <div class="text-emerald-700 dark:text-emerald-400 font-bold mb-0.5">পেমেন্ট</div>
-                        <div class="font-black font-mono text-sm text-emerald-800 dark:text-emerald-300">৳ {{ toBanglaNum(number_format($khotianTotalPayment ?? 0, 0)) }}</div>
-                    </div>
-                    <div class="text-center p-3 bg-rose-50 dark:bg-rose-950/40 rounded-2xl border border-rose-100 dark:border-rose-900/30">
-                        <div class="text-rose-700 dark:text-rose-400 font-bold mb-0.5">বাকি রইল</div>
-                        <div class="font-black font-mono text-sm text-rose-800 dark:text-rose-300">৳ {{ toBanglaNum(number_format($khotianNetDue ?? 0, 0)) }}</div>
-                    </div>
-                </div>
-
-                <!-- Date Filter -->
-                <div class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 dark:border-slate-800 flex-shrink-0 text-xs">
-                    <span class="font-bold text-gray-600 dark:text-slate-400">ফিল্টার:</span>
-                    <div x-data="{
-                        fpStart: null, fpEnd: null,
-                        init() {
-                            this.fpStart = flatpickr($refs.kStartDate, {
-                                locale: fpLocale, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd-m-Y',
-                                allowInput: false, disableMobile: true,
-                                onChange: (d, s) => $wire.set('khotianStartDate', s)
-                            });
-                            this.fpEnd = flatpickr($refs.kEndDate, {
-                                locale: fpLocale, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd-m-Y',
-                                allowInput: false, disableMobile: true,
-                                onChange: (d, s) => $wire.set('khotianEndDate', s)
-                            });
-                        }
-                    }" class="flex items-center gap-2" wire:ignore>
-                        <input x-ref="kStartDate" type="text" placeholder="শুরু তারিখ" readonly class="pl-3 pr-3 py-1.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-mono text-xs cursor-pointer focus:outline-none w-28">
-                        <span class="text-gray-400">—</span>
-                        <input x-ref="kEndDate" type="text" placeholder="শেষ তারিখ" readonly class="pl-3 pr-3 py-1.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-mono text-xs cursor-pointer focus:outline-none w-28">
-                    </div>
-                    <button type="button" wire:click="$set('khotianStartDate', null); $set('khotianEndDate', null);" class="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl font-bold cursor-pointer transition-all">রিসেট</button>
-                </div>
-
-                <!-- Table -->
-                <div class="overflow-y-auto flex-1">
-                    <table class="w-full border-collapse text-left text-xs">
-                        <thead class="sticky top-0">
-                            <tr class="bg-emerald-50 dark:bg-slate-800/90 text-emerald-800 dark:text-emerald-300 font-bold border-b border-gray-150 dark:border-slate-800">
-                                <th class="py-3 px-4">তারিখ</th>
-                                <th class="py-3 px-4">বিবরণ</th>
-                                <th class="py-3 px-4 text-right">পরিমাণ</th>
-                                <th class="py-3 px-4 text-right">মোট বিল</th>
-                                <th class="py-3 px-4 text-emerald-600 text-right">পেমেন্ট</th>
-                                <th class="py-3 px-4 text-rose-500 text-right">বাকি</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
-                            @forelse($khotianDetailTransactions as $ktx)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
-                                    <td class="py-2.5 px-4 font-mono text-gray-500 dark:text-slate-400 whitespace-nowrap">{{ \Carbon\Carbon::parse($ktx->date)->format('d-m-Y') }}</td>
-                                    <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $ktx->description ?: '—' }}</td>
-                                    <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-300 text-right">{{ $ktx->quantity ? toBanglaNum($ktx->quantity) : '—' }}</td>
-                                    <td class="py-2.5 px-4 font-mono font-bold text-amber-600 text-right">৳ {{ toBanglaNum(number_format($ktx->rent, 0)) }}</td>
-                                    <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($ktx->received, 0)) }}</td>
-                                    <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($ktx->due_amount, 0)) }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="py-10 text-center text-gray-400 font-semibold">কোনো লেনদেন পাওয়া যায়নি।</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                @if($khotianDetailTransactions instanceof \Illuminate\Pagination\LengthAwarePaginator && $khotianDetailTransactions->hasPages())
-                    <div class="px-5 py-3 border-t border-gray-100 dark:border-slate-800 flex-shrink-0">
-                        {{ $khotianDetailTransactions->links() }}
-                    </div>
-                @endif
             </div>
         </div>
     @endif

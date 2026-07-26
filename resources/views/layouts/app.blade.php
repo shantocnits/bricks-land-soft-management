@@ -63,6 +63,58 @@
           })
       "
       class="font-sans antialiased bg-gray-50 text-gray-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300">
+    
+    <!-- Global Top-Center Toast Notification -->
+    <template x-teleport="body">
+        <div x-data="{ show: false, message: '', timer: null }"
+             x-init="
+                @if(session()->has('message'))
+                    message = @js(session('message'));
+                    show = true;
+                    timer = setTimeout(() => show = false, 3000);
+                @endif
+                window.addEventListener('show-toast', e => {
+                    let d = e.detail;
+                    let msg = '';
+                    if (typeof d === 'string') msg = d;
+                    else if (d && d.message) msg = d.message;
+                    else if (d && d[0]) msg = typeof d[0] === 'string' ? d[0] : (d[0].message || '');
+                    if (msg) {
+                        message = msg;
+                        show = false;
+                        if (timer) clearTimeout(timer);
+                        setTimeout(() => { show = true; timer = setTimeout(() => show = false, 3000); }, 50);
+                    }
+                });
+             "
+             @show-toast.window="
+                let d = $event.detail;
+                let msg = '';
+                if (typeof d === 'string') msg = d;
+                else if (d && d.message) msg = d.message;
+                else if (d && d[0]) msg = typeof d[0] === 'string' ? d[0] : (d[0].message || '');
+                if (msg) {
+                    message = msg;
+                    show = false;
+                    if (timer) clearTimeout(timer);
+                    $nextTick(() => { show = true; timer = setTimeout(() => show = false, 3000); });
+                }
+             "
+             x-show="show"
+             x-transition:enter="transition ease-out duration-200 transform"
+             x-transition:enter-start="-translate-y-10 opacity-0 scale-95"
+             x-transition:enter-end="translate-y-0 opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150 transform"
+             x-transition:leave-start="translate-y-0 opacity-100 scale-100"
+             x-transition:leave-end="-translate-y-10 opacity-0 scale-95"
+             x-cloak
+             class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999999] px-5 py-3 bg-[#034C3C] text-white rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-xs border border-emerald-400/30">
+            <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span x-text="message"></span>
+            <button @click="show = false" class="text-white/70 hover:text-white ml-2 cursor-pointer">✕</button>
+        </div>
+    </template>
+
     <div class="flex h-screen overflow-hidden relative">
         
         <!-- Mobile Blur Overlay Backdrop -->

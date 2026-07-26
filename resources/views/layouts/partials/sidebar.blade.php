@@ -386,10 +386,10 @@
         <!-- 18. গাড়ি ভাড়া -->
         @if($hasAccess('vehicle_rent'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('vehicle-rent') }}" wire:navigate
                @mouseenter="showTooltip('গাড়ি ভাড়া', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('vehicle-rent') ? 'bg-secondary text-white shadow-sm font-bold' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
                 </svg>
@@ -402,10 +402,10 @@
         <!-- 19. দেনা-পাওনা -->
         @if($hasAccess('debts'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('deuna-pauna') }}" wire:navigate
                @mouseenter="showTooltip('দেনা-পাওনা', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('deuna-pauna*') ? 'bg-secondary text-white shadow-sm font-bold' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                 </svg>
@@ -415,46 +415,13 @@
         </div>
         @endif
 
-        <!-- 20. অ্যাকাউন্টস -->
-        @if($hasAccess('accounts'))
-        <div class="mx-2">
-            <a href="#" 
-               @mouseenter="showTooltip('অ্যাকউন্টস', $el)"
-               @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-                <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
-                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">অ্যাকউন্টস</span>
-            </a>
-        </div>
-        @endif
-
-        <!-- 21. প্রোডাকশন -->
-        @if($hasAccess('production'))
-        <div class="mx-2">
-            <a href="#" 
-               @mouseenter="showTooltip('প্রোডাকশন', $el)"
-               @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
-                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">প্রোডাকশন</span>
-            </a>
-        </div>
-        @endif
-
         <!-- 22. ফোন নাম্বার -->
         @if($hasAccess('phone'))
         <div class="mx-2">
-            <a href="#" 
+            <a href="{{ route('phone-number') }}" wire:navigate
                @mouseenter="showTooltip('ফোন নাম্বার', $el)"
                @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg text-primary-100 hover:bg-primary-800/50 hover:text-white transition-all duration-200">
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('phone-number') ? 'bg-secondary text-white shadow-sm font-bold' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
@@ -463,6 +430,20 @@
             </a>
         </div>
         @endif
+
+        <!-- 23. এসএমএস -->
+        <div class="mx-2">
+            <a href="{{ route('sms-khata') }}" wire:navigate
+               @mouseenter="showTooltip('এসএমএস', $el)"
+               @mouseleave="hideTooltip()"
+               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('sms-khata') ? 'bg-secondary text-white shadow-sm font-bold' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                </svg>
+                <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
+                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">এসএমএস</span>
+            </a>
+        </div>
 
 
 
