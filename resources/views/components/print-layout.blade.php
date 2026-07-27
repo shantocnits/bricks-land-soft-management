@@ -1,7 +1,8 @@
 @props([
     'type' => 'a4-customer', // a4-customer, a4-dual, pos-customer, pos-dual, table-report
     'challan' => null,
-    'title' => 'চালান রশিদ',
+    'title' => 'চালান কপি',
+    'isDelivery' => false,
 ])
 
 @php
@@ -140,9 +141,16 @@
                         <p>২। ইট ডেলিভারি নেওয়ার পর কোনো অভিযোগ গ্রহণ যোগ্য হবে না।</p>
                         <p>৩। চালান করার ৩০ দিনের মধ্যে ইট ডেলিভারি নিতে হবে।</p>
                     </div>
-                    <div class="inline-block border-2 border-black rounded-xl px-10 py-2.5 text-center font-black text-2xl tracking-wide uppercase">
-                        {{ $challan->due > 0 ? 'বাকি' : 'পরিশোধ' }}
-                    </div>
+                    @if($challan->due > 0)
+                        <div class="border-2 border-red-500 rounded-xl p-3 text-center">
+                            <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ :</p>
+                            <p class="text-lg font-black text-red-600 mt-0.5">{{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : now()->addDay()->format('d-m-Y') }}</p>
+                        </div>
+                    @else
+                        <div class="inline-block border-2 border-green-600 rounded-xl px-8 py-2 text-center font-black text-xl tracking-wide uppercase text-green-700">
+                            পরিশোধিত
+                        </div>
+                    @endif
                 </div>
 
                 <div class="bg-gray-50/80 rounded-xl p-3.5 border border-gray-200 space-y-1.5 text-xs font-sans">
@@ -252,9 +260,16 @@
                         <p>২। ইট ডেলিভারি নেওয়ার পর কোনো অভিযোগ গ্রহণ যোগ্য হবে না।</p>
                         <p>৩। চালান করার ৩০ দিনের মধ্যে ইট ডেলিভারি নিতে হবে।</p>
                     </div>
-                    <div class="inline-block border-2 border-black rounded-xl px-10 py-2.5 text-center font-black text-2xl tracking-wide uppercase">
-                        {{ $challan->due > 0 ? 'বাকি' : 'পরিশোধ' }}
-                    </div>
+                    @if($challan->due > 0)
+                        <div class="border-2 border-red-500 rounded-xl p-3 text-center">
+                            <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ :</p>
+                            <p class="text-lg font-black text-red-600 mt-0.5">{{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : now()->addDay()->format('d-m-Y') }}</p>
+                        </div>
+                    @else
+                        <div class="inline-block border-2 border-green-600 rounded-xl px-8 py-2 text-center font-black text-xl tracking-wide uppercase text-green-700">
+                            পরিশোধিত
+                        </div>
+                    @endif
                 </div>
 
                 <div class="bg-gray-50/80 rounded-xl p-3.5 border border-gray-200 space-y-1.5 text-xs font-sans">
@@ -363,9 +378,16 @@
                         <p>২। ইট ডেলিভারি নেওয়ার পর কোনো অভিযোগ গ্রহণ যোগ্য হবে না।</p>
                         <p>৩। চালান করার ৩০ দিনের মধ্যে ইট ডেলিভারি নিতে হবে।</p>
                     </div>
-                    <div class="inline-block border-2 border-black rounded-xl px-10 py-2.5 text-center font-black text-2xl tracking-wide uppercase">
-                        {{ $challan->due > 0 ? 'বাকি' : 'পরিশোধ' }}
-                    </div>
+                    @if($challan->due > 0)
+                        <div class="border-2 border-red-500 rounded-xl p-3 text-center">
+                            <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ :</p>
+                            <p class="text-lg font-black text-red-600 mt-0.5">{{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : now()->addDay()->format('d-m-Y') }}</p>
+                        </div>
+                    @else
+                        <div class="inline-block border-2 border-green-600 rounded-xl px-8 py-2 text-center font-black text-xl tracking-wide uppercase text-green-700">
+                            পরিশোধিত
+                        </div>
+                    @endif
                 </div>
 
                 <div class="bg-gray-50/80 rounded-xl p-3.5 border border-gray-200 space-y-1.5 text-xs font-sans">

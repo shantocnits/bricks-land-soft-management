@@ -175,11 +175,13 @@ class CustomerProfile extends Component
 
     public $showPrintModal = false;
     public $printChallan = null;
+    public $isDeliveryPrint = false;
 
-    public function openPrintModal($challanId)
+    public function openPrintModal($challanId, $isDelivery = false)
     {
         $this->printChallan = Challan::with('items')->find($challanId);
         if ($this->printChallan) {
+            $this->isDeliveryPrint = $isDelivery;
             $this->showPrintModal = true;
         }
     }
@@ -187,6 +189,7 @@ class CustomerProfile extends Component
     public function closePrintModal()
     {
         $this->showPrintModal = false;
+        $this->isDeliveryPrint = false;
         $this->printChallan = null;
     }
 

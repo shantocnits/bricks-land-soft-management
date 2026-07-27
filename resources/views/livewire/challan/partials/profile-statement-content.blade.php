@@ -207,5 +207,5 @@
 
 <!-- Footer -->
 <div class="text-center text-[10px] text-gray-400 font-mono mt-6 border-t border-gray-200 pt-2">
-    রিপোর্ট প্রিন্ট: {{ now()->format('d-m-Y h:i A') }} | Software by Payratech.com
+    রিপোর্ট প্রিন্ট: {{ now()->format('d-m-Y h:i A') }} | Software by CODENEXTIT.COM
 </div>

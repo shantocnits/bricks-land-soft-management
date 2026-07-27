@@ -472,7 +472,7 @@
                         </a>
 
                         <!-- Web Link -->
-                        <a href="https://www.payratech.com" target="_blank" class="flex items-center gap-4 p-2.5 rounded-2xl hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all group">
+                        <a href="https://www.CODENEXTIT.COM" target="_blank" class="flex items-center gap-4 p-2.5 rounded-2xl hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all group">
                             <span class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.003 9.003 0 008.354-5.646m-8 5.646a9.003 9.003 0 01-8.354-5.646m8 5.646V12m0 0V3m0 9h8.354M12 12H3.646m16.708 0a9 9 0 10-18 0c0 .916.137 1.8.39 2.632"/>
@@ -480,12 +480,12 @@
                             </span>
                             <div class="flex flex-col">
                                 <span class="text-[10px] font-bold text-gray-400 font-sans uppercase">ওয়েবসাইট</span>
-                                <span class="text-sm font-black text-gray-800 dark:text-slate-200 font-mono group-hover:text-blue-600 transition-colors">www.payratech.com</span>
+                                <span class="text-sm font-black text-gray-800 dark:text-slate-200 font-mono group-hover:text-blue-600 transition-colors">www.CODENEXTIT.COM</span>
                             </div>
                         </a>
 
                         <!-- Email Link -->
-                        <a href="mailto:support@payratech.com" class="flex items-center gap-4 p-2.5 rounded-2xl hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-all group">
+                        <a href="mailto:support@CODENEXTIT.COM" class="flex items-center gap-4 p-2.5 rounded-2xl hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-all group">
                             <span class="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
@@ -493,7 +493,7 @@
                             </span>
                             <div class="flex flex-col">
                                 <span class="text-[10px] font-bold text-gray-400 font-sans uppercase">ইমেইল</span>
-                                <span class="text-sm font-black text-gray-800 dark:text-slate-200 font-mono group-hover:text-orange-600 transition-colors">support@payratech.com</span>
+                                <span class="text-sm font-black text-gray-800 dark:text-slate-200 font-mono group-hover:text-orange-600 transition-colors">support@CODENEXTIT.COM</span>
                             </div>
                         </a>
                     </div>

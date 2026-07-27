@@ -242,7 +242,7 @@
                     </div>
                     <div>
                         <h4 class="font-bold text-slate-400 dark:text-slate-500 text-[9px] uppercase font-sans">ওয়েবসাইট</h4>
-                        <p class="text-sm font-extrabold text-slate-800 dark:text-white mt-0.5 font-sans">www.payratech.com</p>
+                        <p class="text-sm font-extrabold text-slate-800 dark:text-white mt-0.5 font-sans">www.CODENEXTIT.COM</p>
                     </div>
                 </div>
 
@@ -255,7 +255,7 @@
                     </div>
                     <div>
                         <h4 class="font-bold text-slate-400 dark:text-slate-500 text-[9px] uppercase font-sans">ইমেইল</h4>
-                        <p class="text-sm font-extrabold text-slate-800 dark:text-white mt-0.5 font-sans">support@payratech.com</p>
+                        <p class="text-sm font-extrabold text-slate-800 dark:text-white mt-0.5 font-sans">support@CODENEXTIT.COM</p>
                     </div>
                 </div>
             </div>

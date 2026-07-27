@@ -949,7 +949,7 @@
 
             <!-- Footer -->
             <div class="print-footer">
-                প্রিন্ট তারিখ: {{ now()->format('d-m-Y h:i A') }} | Software by: Payratech.com
+                প্রিন্ট তারিখ: {{ now()->format('d-m-Y h:i A') }} | Software by: CODENEXTIT.COM
             </div>
         </div>
     </div>
