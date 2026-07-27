@@ -6,34 +6,34 @@
         <!-- Period Filters (Left) -->
         <div class="flex flex-wrap items-center gap-2">
             <button 
+                type="button"
                 wire:click="setPeriod('today')" 
-                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm"
-                :class="filterPeriod === 'today' ? 'bg-primary text-white ring-2 ring-emerald-500/10' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750'">
+                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm {{ $filterPeriod === 'today' ? 'bg-[#0088A8] text-white ring-2 ring-cyan-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
                 আজকের হিসাব
             </button>
             <button 
+                type="button"
                 wire:click="setPeriod('7days')" 
-                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm"
-                :class="filterPeriod === '7days' ? 'bg-primary text-white ring-2 ring-emerald-500/10' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750'">
+                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm {{ $filterPeriod === '7days' ? 'bg-[#009669] text-white ring-2 ring-emerald-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
                 গত ৭ দিনের হিসাব
             </button>
             <button 
+                type="button"
                 wire:click="setPeriod('15days')" 
-                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm"
-                :class="filterPeriod === '15days' ? 'bg-primary text-white ring-2 ring-emerald-500/10' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750'">
+                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm {{ $filterPeriod === '15days' ? 'bg-[#008080] text-white ring-2 ring-teal-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
                 গত ১৫ দিনের হিসাব
             </button>
             <button 
-                wire:click="setPeriod('month')" 
-                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm"
-                :class="filterPeriod === 'month' ? 'bg-primary text-white ring-2 ring-emerald-500/10' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750'">
-                চলতি মাসের হিসাব
+                type="button"
+                wire:click="setPeriod('season')" 
+                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm {{ $filterPeriod === 'season' ? 'bg-[#E65100] text-white ring-2 ring-orange-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
+                সিজনের হিসাব
             </button>
             <button 
-                wire:click="setPeriod('last_month')" 
-                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm"
-                :class="filterPeriod === 'last_month' ? 'bg-primary text-white ring-2 ring-emerald-500/10' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750'">
-                গত মাসের হিসাব
+                type="button"
+                wire:click="setPeriod('profit_loss')" 
+                class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-sm {{ $filterPeriod === 'profit_loss' ? 'bg-[#7E57C2] text-white ring-2 ring-purple-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
+                লাভ লসের হিসাব
             </button>
         </div>
 
@@ -48,59 +48,75 @@
                 </span>
                 <input 
                     type="text" 
-                    wire:model.live="search"
-                    class="w-full lg:w-48 py-1.5 pl-9 pr-4 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-950/30 transition-all"
-                    placeholder="সার্চ...">
+                    wire:model.live.debounce.300ms="search"
+                    class="w-full lg:w-48 py-1.5 pl-9 pr-4 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-950/30 transition-all placeholder:text-gray-400"
+                    placeholder="খুঁজুন...">
             </div>
 
-            <!-- Date picker -->
-            <div class="relative w-36 lg:w-auto">
+            <!-- Date picker (Flatpickr) -->
+            <div class="relative flex items-center">
                 <input 
-                    type="date" 
-                    wire:model.live="dateFilter"
-                    class="w-full py-1.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-950/30 transition-all">
+                    type="text" 
+                    data-flatpickr 
+                    data-wire-prop="dateFilter" 
+                    data-default="{{ $dateFilter }}"
+                    wire:model.live="dateFilter" 
+                    placeholder="তারিখ" 
+                    readonly
+                    class="pl-3 pr-8 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white w-36 font-sans font-semibold cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-950/30 transition-all">
+                <span class="absolute right-2.5 text-emerald-500 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                </span>
             </div>
         </div>
     </div>
 
-    <!-- Quick Status Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <!-- Quick Status Cards Grid (6 Summary Cards) -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         
         <!-- Card 1: মোট বিক্রি -->
-        <div class="bg-[#00609C] hover:bg-[#005185] text-white p-5 rounded-2xl shadow-md border border-blue-700/10 hover:shadow-lg transition-all duration-200 flex flex-col justify-between">
-            <span class="text-xs font-bold opacity-90">মোট বিক্রি (ভ্যাট সহ)</span>
-            <span class="text-3xl font-extrabold mt-3 tracking-wide">৳ ০</span>
-        </div>
+        <a href="{{ route('challan.today') }}" wire:navigate
+           class="bg-[#00609C] hover:bg-[#005185] text-white p-3.5 sm:p-5 rounded-2xl shadow-md border border-blue-700/10 hover:shadow-xl transition-all duration-200 flex flex-col justify-between cursor-pointer group active:scale-98">
+            <span class="text-[11px] sm:text-xs font-bold opacity-90 group-hover:underline">মোট বিক্রি (ভাটা সহ)</span>
+            <span class="text-base sm:text-2xl lg:text-3xl font-extrabold mt-2 sm:mt-3 tracking-wide font-mono">৳ {{ number_format($totalSalesVat, 0) }}</span>
+        </a>
 
         <!-- Card 2: নগদ বিক্রি -->
-        <div class="bg-[#0E8C4E] hover:bg-[#0C7642] text-white p-5 rounded-2xl shadow-md border border-emerald-700/10 hover:shadow-lg transition-all duration-200 flex flex-col justify-between">
-            <span class="text-xs font-bold opacity-90">নগদ বিক্রি</span>
-            <span class="text-3xl font-extrabold mt-3 tracking-wide">৳ ০</span>
-        </div>
+        <a href="{{ route('challan.today') }}" wire:navigate
+           class="bg-[#0E8C4E] hover:bg-[#0C7642] text-white p-3.5 sm:p-5 rounded-2xl shadow-md border border-emerald-700/10 hover:shadow-xl transition-all duration-200 flex flex-col justify-between cursor-pointer group active:scale-98">
+            <span class="text-[11px] sm:text-xs font-bold opacity-90 group-hover:underline">নগদ বিক্রি</span>
+            <span class="text-base sm:text-2xl lg:text-3xl font-extrabold mt-2 sm:mt-3 tracking-wide font-mono">৳ {{ number_format($cashSales, 0) }}</span>
+        </a>
 
         <!-- Card 3: বাকি বিক্রি -->
-        <div class="bg-[#BF20BA] hover:bg-[#A31B9E] text-white p-5 rounded-2xl shadow-md border border-purple-700/10 hover:shadow-lg transition-all duration-200 flex flex-col justify-between">
-            <span class="text-xs font-bold opacity-90">বাকি বিক্রি</span>
-            <span class="text-3xl font-extrabold mt-3 tracking-wide">৳ ০</span>
-        </div>
+        <a href="{{ route('challan.pending') }}" wire:navigate
+           class="bg-[#BF20BA] hover:bg-[#A31B9E] text-white p-3.5 sm:p-5 rounded-2xl shadow-md border border-purple-700/10 hover:shadow-xl transition-all duration-200 flex flex-col justify-between cursor-pointer group active:scale-98">
+            <span class="text-[11px] sm:text-xs font-bold opacity-90 group-hover:underline">বাকি বিক্রি</span>
+            <span class="text-base sm:text-2xl lg:text-3xl font-extrabold mt-2 sm:mt-3 tracking-wide font-mono">৳ {{ number_format($dueSales, 0) }}</span>
+        </a>
 
         <!-- Card 4: মোট পেমেন্ট -->
-        <div class="bg-[#E05A16] hover:bg-[#BE4B11] text-white p-5 rounded-2xl shadow-md border border-orange-700/10 hover:shadow-lg transition-all duration-200 flex flex-col justify-between">
-            <span class="text-xs font-bold opacity-90">মোট পেমেন্ট</span>
-            <span class="text-3xl font-extrabold mt-3 tracking-wide">৳ ০</span>
-        </div>
+        <a href="{{ route('payment-khata') }}" wire:navigate
+           class="bg-[#E05A16] hover:bg-[#BE4B11] text-white p-3.5 sm:p-5 rounded-2xl shadow-md border border-orange-700/10 hover:shadow-xl transition-all duration-200 flex flex-col justify-between cursor-pointer group active:scale-98">
+            <span class="text-[11px] sm:text-xs font-bold opacity-90 group-hover:underline">মোট পেমেন্ট</span>
+            <span class="text-base sm:text-2xl lg:text-3xl font-extrabold mt-2 sm:mt-3 tracking-wide font-mono">৳ {{ number_format($totalPayment, 0) }}</span>
+        </a>
 
         <!-- Card 5: বাকি জমা -->
-        <div class="bg-[#0B958E] hover:bg-[#097E78] text-white p-5 rounded-2xl shadow-md border border-teal-700/10 hover:shadow-lg transition-all duration-200 flex flex-col justify-between">
-            <span class="text-xs font-bold opacity-90">বাকি জমা</span>
-            <span class="text-3xl font-extrabold mt-3 tracking-wide">৳ ০</span>
-        </div>
+        <a href="{{ route('due-ledger.today') }}" wire:navigate
+           class="bg-[#0B958E] hover:bg-[#097E78] text-white p-3.5 sm:p-5 rounded-2xl shadow-md border border-teal-700/10 hover:shadow-xl transition-all duration-200 flex flex-col justify-between cursor-pointer group active:scale-98">
+            <span class="text-[11px] sm:text-xs font-bold opacity-90 group-hover:underline">বাকি জমা</span>
+            <span class="text-base sm:text-2xl lg:text-3xl font-extrabold mt-2 sm:mt-3 tracking-wide font-mono">৳ {{ number_format($dueDeposit, 0) }}</span>
+        </a>
 
-        <!-- Card 6: বাকি ক্যাশ -->
-        <div class="bg-[#5D55EA] hover:bg-[#4E46D7] text-white p-5 rounded-2xl shadow-md border border-indigo-700/10 hover:shadow-lg transition-all duration-200 flex flex-col justify-between">
-            <span class="text-xs font-bold opacity-90">বাকি ক্যাশ</span>
-            <span class="text-3xl font-extrabold mt-3 tracking-wide">৳ ০</span>
-        </div>
+        <!-- Card 6: মোট ক্যাশ -->
+        <a href="{{ route('cash-khata') }}" wire:navigate
+           class="bg-[#5D55EA] hover:bg-[#4E46D7] text-white p-3.5 sm:p-5 rounded-2xl shadow-md border border-indigo-700/10 hover:shadow-xl transition-all duration-200 flex flex-col justify-between cursor-pointer group active:scale-98">
+            <span class="text-[11px] sm:text-xs font-bold opacity-90 group-hover:underline">মোট ক্যাশ</span>
+            <span class="text-base sm:text-2xl lg:text-3xl font-extrabold mt-2 sm:mt-3 tracking-wide font-mono">৳ {{ number_format($netCash, 0) }}</span>
+        </a>
 
     </div>
 
@@ -108,68 +124,100 @@
     <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         
         <!-- Column 1: চালান (xl:col-span-4) -->
-        <div class="xl:col-span-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col min-h-[420px] transition-colors duration-300">
-            <!-- Header -->
-            <div class="bg-[#037A61] text-white px-4 py-3 font-bold text-sm tracking-wide text-center flex items-center justify-center">
-                📄 চালান
+        <div class="xl:col-span-4 space-y-4">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col transition-colors duration-300">
+                <!-- Header -->
+                <a href="{{ route('challan.today') }}" wire:navigate
+                   class="bg-[#037A61] hover:bg-[#02624e] text-white px-4 py-3 font-bold text-sm tracking-wide text-center flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                    📄 চালান
+                </a>
+                
+                <!-- Table Container -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-[#A3E635]/20 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold border-b border-gray-100 dark:border-slate-800">
+                                <th class="px-3 py-2.5 text-left">শ্রেণি</th>
+                                <th class="px-3 py-2.5 text-center">চালান</th>
+                                <th class="px-3 py-2.5 text-center">পরিমাণ</th>
+                                <th class="px-3 py-2.5 text-right">মোট মূল্য</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50 font-sans">
+                            @forelse($challanCategories as $c)
+                                <tr class="text-gray-700 dark:text-slate-300 hover:bg-emerald-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td class="px-3 py-2.5 text-left font-bold text-emerald-700 dark:text-emerald-400">{{ $c->category_name }}</td>
+                                    <td class="px-3 py-2.5 text-center font-mono font-bold">{{ $c->total_challan }}</td>
+                                    <td class="px-3 py-2.5 text-center font-mono font-bold">{{ number_format($c->total_qty) }}</td>
+                                    <td class="px-3 py-2.5 text-right font-mono font-bold">৳ {{ number_format($c->total_amount, 0) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-4 py-6 text-center text-gray-400 dark:text-slate-500">কোন চালান ডাটা পাওয়া যায়নি</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            
-            <!-- Table Container -->
-            <div class="flex-grow overflow-x-auto">
-                <table class="w-full text-left text-xs border-collapse">
-                    <thead>
-                        <tr class="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 font-semibold border-b border-gray-100 dark:border-slate-800">
-                            <th class="px-4 py-2 text-center">শ্রেণি</th>
-                            <th class="px-4 py-2 text-center">চালান</th>
-                            <th class="px-4 py-2 text-center">পরিমাণ</th>
-                            <th class="px-4 py-2 text-center">মোট মূল্য</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50">
-                        @forelse($challans as $c)
-                            <tr class="text-gray-700 dark:text-slate-350 hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
-                                <td class="px-4 py-2.5 text-center">{{ $c['category'] }}</td>
-                                <td class="px-4 py-2.5 text-center font-semibold text-emerald-600 dark:text-emerald-400">{{ $c['challan_no'] }}</td>
-                                <td class="px-4 py-2.5 text-center">{{ number_format($c['qty']) }}</td>
-                                <td class="px-4 py-2.5 text-center font-bold">{{ $c['total'] }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="px-4 py-8 text-center text-gray-400 dark:text-gray-600">কোন চালান ডাটা পাওয়া যায়নি</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+
+            <!-- Financial Summary Box Below Challan Table -->
+            <div class="bg-[#D1E7DD] dark:bg-emerald-950/40 border border-emerald-300/60 dark:border-emerald-900/60 rounded-2xl p-4 space-y-2.5 text-xs font-sans">
+                <div class="flex justify-between items-center text-emerald-900 dark:text-emerald-200">
+                    <span class="font-bold">মোট বিক্রি মূল্য</span>
+                    <span class="font-mono font-extrabold text-sm">৳ {{ number_format($totalChallanValue, 0) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-emerald-800 dark:text-emerald-300">
+                    <span class="font-semibold">ছাড় (-)</span>
+                    <span class="font-mono font-bold text-amber-700 dark:text-amber-400">৳ {{ number_format($totalDiscount, 0) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-emerald-800 dark:text-emerald-300">
+                    <span class="font-semibold">গাড়ি ভাড়া (+)</span>
+                    <span class="font-mono font-bold text-blue-700 dark:text-blue-400">৳ {{ number_format($totalTransportRent, 0) }}</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-emerald-300 dark:border-emerald-800/80 text-emerald-950 dark:text-emerald-100 font-extrabold">
+                    <span>মোট বিক্রি (ভাড়া সহ)</span>
+                    <span class="font-mono text-base text-emerald-800 dark:text-emerald-300">৳ {{ number_format($totalSalesVat, 0) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-emerald-800 dark:text-emerald-300">
+                    <span class="font-semibold">নগদ</span>
+                    <span class="font-mono font-bold text-emerald-700 dark:text-emerald-400">৳ {{ number_format($cashSales, 0) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-rose-700 dark:text-rose-400 font-bold">
+                    <span>বাকি</span>
+                    <span class="font-mono text-sm">৳ {{ number_format($dueSales, 0) }}</span>
+                </div>
             </div>
         </div>
 
         <!-- Column 2: পেমেন্ট (xl:col-span-4) -->
         <div class="xl:col-span-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col min-h-[420px] transition-colors duration-300">
             <!-- Header -->
-            <div class="bg-[#E89E53] text-white px-4 py-3 font-bold text-sm tracking-wide text-center flex items-center justify-center">
+            <a href="{{ route('payment-khata') }}" wire:navigate
+               class="bg-[#E89E53] hover:bg-[#d68a41] text-white px-4 py-3 font-bold text-sm tracking-wide text-center flex items-center justify-center gap-2 cursor-pointer transition-colors">
                 💵 পেমেন্ট
-            </div>
+            </a>
             
             <!-- Table Container -->
             <div class="flex-grow overflow-x-auto">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
-                        <tr class="bg-orange-50 dark:bg-orange-950/20 text-orange-900 dark:text-orange-300 font-semibold border-b border-gray-100 dark:border-slate-800">
-                            <th class="px-4 py-2 text-center">খতিয়ান</th>
-                            <th class="px-4 py-2 text-center">পরিমাণ</th>
-                            <th class="px-4 py-2 text-center">পেমেন্ট নেওয়া</th>
+                        <tr class="bg-orange-50 dark:bg-orange-950/20 text-orange-900 dark:text-orange-300 font-bold border-b border-gray-100 dark:border-slate-800">
+                            <th class="px-4 py-2.5 text-left">খতিয়ান</th>
+                            <th class="px-4 py-2.5 text-center">পরিমাণ</th>
+                            <th class="px-4 py-2.5 text-right">পেমেন্ট দেওয়া</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50">
-                        @forelse($payments as $p)
-                            <tr class="text-gray-700 dark:text-slate-350 hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
-                                <td class="px-4 py-2.5 text-center font-semibold">{{ $p['khatian'] }}</td>
-                                <td class="px-4 py-2.5 text-center font-bold text-orange-600 dark:text-orange-400">{{ $p['qty'] }}</td>
-                                <td class="px-4 py-2.5 text-center">{{ $p['received_by'] }}</td>
+                    <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50 font-sans">
+                        @forelse($paymentSummary as $p)
+                            <tr class="text-gray-700 dark:text-slate-300 hover:bg-orange-50/40 dark:hover:bg-slate-800/20 transition-colors">
+                                <td class="px-4 py-2.5 text-left font-bold text-orange-700 dark:text-orange-400">{{ $p->ledger }}</td>
+                                <td class="px-4 py-2.5 text-center font-mono font-bold text-orange-600 dark:text-orange-300">৳ {{ number_format($p->total_payment, 0) }}</td>
+                                <td class="px-4 py-2.5 text-right text-gray-600 dark:text-slate-400">{{ $p->desc ?: 'পেমেন্ট দেওয়া' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-4 py-8 text-center text-gray-400 dark:text-gray-600">কোন পেমেন্ট ডাটা পাওয়া যায়নি</td>
+                                <td colspan="3" class="px-4 py-8 text-center text-gray-400 dark:text-slate-500">কোন পেমেন্ট ডাটা পাওয়া যায়নি</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -184,58 +232,76 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 
                 <!-- প্রোডাকশন -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col min-h-[196px] transition-colors duration-300">
-                    <div class="bg-[#3C82F6] text-white px-3 py-2 font-bold text-xs text-center">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col transition-colors duration-300">
+                    <div class="bg-[#3C82F6] text-white px-3 py-2.5 font-bold text-xs text-center flex items-center justify-center gap-1.5">
                         ⚙️ প্রোডাকশন
                     </div>
                     <div class="flex-grow overflow-y-auto">
                         <table class="w-full text-xs border-collapse">
                             <thead>
-                                <tr class="bg-blue-50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300 text-[10px] font-semibold border-b border-gray-100 dark:border-slate-800">
-                                    <th class="px-3 py-1.5 text-center">তেল</th>
-                                    <th class="px-3 py-1.5 text-center">প্রোডাকশন</th>
+                                <tr class="bg-blue-50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300 text-[11px] font-bold border-b border-gray-100 dark:border-slate-800">
+                                    <th class="px-3 py-2 text-left">মেল</th>
+                                    <th class="px-3 py-2 text-right">প্রোডাকশন</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50">
+                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50 font-sans">
                                 @forelse($productions as $pr)
-                                    <tr class="text-gray-600 dark:text-slate-350 hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
-                                        <td class="px-3 py-2 text-center">{{ $pr['oil'] }}</td>
-                                        <td class="px-3 py-2 text-center font-bold text-blue-600 dark:text-blue-400">{{ $pr['production'] }}</td>
+                                    <tr class="text-gray-700 dark:text-slate-300 hover:bg-blue-50/40 dark:hover:bg-slate-800/20">
+                                        <td class="px-3 py-2 text-left font-semibold">{{ $pr['mill'] }}</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-blue-600 dark:text-blue-400">{{ number_format($pr['qty']) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
                                         <td colspan="2" class="px-3 py-6 text-center text-gray-400">খালি</td>
                                     </tr>
                                 @endforelse
+                                <tr class="bg-blue-50/60 dark:bg-blue-950/40 font-bold text-blue-950 dark:text-blue-200 border-t border-blue-200 dark:border-blue-900">
+                                    <td class="px-3 py-2 text-left">মোট প্রোডাকশন</td>
+                                    <td class="px-3 py-2 text-right font-mono">{{ number_format(array_sum(array_column($productions, 'qty'))) }}</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 <!-- লোড -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col min-h-[196px] transition-colors duration-300">
-                    <div class="bg-[#0DA89B] text-white px-3 py-2 font-bold text-xs text-center">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col transition-colors duration-300">
+                    <a href="{{ route('load-khata') }}" wire:navigate
+                       class="bg-[#0DA89B] hover:bg-[#0B958A] text-white px-3 py-2.5 font-bold text-xs text-center flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
                         🚚 লোড
-                    </div>
+                    </a>
                     <div class="flex-grow overflow-y-auto">
                         <table class="w-full text-xs border-collapse">
                             <thead>
-                                <tr class="bg-teal-50 dark:bg-teal-950/20 text-teal-900 dark:text-teal-300 text-[10px] font-semibold border-b border-gray-100 dark:border-slate-800">
-                                    <th class="px-3 py-1.5 text-center">বিবরণ</th>
-                                    <th class="px-3 py-1.5 text-center">পরিমাণ</th>
+                                <tr class="bg-teal-50 dark:bg-teal-950/20 text-teal-900 dark:text-teal-300 text-[11px] font-bold border-b border-gray-100 dark:border-slate-800">
+                                    <th class="px-3 py-2 text-left">বিবরণ</th>
+                                    <th class="px-3 py-2 text-right">পরিমাণ</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50">
-                                @forelse($loads as $l)
-                                    <tr class="text-gray-600 dark:text-slate-350 hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
-                                        <td class="px-3 py-2 text-center">{{ $l['details'] }}</td>
-                                        <td class="px-3 py-2 text-center font-bold text-teal-600 dark:text-teal-400">{{ $l['qty'] }}</td>
+                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50 font-sans">
+                                @forelse($loadSummary as $l)
+                                    <tr class="text-gray-700 dark:text-slate-300 hover:bg-teal-50/40 dark:hover:bg-slate-800/20">
+                                        <td class="px-3 py-2 text-left font-semibold">{{ $l->description ?: ($l->category ?: 'লোডিং') }}</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-teal-600 dark:text-teal-400">{{ number_format($l->total_qty) }}</td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="2" class="px-3 py-6 text-center text-gray-400">খালি</td>
+                                    <tr class="text-gray-600 dark:text-slate-300">
+                                        <td class="px-3 py-2 text-left font-semibold">মাঠ থেকে লোড হয়েছে</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-teal-600 dark:text-teal-400">০</td>
+                                    </tr>
+                                    <tr class="text-gray-600 dark:text-slate-300">
+                                        <td class="px-3 py-2 text-left font-semibold">পাকা ইট লোড হয়েছে</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-teal-600 dark:text-teal-400">০</td>
+                                    </tr>
+                                    <tr class="text-gray-600 dark:text-slate-300">
+                                        <td class="px-3 py-2 text-left font-semibold">স্টক থেকে লোড হয়েছে</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-teal-600 dark:text-teal-400">০</td>
                                     </tr>
                                 @endforelse
+                                <tr class="bg-teal-50/60 dark:bg-teal-950/40 font-bold text-teal-950 dark:text-teal-200 border-t border-teal-200 dark:border-teal-900">
+                                    <td class="px-3 py-2 text-left">মোট লোড</td>
+                                    <td class="px-3 py-2 text-right font-mono">{{ number_format($loadSummary->sum('total_qty')) }}</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -243,62 +309,90 @@
 
             </div>
 
-            <!-- Bottom Subgrid: ডেলিভারি & আমানত (Side-by-Side) -->
+            <!-- Bottom Subgrid: ডেলিভারি & আনলোড (Side-by-Side) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 
                 <!-- ডেলিভারি -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col min-h-[196px] transition-colors duration-300">
-                    <div class="bg-[#7B86FC] text-white px-3 py-2 font-bold text-xs text-center">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col transition-colors duration-300">
+                    <a href="{{ route('delivery.today') }}" wire:navigate
+                       class="bg-[#7B86FC] hover:bg-[#6874EB] text-white px-3 py-2.5 font-bold text-xs text-center flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
                         📦 ডেলিভারি
-                    </div>
+                    </a>
                     <div class="flex-grow overflow-y-auto">
                         <table class="w-full text-xs border-collapse">
                             <thead>
-                                <tr class="bg-indigo-50 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-300 text-[10px] font-semibold border-b border-gray-100 dark:border-slate-800">
-                                    <th class="px-3 py-1.5 text-center">শ্রেণি</th>
-                                    <th class="px-3 py-1.5 text-center">ডেলিভারি</th>
+                                <tr class="bg-indigo-50 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-300 text-[11px] font-bold border-b border-gray-100 dark:border-slate-800">
+                                    <th class="px-3 py-2 text-left">শ্রেণি</th>
+                                    <th class="px-3 py-2 text-right">ডেলিভারি</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50">
-                                @forelse($deliveries as $d)
-                                    <tr class="text-gray-600 dark:text-slate-350 hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
-                                        <td class="px-3 py-2 text-center">{{ $d['category'] }}</td>
-                                        <td class="px-3 py-2 text-center font-bold text-indigo-600 dark:text-indigo-400">{{ $d['qty'] }}</td>
+                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50 font-sans">
+                                @forelse($deliverySummary as $d)
+                                    <tr class="text-gray-700 dark:text-slate-300 hover:bg-indigo-50/40 dark:hover:bg-slate-800/20">
+                                        <td class="px-3 py-2 text-left font-semibold">{{ $d->category_name }}</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ number_format($d->total_qty) }}</td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="2" class="px-3 py-6 text-center text-gray-400">খালি</td>
+                                    <tr class="text-gray-600 dark:text-slate-300">
+                                        <td class="px-3 py-2 text-left font-semibold">পিকট</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-indigo-600 dark:text-indigo-400">০</td>
+                                    </tr>
+                                    <tr class="text-gray-600 dark:text-slate-300">
+                                        <td class="px-3 py-2 text-left font-semibold">২ নং (ক)</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-indigo-600 dark:text-indigo-400">০</td>
+                                    </tr>
+                                    <tr class="text-gray-600 dark:text-slate-300">
+                                        <td class="px-3 py-2 text-left font-semibold">২ নং (খ)</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-indigo-600 dark:text-indigo-400">০</td>
                                     </tr>
                                 @endforelse
+                                <tr class="bg-indigo-50/60 dark:bg-indigo-950/40 font-bold text-indigo-950 dark:text-indigo-200 border-t border-indigo-200 dark:border-indigo-900">
+                                    <td class="px-3 py-2 text-left">মোট ডেলিভারি</td>
+                                    <td class="px-3 py-2 text-right font-mono">{{ number_format($deliverySummary->sum('total_qty')) }}</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- আমানত -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col min-h-[196px] transition-colors duration-300">
-                    <div class="bg-[#B3A69A] text-white px-3 py-2 font-bold text-xs text-center">
-                        💼 আমানত
-                    </div>
+                <!-- আনলোড -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 overflow-hidden flex flex-col transition-colors duration-300">
+                    <a href="{{ route('unload-khata') }}" wire:navigate
+                       class="bg-[#8D8378] hover:bg-[#7a7167] text-white px-3 py-2.5 font-bold text-xs text-center flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                        🏗️ আনলোড
+                    </a>
                     <div class="flex-grow overflow-y-auto">
                         <table class="w-full text-xs border-collapse">
                             <thead>
-                                <tr class="bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-300 text-[10px] font-semibold border-b border-gray-100 dark:border-slate-800">
-                                    <th class="px-3 py-1.5 text-center">শ্রেণি</th>
-                                    <th class="px-3 py-1.5 text-center">পরিমাণ</th>
+                                <tr class="bg-amber-50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-300 text-[11px] font-bold border-b border-gray-100 dark:border-slate-800">
+                                    <th class="px-3 py-2 text-left">শ্রেণি</th>
+                                    <th class="px-3 py-2 text-right">পরিমাণ</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50">
-                                @forelse($deposits as $dp)
-                                    <tr class="text-gray-600 dark:text-slate-350 hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
-                                        <td class="px-3 py-2 text-center">{{ $dp['category'] }}</td>
-                                        <td class="px-3 py-2 text-center font-bold text-slate-600 dark:text-slate-400">{{ $dp['amount'] }}</td>
+                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50 font-sans">
+                                @forelse($unloadSummary as $u)
+                                    <tr class="text-gray-700 dark:text-slate-300 hover:bg-amber-50/40 dark:hover:bg-slate-800/20">
+                                        <td class="px-3 py-2 text-left font-semibold">{{ $u->category_name }}</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-amber-700 dark:text-amber-400">{{ number_format($u->total_qty) }}</td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="2" class="px-3 py-6 text-center text-gray-400">খালি</td>
+                                    <tr class="text-gray-600 dark:text-slate-300">
+                                        <td class="px-3 py-2 text-left font-semibold">১ নং</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-amber-700 dark:text-amber-400">০</td>
+                                    </tr>
+                                    <tr class="text-gray-600 dark:text-slate-300">
+                                        <td class="px-3 py-2 text-left font-semibold">পিকট</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-amber-700 dark:text-amber-400">০</td>
+                                    </tr>
+                                    <tr class="text-gray-600 dark:text-slate-300">
+                                        <td class="px-3 py-2 text-left font-semibold">২ নং (ক)</td>
+                                        <td class="px-3 py-2 text-right font-mono font-bold text-amber-700 dark:text-amber-400">০</td>
                                     </tr>
                                 @endforelse
+                                <tr class="bg-amber-50/60 dark:bg-amber-950/40 font-bold text-amber-950 dark:text-amber-200 border-t border-amber-200 dark:border-amber-900">
+                                    <td class="px-3 py-2 text-left">মোট আনলোড</td>
+                                    <td class="px-3 py-2 text-right font-mono">{{ number_format($unloadSummary->sum('total_qty')) }}</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -308,5 +402,6 @@
 
         </div>
 
-</div>
+    </div>
 
+</div>

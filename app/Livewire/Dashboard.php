@@ -3,62 +3,176 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use App\Models\Challan;
+use App\Models\ChallanItem;
+use App\Models\Payment;
+use App\Models\LoadEntry;
+use App\Models\UnloadItem;
+use App\Models\UnloadEntry;
+use App\Models\Delivery;
+use App\Models\CashEntry;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class Dashboard extends Component
 {
-    public $search = '';
-    public $filterPeriod = 'today'; // today, 7days, 15days, month, last_month
-    public $dateFilter = '2026-07-12';
+    public string $search = '';
+    public string $filterPeriod = 'today'; // 'today', '7days', '15days', 'season', 'profit_loss'
+    public string $dateFilter = '';
 
-    /**
-     * Restrict access to users with dashboard permission or admin role.
-     */
-    public function mount()
-    {
-        // Accessible by all authenticated users
-    }
-
-    // Sample data structure matching the tables in image_680313.png
-    public $challans = [
-        ['category' => '১ম শ্রেণি', 'challan_no' => 'CH-101', 'qty' => 5000, 'total' => '৳ ৪৫,০০০'],
-        ['category' => '২য় শ্রেণি', 'challan_no' => 'CH-102', 'qty' => 3000, 'total' => '৳ ২৪,০০০'],
-        ['category' => '১ম শ্রেণি', 'challan_no' => 'CH-103', 'qty' => 4500, 'total' => '৳ ৪০,৫০০'],
-    ];
-
-    public $payments = [
-        ['khatian' => 'কেএইচ-১২', 'qty' => '৳ ৫০,০০০', 'received_by' => 'হিসাবরক্ষক'],
-        ['khatian' => 'কেএইচ-০৫', 'qty' => '৳ ৩০,০০০', 'received_by' => 'ক্যাশিয়ার'],
-    ];
-
-    public $productions = [
-        ['oil' => '৫০ লিটার', 'production' => '১০,০০০ পিস'],
-        ['oil' => '৪০ লিটার', 'production' => '৮,০০০ পিস'],
-    ];
-
-    public $loads = [
-        ['details' => 'ট্রাক লোডিং (১০ চাকা)', 'qty' => '১৫,০০০ পিস'],
-        ['details' => 'ট্রাক লোডিং (৬ চাকা)', 'qty' => '৮,০০০ পিস'],
-    ];
-
-    public $deliveries = [
-        ['category' => '১ম শ্রেণি', 'qty' => '৫,০০০ পিস'],
-        ['category' => '২য় শ্রেণি', 'qty' => '৩,০০০ পিস'],
-    ];
-
-    public $deposits = [
-        ['category' => 'ব্যাংক আমানত', 'amount' => '৳ ২,০০,০০০'],
-        ['category' => 'ক্যাশ আমানত', 'amount' => '৳ ৫০,০০০'],
-    ];
-
-    public function setPeriod($period)
+    public function setPeriod(string $period): void
     {
         $this->filterPeriod = $period;
-        // In a real application, you would query database records based on the period here.
+        $this->dateFilter = '';
+    }
+
+    public function updatedDateFilter(): void
+    {
+        if ($this->dateFilter) {
+            $this->filterPeriod = '';
+        }
     }
 
     public function render()
     {
-        return view('livewire.dashboard')
-            ->layout('layouts.app');
+        $queryDate = null;
+        $startDate = null;
+
+        if ($this->dateFilter) {
+            $queryDate = Carbon::parse($this->dateFilter);
+        } else {
+            if ($this->filterPeriod === 'today') {
+                $queryDate = Carbon::today();
+            } elseif ($this->filterPeriod === '7days') {
+                $startDate = Carbon::today()->subDays(6);
+            } elseif ($this->filterPeriod === '15days') {
+                $startDate = Carbon::today()->subDays(14);
+            }
+            // 'season' & 'profit_loss' show full season data
+        }
+
+        // 1. Challan Summary Cards
+        $challanQuery = Challan::query();
+        if ($queryDate) {
+            $challanQuery->whereDate('date', $queryDate);
+        } elseif ($startDate) {
+            $challanQuery->whereDate('date', '>=', $startDate);
+        }
+
+        $totalSalesVat      = $challanQuery->sum('grand_total');
+        $cashSales          = $challanQuery->sum('cash');
+        $dueSales           = $challanQuery->sum('due');
+        $totalChallanValue  = $challanQuery->sum('total_value');
+        $totalDiscount      = $challanQuery->sum('discount');
+        $totalTransportRent = $challanQuery->sum('transport_rent');
+
+        // 2. Payment Summary Card & Table
+        $paymentQuery = Payment::query();
+        if ($queryDate) {
+            $paymentQuery->whereDate('date', $queryDate);
+        } elseif ($startDate) {
+            $paymentQuery->whereDate('date', '>=', $startDate);
+        }
+        $totalPayment = $paymentQuery->sum('payment');
+
+        // 3. Due Collection / Remaining Baki
+        $dueDeposit = max(0, $dueSales - $totalPayment);
+
+        // 4. Cash Summary
+        $netCash = $cashSales + $totalPayment;
+
+        // 5. Challan Category Table Data
+        $challanItemsQuery = ChallanItem::query()
+            ->join('challans', 'challan_items.challan_id', '=', 'challans.id')
+            ->select(
+                'challan_items.category_name',
+                DB::raw('COUNT(DISTINCT challans.id) as total_challan'),
+                DB::raw('SUM(challan_items.quantity) as total_qty'),
+                DB::raw('SUM(challan_items.amount) as total_amount')
+            );
+        if ($queryDate) {
+            $challanItemsQuery->whereDate('challans.date', $queryDate);
+        } elseif ($startDate) {
+            $challanItemsQuery->whereDate('challans.date', '>=', $startDate);
+        }
+        if ($this->search) {
+            $challanItemsQuery->where('challan_items.category_name', 'like', '%' . $this->search . '%');
+        }
+        $challanCategories = $challanItemsQuery->groupBy('challan_items.category_name')->get();
+
+        // 6. Payment Table Data
+        $paymentsQueryList = Payment::query()
+            ->select('ledger', 'desc', DB::raw('SUM(payment) as total_payment'))
+            ->groupBy('ledger', 'desc');
+        if ($queryDate) {
+            $paymentsQueryList->whereDate('date', $queryDate);
+        } elseif ($startDate) {
+            $paymentsQueryList->whereDate('date', '>=', $startDate);
+        }
+        if ($this->search) {
+            $paymentsQueryList->where(function ($q) {
+                $q->where('ledger', 'like', '%' . $this->search . '%')
+                  ->orWhere('desc', 'like', '%' . $this->search . '%');
+            });
+        }
+        $paymentSummary = $paymentsQueryList->get();
+
+        // 7. Production Table Data
+        $totalChallanQty = $challanCategories->sum('total_qty');
+        $productions = [
+            ['mill' => '১ নং মেল', 'qty' => $totalChallanQty],
+        ];
+
+        // 8. Delivery Table Data
+        $deliveryQuery = Delivery::query()
+            ->select('category_name', DB::raw('SUM(quantity) as total_qty'))
+            ->groupBy('category_name');
+        if ($queryDate) {
+            $deliveryQuery->whereDate('delivery_date', $queryDate);
+        } elseif ($startDate) {
+            $deliveryQuery->whereDate('delivery_date', '>=', $startDate);
+        }
+        $deliverySummary = $deliveryQuery->get();
+
+        // 9. Load Table Data
+        $loadQuery = LoadEntry::query()
+            ->select('description', 'category', DB::raw('SUM(quantity) as total_qty'))
+            ->groupBy('description', 'category');
+        if ($queryDate) {
+            $loadQuery->whereDate('date', $queryDate);
+        } elseif ($startDate) {
+            $loadQuery->whereDate('date', '>=', $startDate);
+        }
+        $loadSummary = $loadQuery->get();
+
+        // 10. Unload Table Data
+        $unloadQuery = UnloadItem::query()
+            ->join('unload_entries', 'unload_items.unload_entry_id', '=', 'unload_entries.id')
+            ->select('unload_items.category_name', DB::raw('SUM(unload_items.quantity) as total_qty'))
+            ->groupBy('unload_items.category_name');
+        if ($queryDate) {
+            $unloadQuery->whereDate('unload_entries.date', $queryDate);
+        } elseif ($startDate) {
+            $unloadQuery->whereDate('unload_entries.date', '>=', $startDate);
+        }
+        $unloadSummary = $unloadQuery->get();
+
+        return view('livewire.dashboard', [
+            'totalSalesVat'      => $totalSalesVat,
+            'cashSales'          => $cashSales,
+            'dueSales'           => $dueSales,
+            'totalPayment'       => $totalPayment,
+            'dueDeposit'         => $dueDeposit,
+            'netCash'            => $netCash,
+            'totalChallanValue'  => $totalChallanValue,
+            'totalDiscount'      => $totalDiscount,
+            'totalTransportRent' => $totalTransportRent,
+            'challanCategories'  => $challanCategories,
+            'paymentSummary'     => $paymentSummary,
+            'productions'        => $productions,
+            'deliverySummary'    => $deliverySummary,
+            'loadSummary'        => $loadSummary,
+            'unloadSummary'      => $unloadSummary,
+        ])->layout('layouts.app');
     }
 }

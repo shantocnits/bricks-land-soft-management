@@ -173,6 +173,23 @@ class CustomerProfile extends Component
         session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
     }
 
+    public $showPrintModal = false;
+    public $printChallan = null;
+
+    public function openPrintModal($challanId)
+    {
+        $this->printChallan = Challan::with('items')->find($challanId);
+        if ($this->printChallan) {
+            $this->showPrintModal = true;
+        }
+    }
+
+    public function closePrintModal()
+    {
+        $this->showPrintModal = false;
+        $this->printChallan = null;
+    }
+
     public function openChallanDetailsModal($challanId)
     {
         $this->detailsChallan = Challan::with('items')->find($challanId);

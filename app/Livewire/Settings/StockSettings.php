@@ -32,11 +32,13 @@ class StockSettings extends Component
     {
         $this->validate([
             'stock_system' => 'required|in:total_stock,category_stock,category_khamal_stock',
-            'raw_bricks_made' => 'required|integer|min:0',
+            'raw_bricks_made' => 'nullable|numeric|min:0',
         ]);
 
         Setting::set('stock_system', $this->stock_system);
-        Setting::set('raw_bricks_made', $this->raw_bricks_made);
+        if ($this->raw_bricks_made !== null) {
+            Setting::set('raw_bricks_made', $this->raw_bricks_made);
+        }
 
         session()->flash('message', 'স্টক সেটিংস সফলভাবে আপডেট করা হয়েছে।');
     }

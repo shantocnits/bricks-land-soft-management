@@ -446,17 +446,6 @@ if (!function_exists('toBanglaNum')) {
                     </tbody>
                 </table>
             </div>
-
-            {{-- Print Button --}}
-            <div class="text-center">
-                <button type="button" onclick="window.print()"
-                        class="px-5 py-2.5 border border-[#034C3C] text-[#034C3C] dark:border-emerald-500 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-800 text-xs font-bold rounded-xl transition-all cursor-pointer inline-flex items-center gap-2">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
-                    </svg>
-                    লোড রিপোর্ট প্রিন্ট করুন
-                </button>
-            </div>
         </div>
     </div>
 </div>

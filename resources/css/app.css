@@ -4,19 +4,44 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+:root {
+    --border: #e5e7eb;
+    --primary: #059669;
+    --primary-dark: #047857;
+    --primary-light: #10b981;
+    --secondary: #068a6b;
+    --accent: #009e74;
+}
+
 @theme {
     --font-sans:
         "Hind Siliguri", ui-sans-serif, system-ui, sans-serif,
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
     
+    /* Global Border variable (#e5e7eb / border-gray-200) */
+    --color-border: #e5e7eb;
+    --border: #e5e7eb;
+
     /* Primary brand colors (emerald shades) */
     --color-primary: #059669;         /* emerald-600 */
     --color-primary-dark: #047857;    /* emerald-700 */
     --color-primary-light: #10b981;   /* emerald-500 */
+    
+    /* Secondary & Accent brand colors */
     --color-secondary: #068a6b;
+    --color-secondary-dark: #046850;
+    --color-secondary-light: #08ac86;
+
     --color-accent: #009e74;
     --color-accent-hover: #008762;
+
+    /* Additional UI Brand Accent Tokens */
+    --color-cyan-brand: #00838F;
+    --color-blue-brand: #00609C;
+    --color-orange-brand: #E05A16;
+    --color-teal-brand: #0B958E;
+    --color-purple-brand: #BF20BA;
 
     /* Sidebar dark green theme colors */
     --color-primary-sidebar: #034c3c;
@@ -36,6 +61,30 @@
 }
 
 @variant dark (&:where(.dark, .dark *));
+
+/* Global Light Mode Border Uniformity using --border (#e5e7eb / border-gray-200) */
+html:not(.dark) input:not([type="checkbox"]):not([type="radio"]),
+html:not(.dark) textarea,
+html:not(.dark) select,
+html:not(.dark) table,
+html:not(.dark) th,
+html:not(.dark) td,
+html:not(.dark) tr,
+html:not(.dark) .border,
+html:not(.dark) .border-t,
+html:not(.dark) .border-b,
+html:not(.dark) .border-l,
+html:not(.dark) .border-r,
+html:not(.dark) .border-gray-100,
+html:not(.dark) .border-gray-200,
+html:not(.dark) .border-gray-300,
+html:not(.dark) .border-gray-200\/80,
+html:not(.dark) .border-slate-100,
+html:not(.dark) .border-slate-200,
+html:not(.dark) .divide-y > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-x > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--border, #e5e7eb) !important;
+}
 
 /* Smooth transition for theme toggle */
 *,

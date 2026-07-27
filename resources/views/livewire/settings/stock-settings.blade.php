@@ -110,20 +110,7 @@
 
             </div>
 
-            <!-- Raw bricks made input field -->
-            <div class="border-t border-gray-150 dark:border-slate-800 pt-6 mt-6">
-                <div class="max-w-md">
-                    <label class="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-2 font-sans">মাঠে উৎপাদিত মোট কাঁচা ইট (প্রাথমিক স্টক)</label>
-                    <div class="relative font-sans">
-                        <input type="number" wire:model.defer="raw_bricks_made" placeholder="যেমন: ৩৯৪৮৯"
-                               class="w-full px-4 py-3 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                    </div>
-                    @error('raw_bricks_made')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
-                    <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 font-sans">
-                        মাঠের কাঁচা ইটের অবশিষ্ট স্টক সঠিকভাবে হিসাব করার জন্য মাঠে মোট উৎপাদিত কাঁচা ইটের সংখ্যা এখানে সেট করুন।
-                    </p>
-                </div>
-            </div>
+
 
             <!-- Submit -->
             <div class="flex mt-6">

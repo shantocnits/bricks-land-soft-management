@@ -172,6 +172,7 @@
                         </div>
                     </div>
                     <button type="button" @click="window.print()" class="px-4 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                         @if($activeTab === 'all_challan')
                             চালান প্রিন্ট
                         @elseif($activeTab === 'delivery_history')
@@ -248,7 +249,7 @@
                                                      x-cloak>
                                                     <button type="button" @click="openDropdown = false; window.print()" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                         <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                                                        প্রিন্ট
+                                                        চালান প্রিন্ট
                                                     </button>
                                                     <button type="button" @click="openDropdown = false" wire:click="openDeliveryModal({{ $challan->id }})" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                         <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -318,7 +319,7 @@
                                                      x-cloak>
                                                     <button type="button" @click="openDropdown = false; window.print()" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                         <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                                                        প্রিন্ট
+                                                        ডেলিভারি প্রিন্ট
                                                     </button>
                                                     <button type="button" @click="openDropdown = false" wire:click="openDeliveryDetailsModal({{ $challan->id }})" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                         <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -348,7 +349,6 @@
                                     <th class="px-3 py-3 text-right border-r border-gray-150 dark:border-slate-800 w-32">অবশিষ্ট বাকি</th>
                                     <th class="px-3 py-3 border-r border-gray-150 dark:border-slate-800">নোট</th>
                                     <th class="px-3 py-3 border-r border-gray-150 dark:border-slate-800 w-28">নতুন তারিখ</th>
-                                    <th class="px-3 py-3 text-center w-16">বাটন</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-slate-800 text-xs">
@@ -361,30 +361,10 @@
                                         <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 font-bold text-red-500 font-sans">৳{{ number_format($challan->due, 2) }}</td>
                                         <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 text-gray-600 dark:text-slate-400 font-sans">{{ $challan->notes ?: '—' }}</td>
                                         <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 font-sans font-semibold text-gray-800 dark:text-white">{{ $challan->due_payment_date ?: '—' }}</td>
-                                        <td class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">
-                                            <button type="button" @click="openDropdown = !openDropdown; buttonRect = $el.getBoundingClientRect()" class="p-1.5 text-gray-500 hover:text-primary focus:outline-none transition-all cursor-pointer">
-                                                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/></svg>
-                                            </button>
-                                            <template x-teleport="body">
-                                                <div x-show="openDropdown" @click.away="openDropdown = false" x-transition
-                                                     class="fixed w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-2xl p-1.5 z-[9999] text-left text-xs flex flex-col gap-0.5"
-                                                     :style="buttonRect ? ('left: ' + (buttonRect.left - 140) + 'px; position: fixed; ' + (window.innerHeight - buttonRect.bottom < 140 ? 'bottom: ' + (window.innerHeight - buttonRect.top + 4) + 'px;' : 'top: ' + (buttonRect.bottom + 4) + 'px;')) : ''"
-                                                     x-cloak>
-                                                    <button type="button" @click="openDropdown = false; window.print()" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
-                                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                                                        প্রিন্ট
-                                                    </button>
-                                                    <button type="button" @click="openDropdown = false" wire:click="openChallanDetailsModal({{ $challan->id }})" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
-                                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                        বাকি বিস্তারিত
-                                                    </button>
-                                                </div>
-                                            </template>
-                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="px-4 py-8 text-center text-gray-450 dark:text-slate-500">কোনো বাকি জমা ইতিহাস পাওয়া যায়নি</td>
+                                        <td colspan="7" class="px-4 py-8 text-center text-gray-450 dark:text-slate-500">কোনো বাকি জমা ইতিহাস পাওয়া যায়নি</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -396,22 +376,24 @@
     </div><!-- ====================== PRINT AREA ====================== -->
     <div id="customer-profile-print-area" class="hidden">
         @php
-            $rangeLabel = ($dateFrom && $dateTo)
-                ? \Carbon\Carbon::parse($dateFrom)->format('d-m-Y') . ' থেকে ' . \Carbon\Carbon::parse($dateTo)->format('d-m-Y')
-                : \Carbon\Carbon::today()->format('d-m-Y');
+            $setting = \App\Models\Setting::first();
+            $companyName = $setting->site_title ?? $setting->company_name ?? 'ডেমো ব্রিকস';
+            $companyAddress = $setting->company_address ?? 'হিলালিপাড়া,কাটাবাড়ি,গোবিন্দগঞ্জ';
+            $companyPhone = $setting->company_phone ?? '০১৯০১৩৪৯৯০১,০১৯০১৩৪৯৯০৬';
+            $proprietor = $setting->proprietor_name ?? 'মোঃ মানিক মিয়া';
         @endphp
 
         <div class="print-page px-4 py-2">
             <!-- Company Header -->
-            <div class="print-header text-center border-b-2 border-gray-800 pb-3 mb-4">
-                <h1 class="print-company text-3xl font-black tracking-wide text-gray-900">ডেমো ব্রিকস</h1>
-                <p class="print-sub text-sm font-bold text-gray-700">হিলালিপাড়া, কাটাবাড়ি, গোবিন্দগঞ্জ</p>
-                <p class="print-sub text-xs text-gray-600 font-bold">মোবাইল: ০১৯০১৩৪৯৯০১, ০১৯০১৩৪৯৯০৬</p>
-                <p class="print-sub text-xs text-gray-600 font-bold">প্রোপাইটরঃ মোঃ মানিক মিয়া</p>
+            <div class="text-center pb-2 mb-2">
+                <h1 class="text-3xl font-black text-gray-900 tracking-wide mb-1">{{ $companyName }}</h1>
+                <p class="text-xs font-bold text-gray-700 mb-0.5">{{ $companyAddress }}</p>
+                <p class="text-xs font-bold text-gray-700 mb-0.5">মোবাইল: {{ $companyPhone }}</p>
+                <p class="text-xs font-bold text-gray-800">প্রোপাইটরঃ {{ $proprietor }}</p>
             </div>
 
-            <!-- Report Meta Title Bar -->
-            <div class="bg-gray-100 dark:bg-slate-800 text-center py-2 rounded-xl border border-gray-200 dark:border-slate-700 font-bold text-sm text-gray-900 dark:text-white mb-4">
+            <!-- Title Banner -->
+            <div class="bg-[#e5e7eb] text-center py-1.5 rounded-lg font-black text-sm text-gray-900 mb-4 tracking-wide">
                 @if($activeTab === 'all_challan')
                     কাস্টমার স্টেটমেন্ট (সব তথ্য)
                 @elseif($activeTab === 'delivery_history')
@@ -421,249 +403,201 @@
                 @endif
             </div>
 
-            <!-- Customer Meta Grid -->
-            <div class="flex justify-between items-start text-xs border border-gray-250 dark:border-slate-700 rounded-2xl p-4 mb-5 bg-gray-50/50 dark:bg-slate-900/30">
-                <div class="space-y-1">
-                    <h3 class="font-extrabold text-sm text-gray-900 dark:text-white">{{ $customer_name }}</h3>
-                    <p class="text-gray-600 dark:text-slate-400 font-semibold">{{ $customer_address ?: 'ঘোড়াঘাট' }} | মোবাইল: {{ $customer_phone }}</p>
-                    <p class="text-gray-500 dark:text-slate-500 font-semibold">আইডি: {{ $printChallans->first() ? $printChallans->first()->id : '—' }}</p>
+            <!-- Customer Metadata Box -->
+            <div class="flex justify-between items-start text-xs mb-4 font-sans border-l-4 border-gray-800 pl-2">
+                <div class="space-y-0.5">
+                    <h3 class="font-extrabold text-sm text-gray-900">{{ $customer_name }}</h3>
+                    <p class="text-gray-700 font-semibold">{{ $customer_address ?: 'ঘোড়াঘাট' }} | মোবাইল: {{ $customer_phone ?: '০১৬৫৬৪৫৬৪৫৬' }}</p>
+                    <p class="text-gray-600 font-semibold">আইডি: {{ $printChallans->first() ? $printChallans->first()->id : '১২' }}</p>
                 </div>
-                <div class="text-right space-y-1 text-gray-700 dark:text-slate-350">
-                    <p class="font-bold text-primary-dark dark:text-primary-400">সিজন: ২৫-২৬</p>
-                    <p class="font-sans">প্রিন্ট তারিখ: {{ now()->format('d-m-Y') }}</p>
-                    <p class="font-sans">সময়: {{ now()->format('h:i a') }}</p>
-                </div>
-            </div>
-
-            <!-- Stat Summary Grid (3 Columns, 2 Rows) -->
-            <div class="grid grid-cols-3 gap-3 text-center text-xs mb-6 font-bold">
-                <!-- Row 1 -->
-                <div class="border border-gray-200 dark:border-slate-800 bg-gray-50/40 dark:bg-slate-900/20 rounded-2xl p-3">
-                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 font-medium mb-0.5">মোট ইট ক্রয়</span>
-                    <span class="text-gray-900 dark:text-white text-base font-black font-sans">{{ number_format($stats['total_bricks']) }} টি</span>
-                </div>
-                <div class="border border-gray-200 dark:border-slate-800 bg-gray-50/40 dark:bg-slate-900/20 rounded-2xl p-3">
-                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 font-medium mb-0.5">মোট ইট ডেলিভারি</span>
-                    <span class="text-primary dark:text-primary-400 text-base font-black font-sans">{{ number_format($stats['delivered']) }} টি</span>
-                </div>
-                <div class="border border-gray-200 dark:border-slate-800 bg-gray-50/40 dark:bg-slate-900/20 rounded-2xl p-3">
-                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 font-medium mb-0.5">ইট ডেলিভারি বাকি</span>
-                    <span class="text-red-500 text-base font-black font-sans">{{ number_format($stats['remaining']) }} টি</span>
-                </div>
-                <!-- Row 2 -->
-                <div class="border border-gray-200 dark:border-slate-800 bg-gray-50/40 dark:bg-slate-900/20 rounded-2xl p-3">
-                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 font-medium mb-0.5">মোট টাকা</span>
-                    <span class="text-gray-900 dark:text-white text-base font-black font-sans">৳{{ number_format($stats['total_value']) }}</span>
-                </div>
-                <div class="border border-gray-200 dark:border-slate-800 bg-gray-50/40 dark:bg-slate-900/20 rounded-2xl p-3">
-                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 font-medium mb-0.5">মোট জমা</span>
-                    <span class="text-primary dark:text-primary-400 text-base font-black font-sans">৳{{ number_format($stats['paid']) }}</span>
-                </div>
-                <div class="border border-gray-200 dark:border-slate-800 bg-gray-50/40 dark:bg-slate-900/20 rounded-2xl p-3">
-                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 font-medium mb-0.5">মোট বকেয়া</span>
-                    <span class="text-red-500 text-base font-black font-sans">৳{{ number_format($stats['due']) }}</span>
+                <div class="text-right space-y-0.5 font-bold text-gray-800 text-[11px]">
+                    <p class="font-black text-gray-900 text-sm">সিজন: ২৫-২৬</p>
+                    <p class="font-normal text-gray-600">প্রিন্ট তারিখ: {{ now()->format('d-m-Y') }}</p>
+                    <p class="font-normal text-gray-600">সময়: {{ now()->format('h:i:s a') }}</p>
                 </div>
             </div>
 
-            <!-- List Section Heading -->
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-5 h-5 bg-gray-950 text-white rounded-lg flex items-center justify-center font-bold text-xs">১</span>
-                <span class="font-black text-sm text-gray-900 dark:text-white">
-                    @if($activeTab === 'all_challan')
-                        চালান / ইনভয়েস তালিকা
-                    @elseif($activeTab === 'delivery_history')
-                        ডেলিভারি বিবরণ তালিকা
-                    @elseif($activeTab === 'due_history')
-                        বাকি পরিশোধ তালিকা
-                    @endif
-                </span>
-            </div>
+            <!-- Stat Summary Grid (Only for all_challan tab) -->
             @if($activeTab === 'all_challan')
-            <table class="print-table">
+                <div class="grid grid-cols-3 gap-0 text-center text-xs mb-4 font-bold border border-gray-300 rounded-xl overflow-hidden bg-gray-100">
+                    <!-- Row 1 -->
+                    <div class="p-2.5 border-r border-b border-gray-300 bg-gray-50/70">
+                        <span class="block text-[11px] text-gray-600 font-bold mb-1">মোট ইট ক্রয়</span>
+                        <span class="text-gray-900 text-sm font-black font-sans">{{ number_format($stats['total_bricks']) }}</span>
+                    </div>
+                    <div class="p-2.5 border-r border-b border-gray-300 bg-gray-50/70">
+                        <span class="block text-[11px] text-gray-600 font-semibold mb-1">মোট ইট ডেলিভারি</span>
+                        <span class="text-gray-900 text-sm font-black font-sans">{{ number_format($stats['delivered']) }}</span>
+                    </div>
+                    <div class="p-2.5 border-b border-gray-300 bg-gray-50/70">
+                        <span class="block text-[11px] text-gray-600 font-semibold mb-1">ইট ডেলিভারি বাকি</span>
+                        <span class="text-gray-900 text-sm font-black font-sans">{{ number_format($stats['remaining']) }}</span>
+                    </div>
+                    <!-- Row 2 -->
+                    <div class="p-2.5 border-r border-gray-300 bg-gray-50/70">
+                        <span class="block text-[11px] text-gray-600 font-semibold mb-1">মোট টাকা</span>
+                        <span class="text-gray-900 text-sm font-black font-sans">৳{{ number_format($stats['total_value']) }}</span>
+                    </div>
+                    <div class="p-2.5 border-r border-gray-300 bg-gray-50/70">
+                        <span class="block text-[11px] text-gray-600 font-semibold mb-1">মোট জমা</span>
+                        <span class="text-gray-900 text-sm font-black font-sans">৳{{ number_format($stats['paid']) }}</span>
+                    </div>
+                    <div class="p-2.5 bg-gray-50/70">
+                        <span class="block text-[11px] text-gray-600 font-semibold mb-1">মোট বকেয়া</span>
+                        <span class="text-gray-900 text-sm font-black font-sans">৳{{ number_format($stats['due']) }}</span>
+                    </div>
+                </div>
+
+                <!-- List Section Heading -->
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-4 h-4 bg-black text-white rounded flex items-center justify-center font-bold text-[10px]">১</span>
+                    <span class="font-black text-xs text-gray-900">চালান / ইনভয়েস তালিকা</span>
+                </div>
+
+                <table class="print-table">
                     <thead>
                         <tr class="print-thead-row">
-                            <th class="pt-cell text-center" style="width:30px">চালান</th>
-                            <th class="pt-cell" style="width:70px">তারিখ</th>
-                            <th class="pt-cell" style="width:60px">শ্রেণি</th>
-                            <th class="pt-cell text-right" style="width:42px">পরিমাণ</th>
-                            <th class="pt-cell text-right" style="width:36px">দর</th>
-                            <th class="pt-cell text-right" style="width:56px">মূল্য</th>
-                            <th class="pt-cell text-right" style="width:38px">ভাড়া</th>
-                            <th class="pt-cell text-right" style="width:38px">ছাড়</th>
-                            <th class="pt-cell text-right" style="width:56px">সর্বমোট</th>
-                            <th class="pt-cell text-right" style="width:56px">নগদ</th>
-                            <th class="pt-cell text-right" style="width:36px">বাকি</th>
+                            <th class="pt-cell text-center" style="width:75px">তারিখ</th>
+                            <th class="pt-cell text-center" style="width:40px">চালান</th>
+                            <th class="pt-cell text-left" style="width:65px">শ্রেণি</th>
+                            <th class="pt-cell text-right" style="width:45px">পরিমাণ</th>
+                            <th class="pt-cell text-right" style="width:40px">দর</th>
+                            <th class="pt-cell text-right" style="width:40px">ভাড়া</th>
+                            <th class="pt-cell text-right" style="width:40px">ছাড়</th>
+                            <th class="pt-cell text-right" style="width:55px">মোট</th>
+                            <th class="pt-cell text-right" style="width:55px">জমা</th>
+                            <th class="pt-cell text-right" style="width:45px">বাকি</th>
+                            <th class="pt-cell text-left" style="width:60px">মন্তব্য</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($printChallans as $challan)
                             <tr class="print-row">
-                                <td class="pt-cell text-center font-bold">{{ $challan->challan_no }}</td>
-                                <td class="pt-cell font-sans">{{ $challan->date ? $challan->date->format('d-m-Y') : '' }}</td>
-                                <td class="pt-cell">
+                                <td class="pt-cell text-center font-mono text-[10px]">{{ $challan->date ? $challan->date->format('d-m-Y h:i') : '' }}</td>
+                                <td class="pt-cell text-center font-bold font-mono">{{ $challan->challan_no }}</td>
+                                <td class="pt-cell text-left font-semibold">
                                     @foreach($challan->items as $item)
-                                        <span class="block print-cat">{{ $item->category_name }}</span>
+                                        <span class="block">{{ $item->category_name }}</span>
                                     @endforeach
                                 </td>
-                                <td class="pt-cell text-right font-semibold">
+                                <td class="pt-cell text-right font-mono font-bold">
                                     @foreach($challan->items as $item)
                                         <span class="block">{{ number_format($item->quantity) }}</span>
                                     @endforeach
                                 </td>
-                                <td class="pt-cell text-right">
+                                <td class="pt-cell text-right font-mono">
                                     @foreach($challan->items as $item)
                                         <span class="block">৳{{ number_format($item->rate, 2) }}</span>
                                     @endforeach
                                 </td>
-                                <td class="pt-cell text-right">৳{{ number_format($challan->value, 2) }}</td>
-                                <td class="pt-cell text-right">৳{{ number_format($challan->transport_rent, 2) }}</td>
-                                <td class="pt-cell text-right">৳{{ number_format($challan->discount, 2) }}</td>
-                                <td class="pt-cell text-right font-bold">৳{{ number_format($challan->grand_total, 2) }}</td>
-                                <td class="pt-cell text-right font-semibold">৳{{ number_format($challan->cash, 2) }}</td>
-                                <td class="pt-cell text-right font-bold">৳{{ number_format($challan->due, 2) }}</td>
+                                <td class="pt-cell text-right font-mono">৳{{ number_format($challan->transport_rent ?: 0) }}</td>
+                                <td class="pt-cell text-right font-mono">৳{{ number_format($challan->discount ?: 0) }}</td>
+                                <td class="pt-cell text-right font-mono font-bold">৳{{ number_format($challan->grand_total) }}</td>
+                                <td class="pt-cell text-right font-mono font-bold">৳{{ number_format($challan->cash) }}</td>
+                                <td class="pt-cell text-right font-mono font-bold">৳{{ number_format($challan->due) }}</td>
+                                <td class="pt-cell text-left font-sans text-[10px]">{{ $challan->notes ?: '—' }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="11" style="text-align:center;padding:8px;font-size:9pt;">কোনো ডেটা নেই</td></tr>
                         @endforelse
                     </tbody>
-                    <tfoot>
-                        <tr class="print-tfoot-row">
-                            <td class="pt-cell" colspan="3">সর্বমোট:</td>
-                            <td class="pt-cell text-right font-bold">{{ number_format($printTotal['quantity']) }}</td>
-                            <td class="pt-cell">—</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($printTotal['value'], 2) }}</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($printTotal['transport'], 2) }}</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($printTotal['discount'], 2) }}</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($printTotal['grand'], 2) }}</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($printTotal['cash'], 2) }}</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($printTotal['due'], 2) }}</td>
-                        </tr>
-                    </tfoot>
                 </table>
+
             @elseif($activeTab === 'delivery_history')
-                @php
-                    $totalBuy = 0;
-                    $totalDelivered = 0;
-                    $totalRemaining = 0;
-                    foreach($printChallans as $c) {
-                        foreach($c->items as $item) {
-                            $totalBuy += $item->quantity;
-                            $totalDelivered += $item->delivered_quantity;
-                            $totalRemaining += max(0, $item->quantity - $item->delivered_quantity);
-                        }
-                    }
-                @endphp
+                <!-- List Section Heading -->
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-4 h-4 bg-black text-white rounded flex items-center justify-center font-bold text-[10px]">২</span>
+                    <span class="font-black text-xs text-gray-900">ডেলিভারি হিস্ট্রি</span>
+                </div>
+
                 <!-- Delivery History Print Table -->
                 <table class="print-table">
                     <thead>
                         <tr class="print-thead-row">
-                            <th class="pt-cell text-center" style="width:25px">#</th>
-                            <th class="pt-cell" style="width:60px">চালান নং</th>
-                            <th class="pt-cell" style="width:100px">কাস্টমার</th>
-                            <th class="pt-cell" style="width:80px">ঠিকানা</th>
-                            <th class="pt-cell" style="width:60px">শ্রেণি</th>
-                            <th class="pt-cell text-right" style="width:45px">ক্রয়</th>
-                            <th class="pt-cell text-right" style="width:50px">ডেলিভারি</th>
-                            <th class="pt-cell text-right" style="width:50px">ডে.বাকি</th>
-                            <th class="pt-cell text-right" style="width:55px">মোট ডে.</th>
-                            <th class="pt-cell" style="width:60px">ড্রাইভার</th>
-                            <th class="pt-cell" style="width:65px">তারিখ</th>
+                            <th class="pt-cell text-center" style="width:90px">তারিখ ও সময়</th>
+                            <th class="pt-cell text-center" style="width:45px">ডেলি.নং</th>
+                            <th class="pt-cell text-center" style="width:50px">চালান নং</th>
+                            <th class="pt-cell text-left" style="width:70px">ইট শ্রেণি</th>
+                            <th class="pt-cell text-right" style="width:55px">পরিমাণ</th>
+                            <th class="pt-cell text-left" style="width:90px">ঠিকানা</th>
+                            <th class="pt-cell text-left" style="width:80px">ড্রাইভার</th>
+                            <th class="pt-cell text-left" style="width:70px">মন্তব্য</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @php $counter = 1; @endphp
+                        @php $delCounter = 1; @endphp
                         @forelse($printChallans as $challan)
                             @foreach($challan->items as $item)
                                 <tr class="print-row">
-                                    <td class="pt-cell text-center">{{ $counter++ }}</td>
-                                    <td class="pt-cell font-bold">{{ $challan->challan_no }}</td>
-                                    <td class="pt-cell">{{ $challan->customer_name }}</td>
-                                    <td class="pt-cell">{{ $challan->customer_address ?: '—' }}</td>
-                                    <td class="pt-cell font-bold text-primary-dark">{{ $item->category_name }}</td>
-                                    <td class="pt-cell text-right font-semibold">{{ number_format($item->quantity) }}</td>
-                                    <td class="pt-cell text-right font-bold text-primary">{{ number_format($item->delivered_quantity) }}</td>
-                                    <td class="pt-cell text-right font-bold text-red-500">{{ number_format(max(0, $item->quantity - $item->delivered_quantity)) }}</td>
-                                    <td class="pt-cell text-right font-semibold">{{ number_format($item->delivered_quantity) }}</td>
-                                    <td class="pt-cell">Demo Driver</td>
-                                    <td class="pt-cell font-sans">{{ $challan->date ? $challan->date->format('d-m-Y') : '' }}</td>
+                                    <td class="pt-cell text-center font-mono text-[10px]">{{ $challan->date ? $challan->date->format('d-m-Y h:i') : '' }}</td>
+                                    <td class="pt-cell text-center font-bold font-mono">{{ $delCounter++ }}</td>
+                                    <td class="pt-cell text-center font-mono font-bold">{{ $challan->challan_no }}</td>
+                                    <td class="pt-cell text-left font-semibold">{{ $item->category_name }}</td>
+                                    <td class="pt-cell text-right font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td>
+                                    <td class="pt-cell text-left">{{ $challan->customer_address ?: 'ঘোড়াঘাট' }}</td>
+                                    <td class="pt-cell text-left">Demo Driver</td>
+                                    <td class="pt-cell text-left font-sans text-[10px]">{{ $challan->notes ?: '—' }}</td>
                                 </tr>
                             @endforeach
                         @empty
-                            <tr><td colspan="11" style="text-align:center;padding:8px;font-size:9pt;">কোনো ডেটা নেই</td></tr>
+                            <tr><td colspan="8" style="text-align:center;padding:8px;font-size:9pt;">কোনো ডেটা নেই</td></tr>
                         @endforelse
                     </tbody>
-                    <tfoot>
-                        <tr class="print-tfoot-row">
-                            <td class="pt-cell" colspan="5">সর্বমোট:</td>
-                            <td class="pt-cell text-right font-bold">{{ number_format($totalBuy) }}</td>
-                            <td class="pt-cell text-right font-bold">{{ number_format($totalDelivered) }}</td>
-                            <td class="pt-cell text-right font-bold">{{ number_format($totalRemaining) }}</td>
-                            <td class="pt-cell text-right font-bold">{{ number_format($totalDelivered) }}</td>
-                            <td class="pt-cell" colspan="2"></td>
-                        </tr>
-                    </tfoot>
                 </table>
+
             @elseif($activeTab === 'due_history')
-                @php
-                    $totalDueWas = $printChallans->sum('grand_total');
-                    $totalCashPaid = $printChallans->sum('cash');
-                    $totalRemainingDue = $printChallans->sum('due');
-                @endphp
+                <!-- List Section Heading -->
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-4 h-4 bg-black text-white rounded flex items-center justify-center font-bold text-[10px]">৩</span>
+                    <span class="font-black text-xs text-gray-900">বাকি জমা / কালেকশন হিস্ট্রি</span>
+                </div>
+
                 <!-- Due History Print Table -->
                 <table class="print-table">
                     <thead>
                         <tr class="print-thead-row">
-                            <th class="pt-cell" style="width:70px">তারিখ</th>
-                            <th class="pt-cell" style="width:60px">আইডি</th>
-                            <th class="pt-cell text-right" style="width:80px">টাকা বাকি ছিল</th>
-                            <th class="pt-cell text-right" style="width:80px">জমা দেওয়া</th>
-                            <th class="pt-cell text-right" style="width:80px">অবशिष्ट বাকি</th>
-                            <th class="pt-cell">নোট</th>
-                            <th class="pt-cell" style="width:70px">নতুন তারিখ</th>
+                            <th class="pt-cell text-center" style="width:95px">জমা তারিখ</th>
+                            <th class="pt-cell text-center" style="width:50px">রশিদ নং</th>
+                            <th class="pt-cell text-right" style="width:70px">আগের বাকি</th>
+                            <th class="pt-cell text-right" style="width:70px">জমা দিয়েছেন</th>
+                            <th class="pt-cell text-right" style="width:70px">অবশিষ্ট বাকি</th>
+                            <th class="pt-cell text-left" style="width:80px">মন্তব্য</th>
+                            <th class="pt-cell text-left" style="width:70px">সংগ্রহকারী</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($printChallans as $challan)
                             <tr class="print-row">
-                                <td class="pt-cell font-sans">{{ $challan->date ? $challan->date->format('d-m-Y') : '' }}</td>
-                                <td class="pt-cell font-bold">{{ $challan->challan_no }}</td>
-                                <td class="pt-cell text-right">৳{{ number_format($challan->grand_total, 2) }}</td>
-                                <td class="pt-cell text-right font-bold text-primary">৳{{ number_format($challan->cash, 2) }}</td>
-                                <td class="pt-cell text-right font-bold text-red-500">৳{{ number_format($challan->due, 2) }}</td>
-                                <td class="pt-cell">{{ $challan->notes ?: '—' }}</td>
-                                <td class="pt-cell">{{ $challan->due_payment_date ?: '—' }}</td>
+                                <td class="pt-cell text-center font-mono text-[10px]">{{ $challan->date ? $challan->date->format('d-m-Y h:i PM') : '' }}</td>
+                                <td class="pt-cell text-center font-bold font-mono">{{ $challan->challan_no }}</td>
+                                <td class="pt-cell text-right font-mono font-bold">৳{{ number_format($challan->grand_total) }}</td>
+                                <td class="pt-cell text-right font-mono font-bold text-gray-900">৳{{ number_format($challan->cash) }}</td>
+                                <td class="pt-cell text-right font-mono font-bold text-gray-900">৳{{ number_format($challan->due) }}</td>
+                                <td class="pt-cell text-left font-sans text-[10px]">{{ $challan->notes ?: '—' }}</td>
+                                <td class="pt-cell text-left">—</td>
                             </tr>
                         @empty
                             <tr><td colspan="7" style="text-align:center;padding:8px;font-size:9pt;">কোনো ডেটা নেই</td></tr>
                         @endforelse
                     </tbody>
-                    <tfoot>
-                        <tr class="print-tfoot-row">
-                            <td class="pt-cell" colspan="2">সর্বমোট:</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($totalDueWas, 2) }}</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($totalCashPaid, 2) }}</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($totalRemainingDue, 2) }}</td>
-                            <td class="pt-cell" colspan="2"></td>
-                        </tr>
-                    </tfoot>
                 </table>
             @endif
 
             <!-- Signature Area -->
-            <div class="print-signature-row">
-                <div class="print-signature-box">
-                    <div class="print-sig-line"></div>
-                    <p class="print-sig-label">ম্যানেজার</p>
+            <div class="print-signature-row flex justify-between items-center pt-12 mt-8 text-xs font-black text-gray-900">
+                <div class="print-signature-box text-center w-52">
+                    <div class="print-sig-line border-t-2 border-black mb-1"></div>
+                    <p class="print-sig-label">কাস্টমার স্বাক্ষর</p>
                 </div>
-                <div class="print-signature-box">
-                    <div class="print-sig-line"></div>
-                    <p class="print-sig-label">মালিক</p>
+                <div class="print-signature-box text-center w-48">
+                    <div class="print-sig-line border-t-2 border-black mb-1"></div>
+                    <p class="print-sig-label">ম্যানেজার / কর্তৃপক্ষ</p>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="print-footer">
-                প্রিন্ট তারিখ: {{ now()->format('d-m-Y h:i A') }} | Software by: Payratech.com
+            <div class="print-footer text-center text-[10px] text-gray-400 font-mono mt-8 border-t border-gray-200 pt-2">
+                রিপোর্ট প্রিন্ট: {{ now()->format('d-m-Y h:i A') }} | Software by Payratech.com
             </div>
         </div>
     </div>
@@ -1159,31 +1093,43 @@
 
         /* ========== PRINT RULES ========== */
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            html, body {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
             body * { visibility: hidden !important; }
             #customer-profile-print-area,
             #customer-profile-print-area * { visibility: visible !important; }
             #customer-profile-print-area {
                 display: block !important;
-                position: fixed !important;
+                position: absolute !important;
                 left: 0 !important;
                 top: 0 !important;
                 width: 100% !important;
-                background: white !important;
-                padding: 12mm 10mm 12mm 12mm !important;
+                background: #ffffff !important;
+                padding: 0 !important;
                 margin: 0 !important;
                 z-index: 99999 !important;
             }
             .print\:hidden {
                 display: none !important;
             }
+            .print-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
             .print-table thead { display: table-header-group !important; }
             .print-table tfoot { display: table-footer-group !important; }
             .print-table tbody { display: table-row-group !important; }
-            .print-table tbody tr { page-break-inside: avoid !important; }
-            @page {
-                size: A4 portrait;
-                margin: 12mm 10mm 12mm 12mm;
-            }
+            .print-table tbody tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+            .print-signature-row { page-break-inside: avoid !important; break-inside: avoid !important; }
         }
     </style>
 </div>
