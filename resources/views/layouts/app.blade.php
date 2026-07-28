@@ -297,33 +297,44 @@
             }
         });
 
-        // ===== Print Challan Area =====
         window.printChallanArea = function(printAreaId) {
-            var el = document.getElementById(printAreaId);
-            if (!el) { window.print(); return; }
-            var clone = el.cloneNode(true);
-            clone.id = '__print_clone__';
-            clone.style.cssText = '';
-            clone.removeAttribute('class');
-            var style = document.createElement('style');
-            style.textContent = [
-                '@media print {',
-                '  body * { visibility: hidden !important; }',
-                '  #__print_clone__, #__print_clone__ * { visibility: visible !important; }',
-                '  #__print_clone__ { position:fixed!important;left:0!important;top:0!important;width:100%!important;background:#fff!important;padding:12mm 10mm!important;margin:0!important;z-index:999999!important; }',
-                '  @page { size: A4 portrait; margin:0; }',
-                '}'
-            ].join('\n');
-            document.head.appendChild(style);
-            document.body.appendChild(clone);
-            setTimeout(function() {
-                window.print();
-                setTimeout(function() {
-                    document.body.removeChild(clone);
-                    document.head.removeChild(style);
-                }, 500);
-            }, 100);
-        };
+    var el = document.getElementById(printAreaId);
+    if (!el) { window.print(); return; }
+    
+    var clone = el.cloneNode(true);
+    clone.id = '__print_clone__';
+    clone.style.cssText = '';
+    clone.removeAttribute('class');
+    
+    // শুধুমাত্র print-a4-dual হলে landscape, POS হলে 80mm auto, বাকি সব A4 portrait
+    var pageSize = 'A4 portrait';
+    if (printAreaId === 'print-a4-dual') {
+        pageSize = 'A4 landscape';
+    } else if (printAreaId.indexOf('pos') !== -1) {
+        pageSize = '80mm auto'; // থার্মাল প্রিন্টারের জন্য লম্বালম্বি রোল
+    }
+
+    var style = document.createElement('style');
+    style.textContent = [
+        '@media print {',
+        '  body * { visibility: hidden !important; }',
+        '  #__print_clone__, #__print_clone__ * { visibility: visible !important; }',
+        '  #__print_clone__ { position:fixed!important;left:0!important;top:0!important;width:100%!important;background:#fff!important;padding:6mm!important;margin:0!important;z-index:999999!important; }',
+        '  @page { size: ' + pageSize + ' !important; margin: 0mm !important; }',
+        '}'
+    ].join('\n');
+    
+    document.head.appendChild(style);
+    document.body.appendChild(clone);
+    
+    setTimeout(function() {
+        window.print();
+        setTimeout(function() {
+            document.body.removeChild(clone);
+            document.head.removeChild(style);
+        }, 500);
+    }, 100);
+};
     </script>
 
     <!-- Universal Floating Action Buttons & Professional Modals Widget Area -->

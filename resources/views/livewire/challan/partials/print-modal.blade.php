@@ -281,16 +281,25 @@
     <!-- 1. A4 Customer Delivery Print Paper Layout -->
     <div id="print-a4-customer" class="hidden">
         @if(isset($isDeliveryPrint) && $isDeliveryPrint)
-            <div class="bg-white p-4 text-gray-900 space-y-6 max-w-4xl mx-auto font-sans">
-                <style>
-                    @media print {
-                        @page {
-                            size: A4 portrait !important;
-                            margin: 6mm !important;
-                        }
+            <style>
+                @media print {
+                    @page {
+                        size: A4 portrait !important;
+                        margin: 5mm !important;
                     }
-                </style>
-
+                     html, body {
+                width: 297mm !important;
+                height: 210mm !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+                }
+            </style>
+            <div class="bg-white p-4 text-gray-900 space-y-6 max-w-4xl mx-auto font-sans">
                 <!-- Header -->
                 <div class="flex justify-between items-start border-b border-gray-300 pb-3">
                     <div class="flex items-center gap-3">
@@ -330,10 +339,10 @@
                 </div>
 
                 <!-- Items Table -->
-                <div class="overflow-x-auto rounded-xl border border-gray-100">
+                <div class="overflow-x-auto rounded-xl border border-gray-200">
                     <table class="w-full text-xs text-left">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-900 font-bold border-b border-gray-100">
+                            <tr class="bg-gray-100 text-gray-900 font-bold border-b border-gray-200">
                                 <th class="p-2.5 text-center">ডে.নং</th>
                                 <th class="p-2.5 text-center">চালান</th>
                                 <th class="p-2.5 text-left">শ্রেণি</th>
@@ -342,7 +351,7 @@
                                 <th class="p-2.5 text-center">সময়</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 font-sans">
+                        <tbody class="divide-y divide-gray-200 font-sans">
                             @forelse($printChallan->items as $idx => $item)
                                 <tr>
                                     <td class="p-2.5 text-center font-bold font-mono">{{ $idx + 1 }}</td>
@@ -393,16 +402,24 @@
 
     <!-- 2. A4 Both Delivery Print Paper Layout (Customer + Office - Landscape) -->
     <div id="print-a4-dual" class="hidden">
-        @if(isset($isDeliveryPrint) && $isDeliveryPrint)
+    @if(isset($isDeliveryPrint) && $isDeliveryPrint)
+        <style type="text/css" media="print">
+            @page {
+                size: A4 landscape !important;
+                margin: 5mm !important;
+            }
+            html, body {
+                width: 297mm !important;
+                height: 210mm !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        </style>
             <div class="bg-white p-2 text-gray-900 max-w-full mx-auto font-sans">
-                <style>
-                    @media print {
-                        @page {
-                            size: A4 landscape !important;
-                            margin: 4mm !important;
-                        }
-                    }
-                </style>
                 <div class="grid grid-cols-2 gap-6 relative">
                     <!-- Middle Dashed Divider Line -->
                     <div class="absolute inset-y-0 left-1/2 -ml-px border-r-2 border-dashed border-gray-400 pointer-events-none"></div>
@@ -446,10 +463,14 @@
                         </div>
 
                         <table class="w-full text-[11px] border border-gray-200 rounded-lg">
-                            <tr class="bg-gray-100 font-bold border-b text-gray-900"><th class="p-1.5 text-center">ডে.নং</th><th class="p-1.5 text-center">চালান</th><th class="p-1.5 text-left">শ্রেণি</th><th class="p-1.5 text-center">ডেলিভারি</th><th class="p-1.5 text-center">ডে.বাকি</th><th class="p-1.5 text-center">সময়</th></tr>
-                            @foreach($printChallan->items as $idx => $item)
-                                <tr class="border-b"><td class="p-1.5 text-center font-mono font-bold">{{ $idx + 1 }}</td><td class="p-1.5 text-center font-mono font-bold">{{ $printChallan->challan_no }}</td><td class="p-1.5 text-left font-semibold">{{ $item->category_name }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td><td class="p-1.5 text-center font-mono text-[10px]">{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</td></tr>
-                            @endforeach
+                            <thead>
+                                <tr class="bg-gray-100 font-bold border-b border-gray-200 text-gray-900"><th class="p-1.5 text-center">ডে.নং</th><th class="p-1.5 text-center">চালান</th><th class="p-1.5 text-left">শ্রেণি</th><th class="p-1.5 text-center">ডেলিভারি</th><th class="p-1.5 text-center">ডে.বাকি</th><th class="p-1.5 text-center">সময়</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 font-sans">
+                                @foreach($printChallan->items as $idx => $item)
+                                    <tr><td class="p-1.5 text-center font-mono font-bold">{{ $idx + 1 }}</td><td class="p-1.5 text-center font-mono font-bold">{{ $printChallan->challan_no }}</td><td class="p-1.5 text-left font-semibold">{{ $item->category_name }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td><td class="p-1.5 text-center font-mono text-[10px]">{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</td></tr>
+                                @endforeach
+                            </tbody>
                         </table>
 
                         <div class="grid grid-cols-2 gap-3 items-start text-[10px]">
@@ -510,10 +531,14 @@
                         </div>
 
                         <table class="w-full text-[11px] border border-gray-200 rounded-lg">
-                            <tr class="bg-gray-100 font-bold border-b text-gray-900"><th class="p-1.5 text-center">ডে.নং</th><th class="p-1.5 text-center">চালান</th><th class="p-1.5 text-left">শ্রেণি</th><th class="p-1.5 text-center">ডেলিভারি</th><th class="p-1.5 text-center">ডে.বাকি</th><th class="p-1.5 text-center">সময়</th></tr>
-                            @foreach($printChallan->items as $idx => $item)
-                                <tr class="border-b"><td class="p-1.5 text-center font-mono font-bold">{{ $idx + 1 }}</td><td class="p-1.5 text-center font-mono font-bold">{{ $printChallan->challan_no }}</td><td class="p-1.5 text-left font-semibold">{{ $item->category_name }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td><td class="p-1.5 text-center font-mono text-[10px]">{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</td></tr>
-                            @endforeach
+                            <thead>
+                                <tr class="bg-gray-100 font-bold border-b border-gray-200 text-gray-900"><th class="p-1.5 text-center">ডে.নং</th><th class="p-1.5 text-center">চালান</th><th class="p-1.5 text-left">শ্রেণি</th><th class="p-1.5 text-center">ডেলিভারি</th><th class="p-1.5 text-center">ডে.বাকি</th><th class="p-1.5 text-center">সময়</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 font-sans">
+                                @foreach($printChallan->items as $idx => $item)
+                                    <tr><td class="p-1.5 text-center font-mono font-bold">{{ $idx + 1 }}</td><td class="p-1.5 text-center font-mono font-bold">{{ $printChallan->challan_no }}</td><td class="p-1.5 text-left font-semibold">{{ $item->category_name }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td><td class="p-1.5 text-center font-mono text-[10px]">{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</td></tr>
+                                @endforeach
+                            </tbody>
                         </table>
 
                         <div class="grid grid-cols-2 gap-3 items-start text-[10px]">
@@ -544,15 +569,15 @@
     <!-- 3. POS Customer Delivery Print Paper Layout -->
     <div id="print-pos-customer" class="hidden">
         @if(isset($isDeliveryPrint) && $isDeliveryPrint)
-            <div class="max-w-[300px] mr-auto ml-0 bg-white p-2 text-gray-900 font-sans text-xs space-y-3 text-left">
-                <style>
-                    @media print {
-                        @page {
-                            size: 80mm auto !important;
-                            margin: 2mm !important;
-                        }
+            <style>
+                @media print {
+                    @page {
+                        size: 80mm auto !important;
+                        margin: 2mm !important;
                     }
-                </style>
+                }
+            </style>
+            <div class="max-w-[300px] mr-auto ml-0 bg-white p-2 text-gray-900 font-sans text-xs space-y-3 text-left">
                 <div class="text-center space-y-1 border-b border-dashed border-gray-400 pb-2">
                     <p class="text-[11px] underline font-bold text-gray-800">ডেলিভারি রশিদ</p>
                     <h2 class="text-xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
@@ -599,18 +624,15 @@
     <!-- 4. POS Dual Stacked Delivery Print Paper Layout (Customer + Office) -->
     <div id="print-pos-dual" class="hidden">
         @if(isset($isDeliveryPrint) && $isDeliveryPrint)
-            <div class="max-w-[300px] mr-auto ml-0 bg-white p-2 text-gray-900 font-sans text-xs space-y-4 text-left">
-                <style>
-                    @media print {
-                        @page {
-                            size: A4 portrait !important;
-                            margin: 4mm !important;
-                        }
+            <style>
+                @media print {
+                    @page {
+                        size: A4 portrait !important;
+                        margin: 4mm !important;
                     }
-
-                    <style>
-                </style>
-                </style>
+                }
+            </style>
+            <div class="max-w-[300px] mr-auto ml-0 bg-white p-2 text-gray-900 font-sans text-xs space-y-4 text-left">
                 <!-- Customer Slip -->
                 <div class="space-y-3 border-b-2 border-dashed border-gray-500 pb-4">
                     <div class="text-center space-y-1 border-b border-dashed border-gray-400 pb-2">
@@ -700,27 +722,4 @@
         @endif
     </div>
 
-</div>
-
-<!-- Helper JavaScript for Printing Specific Area -->
-<script>
-    if (typeof window.printChallanArea !== 'function') {
-        window.printChallanArea = function(divId) {
-            var printElement = document.getElementById(divId);
-            if (!printElement) return;
-
-            var printWindow = window.open('', '_blank', 'width=950,height=750');
-            if (!printWindow) {
-                alert('পপআপ ব্লক করা আছে, অনুগ্রহ করে ব্রাউজার পপআপ এলাউ করুন');
-                return;
-            }
-
-            var headContent = document.head.innerHTML;
-            var bodyContent = printElement.innerHTML;
-
-            printWindow.document.write('<!DOCTYPE html><html><head>' + headContent + '</head><body onload="window.focus(); setTimeout(function(){ window.print(); window.close(); }, 250);">' + bodyContent + '</body></html>');
-            printWindow.document.close();
-        };
-    }
-</script>
 @endif
