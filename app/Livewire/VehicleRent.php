@@ -51,7 +51,7 @@ class VehicleRent extends Component
         $this->editingId = $rent->id;
         $this->address = $rent->address;
         $this->area = $rent->area;
-        $this->fare = rtrim(rtrim(number_format($rent->fare, 2, '.', ''), '0'), '.');
+        $this->fare = (floatval($rent->fare) > 0) ? rtrim(rtrim(number_format($rent->fare, 2, '.', ''), '0'), '.') : '';
         $this->showEditModal = true;
     }
 
@@ -65,10 +65,9 @@ class VehicleRent extends Component
     {
         $this->validate([
             'address' => 'required|string|max:255',
-            'fare' => 'required|numeric|min:0',
+            'fare' => 'nullable|numeric|min:0',
         ], [
             'address.required' => 'ঠিকানা আবশ্যক।',
-            'fare.required' => 'ভাড়া আবশ্যক।',
         ]);
 
         if ($this->editingId) {
@@ -76,7 +75,7 @@ class VehicleRent extends Component
             $rent->update([
                 'address' => $this->address,
                 'area' => $this->area ?: null,
-                'fare' => $this->fare,
+                'fare' => $this->fare ?: 0,
             ]);
             $this->dispatch('show-toast', ['message' => 'গাড়ি ভাড়ার তথ্য সফলভাবে আপডেট হয়েছে!']);
         }

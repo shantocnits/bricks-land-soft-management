@@ -173,6 +173,58 @@ class CustomerProfile extends Component
         session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
     }
 
+    public function saveDeliveryAndPrint()
+    {
+        $this->validate([
+            'todayDeliveryQty' => 'required|integer|min:1',
+            'deliveryNo' => 'required',
+            'deliveryDate' => 'required|date'
+        ]);
+
+        $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
+        $challan = null;
+        if ($item) {
+            $challan = $item->challan;
+
+            \App\Models\Delivery::create([
+                'delivery_no' => $this->deliveryNo,
+                'challan_id' => $challan->id,
+                'challan_item_id' => $item->id,
+                'category_name' => $item->category_name,
+                'quantity' => intval($this->todayDeliveryQty),
+                'delivery_date' => $this->deliveryDate,
+                'next_delivery_date' => $this->nextDeliveryDate ?: null,
+                'notes' => $this->deliveryNotes,
+                'driver_name' => $this->driverName,
+                'driver_phone' => $this->driverPhone,
+                'vehicle_no' => $this->vehicleNo,
+                'vehicle_rent' => floatval($this->vehicleRent),
+                'sms_sent' => $this->smsToCustomer,
+            ]);
+
+            $item->increment('delivered_quantity', intval($this->todayDeliveryQty));
+
+            $qtyStrBn = str_replace(
+                ['0','1','2','3','4','5','6','7','8','9'],
+                ['০','১','২','৩','৪','৫','৬','৭','৮','৯'],
+                number_format($this->todayDeliveryQty)
+            );
+            \App\Models\ActivityLog::log(
+                'নতুন ডেলিভারি',
+                "চালান নং {$challan->challan_no}। শ্রেণি {$item->category_name}। ডেলিভারি পরিমাণঃ {$qtyStrBn}"
+            );
+        }
+
+        $this->showDeliveryModal = false;
+        session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+
+        if ($challan) {
+            $this->printChallan = Challan::with('items')->find($challan->id);
+            $this->isDeliveryPrint = true;
+            $this->showPrintModal = true;
+        }
+    }
+
     public $showPrintModal = false;
     public $printChallan = null;
     public $isDeliveryPrint = false;

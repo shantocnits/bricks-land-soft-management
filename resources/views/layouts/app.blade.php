@@ -297,44 +297,62 @@
             }
         });
 
+        // =========================================================================
+        // 🖨️ PROJECT PRINT SYSTEM ENGINE (Universal Print Area Handler)
+        // -------------------------------------------------------------------------
+        // This function handles all print operations across the entire application.
+        // Target Containers: #print-a4-customer, #print-a4-dual, #print-pos-customer, #print-pos-dual
+        // Page Orientations: A4 landscape (print-a4-dual), 80mm auto (pos), A4 portrait (default)
+        // =========================================================================
         window.printChallanArea = function(printAreaId) {
-    var el = document.getElementById(printAreaId);
-    if (!el) { window.print(); return; }
-    
-    var clone = el.cloneNode(true);
-    clone.id = '__print_clone__';
-    clone.style.cssText = '';
-    clone.removeAttribute('class');
-    
-    // শুধুমাত্র print-a4-dual হলে landscape, POS হলে 80mm auto, বাকি সব A4 portrait
-    var pageSize = 'A4 portrait';
-    if (printAreaId === 'print-a4-dual') {
-        pageSize = 'A4 landscape';
-    } else if (printAreaId.indexOf('pos') !== -1) {
-        pageSize = '80mm auto'; // থার্মাল প্রিন্টারের জন্য লম্বালম্বি রোল
-    }
+            var el = document.getElementById(printAreaId);
+            if (!el) { window.print(); return; }
+            
+            var clone = el.cloneNode(true);
+            clone.id = '__print_clone__';
+            clone.style.cssText = '';
+            clone.removeAttribute('class');
+            
+            // প্রজেক্টের ৪টি প্রিন্ট আইডি অনুসারে পেজ সাইজ ও মার্জিন নির্ধারণ
+            var pageSize = 'A4 portrait';
+            var marginSize = '5mm';
+            var cloneHeight = 'auto';
+            if (printAreaId === 'print-a4-dual') {
+                pageSize = 'A4 landscape';
+                marginSize = '5mm';
+            } else if (printAreaId === 'print-pos-customer') {
+                pageSize = '80mm auto';
+                marginSize = '2mm';
+                cloneHeight = '100vh';
+            } else if (printAreaId === 'print-pos-dual') {
+                pageSize = 'A4 portrait';
+                marginSize = '5mm';
+            }
 
-    var style = document.createElement('style');
-    style.textContent = [
-        '@media print {',
-        '  body * { visibility: hidden !important; }',
-        '  #__print_clone__, #__print_clone__ * { visibility: visible !important; }',
-        '  #__print_clone__ { position:fixed!important;left:0!important;top:0!important;width:100%!important;background:#fff!important;padding:6mm!important;margin:0!important;z-index:999999!important; }',
-        '  @page { size: ' + pageSize + ' !important; margin: 0mm !important; }',
-        '}'
-    ].join('\n');
-    
-    document.head.appendChild(style);
-    document.body.appendChild(clone);
-    
-    setTimeout(function() {
-        window.print();
-        setTimeout(function() {
-            document.body.removeChild(clone);
-            document.head.removeChild(style);
-        }, 500);
-    }, 100);
-};
+            var style = document.createElement('style');
+            style.textContent = [
+                '@media print {',
+                '  body * { visibility: hidden !important; }',
+                '  #__print_clone__, #__print_clone__ * { visibility: visible !important; }',
+                '  #__print_clone__ { position:fixed!important;left:0!important;top:0!important;width:100%!important;height:' + cloneHeight + '!important;min-height:' + cloneHeight + '!important;background:#ffffff!important;padding:2mm!important;margin:0!important;z-index:999999!important; }',
+                '  @page { size: ' + pageSize + ' !important; margin: ' + marginSize + ' !important; }',
+                '}'
+            ].join('\n');
+            
+            document.head.appendChild(style);
+            document.body.appendChild(clone);
+            
+            setTimeout(function() {
+                window.print();
+                setTimeout(function() {
+                    document.body.removeChild(clone);
+                    document.head.removeChild(style);
+                }, 500);
+            }, 100);
+        };
+        // =========================================================================
+        // 🖨️ END OF PROJECT PRINT SYSTEM ENGINE
+        // =========================================================================
     </script>
 
     <!-- Universal Floating Action Buttons & Professional Modals Widget Area -->

@@ -1,46 +1,60 @@
+{{-- 
+========================================================================================
+🖨️ PROJECT PRINT PAPER LAYOUTS COMPONENT (x-print-layout)
+========================================================================================
+File Path: resources/views/components/print-layout.blade.php
+Purpose: Contains paper print templates for all standard challans, invoices, statements & reports.
+
+Supported Layout Modes ($type):
+  1. 'a4-customer'  -> A4 Single Customer Copy Print Layout (চালান পেজ / কাস্টমার প্রোফাইল চালান পোট্রেট প্রিন্ট)
+  2. 'a4-dual'      -> A4 Dual Customer + Office Side-by-Side Copies (সব চালান / কাস্টমার প্রোফাইল চালানের ল্যান্ডস্কেপ প্রিন্ট)
+  3. 'pos-customer' -> POS Thermal Slip Single Customer Copy (থার্মাল কাস্টমার রসিদ প্রিন্ট)
+  4. 'pos-dual'     -> POS Thermal Dual Stacked Customer + Office Slips (থার্মাল কাস্টমার+অফিস ডাবল রসিদ প্রিন্ট)
+  5. 'table-report' -> Generic Table / Statement Report Print Layout (কাস্টমার স্টেটমেন্ট ও ড্যাশবোর্ড রিপোর্ট প্রিন্ট)
+========================================================================================
+--}}
 @props([
-    'type' => 'a4-customer', // a4-customer, a4-dual, pos-customer, pos-dual, table-report
+    'type' => 'a4-customer',
     'challan' => null,
     'title' => 'চালান কপি',
     'isDelivery' => false,
 ])
 
 @php
-    $setting = \App\Models\Setting::first();
-    $companyName = $setting->site_title ?? $setting->company_name ?? 'ডেমো ব্রিকস';
-    $companyAddress = $setting->company_address ?? 'হিলালিপাড়া,কাটাবাড়ি,গোবিন্দগঞ্জ';
-    $companyPhone = $setting->company_phone ?? '০১৯১০৩-০০০-০০০, ০১৯১০৩-০০০-০০০';
-    $proprietor = $setting->proprietor_name ?? 'মো: মালিক মিয়া';
+    $companyName = \App\Models\Setting::get('company_name_bn', 'ডেমো ব্রিকস');
+    $companyAddress = \App\Models\Setting::get('address', 'হিলালিপাড়া,কাটাবাড়ি,গোবیندগঞ্জ');
+    $companyPhone = \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901,01901349906');
+    $proprietor = \App\Models\Setting::get('owner_name', 'মো: মালিক মিয়া');
     $printTime = now()->format('d-m-Y h:i A');
 @endphp
 
 <div class="print-layout-wrapper text-gray-900 font-sans">
     
-    {{-- Dynamic Print Page CSS --}}
+    {{-- Dynamic Print Page CSS Rules --}}
     <style>
         @media print {
-                @page {
-    @if($type === 'a4-customer')
-        size: A4 portrait;
-        margin: 6mm;
+            @page {
+                @if($type === 'a4-customer')
+                    size: A4 portrait !important;
+                    margin: 5mm !important;
 
-    @elseif($type === 'a4-dual')
-        size: A4 landscape;
-        margin: 4mm;
+                @elseif($type === 'a4-dual')
+                    size: A4 landscape !important;
+                    margin: 5mm !important;
 
-    @elseif($type === 'pos-customer')
-        size: 80mm auto;
-        margin: 2mm;
+                @elseif($type === 'pos-customer')
+                    size: 80mm auto !important;
+                    margin: 2mm !important;
 
-    @elseif($type === 'pos-dual')
-        size: A4 portrait;
-        margin: 4mm;
+                @elseif($type === 'pos-dual')
+                    size: A4 portrait !important;
+                    margin: 5mm !important;
 
-    @else
-        size: A4 portrait;
-        margin: 6mm;
-    @endif
-}
+                @else
+                    size: A4 portrait !important;
+                    margin: 5mm !important;
+                @endif
+            }
             html, body {
                 background: #ffffff !important;
                 color: #000000 !important;
@@ -61,7 +75,10 @@
         }
     </style>
 
-    {{-- ==================== MODE 1: A4 Single Customer Copy ==================== --}}
+    {{-- ======================================================================= --}}
+    {{-- 📄 MODE 1: A4 SINGLE CUSTOMER COPY PRINT LAYOUT                         --}}
+    {{--    (চালান পেজ / কাস্টমার প্রোফাইল চালান সিঙ্গেল কপি পোট্রেট প্রিন্ট)      --}}
+    {{-- ======================================================================= --}}
     @if($type === 'a4-customer')
         <div class="bg-white p-2 sm:p-4 text-gray-900 space-y-5 max-w-4xl mx-auto shadow-none border-0">
             
@@ -142,9 +159,9 @@
                         <p>৩। চালান করার ৩০ দিনের মধ্যে ইট ডেলিভারি নিতে হবে।</p>
                     </div>
                     @if($challan->due > 0)
-                        <div class="border-2 border-red-500 rounded-xl p-3 text-center">
-                            <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ :</p>
-                            <p class="text-lg font-black text-red-600 mt-0.5">{{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : now()->addDay()->format('d-m-Y') }}</p>
+                        <div class="border-2 border-red-500 rounded-xl p-3 text-center space-y-1">
+                            <p class="text-base font-black text-red-600">বাকি: ৳ {{ number_format($challan->due) }}</p>
+                            <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ : {{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : '—' }}</p>
                         </div>
                     @else
                         <div class="inline-block border-2 border-green-600 rounded-xl px-8 py-2 text-center font-black text-xl tracking-wide uppercase text-green-700">
@@ -177,7 +194,10 @@
             </div>
         </div>
 
-    {{-- ==================== MODE 2: A4 Dual Side-by-Side Copies ==================== --}}
+    {{-- ======================================================================= --}}
+    {{-- 📄 MODE 2: A4 DUAL SIDE-BY-SIDE COPIES PRINT LAYOUT                     --}}
+    {{--    (সব চালান পেজ / কাস্টমার প্রোফাইল চালান কাস্টমার+অফিস ল্যান্ডস্কেপ প্রিন্ট)--}}
+    {{-- ======================================================================= --}}
     @elseif($type === 'a4-dual')
         <div class="grid grid-cols-2 gap-6 items-stretch w-full p-2 relative bg-white border-0">
             
@@ -261,9 +281,9 @@
                         <p>৩। চালান করার ৩০ দিনের মধ্যে ইট ডেলিভারি নিতে হবে।</p>
                     </div>
                     @if($challan->due > 0)
-                        <div class="border-2 border-red-500 rounded-xl p-3 text-center">
-                            <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ :</p>
-                            <p class="text-lg font-black text-red-600 mt-0.5">{{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : now()->addDay()->format('d-m-Y') }}</p>
+                        <div class="border-2 border-red-500 rounded-xl p-3 text-center space-y-1">
+                            <p class="text-base font-black text-red-600">বাকি: ৳ {{ number_format($challan->due) }}</p>
+                            <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ : {{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : '—' }}</p>
                         </div>
                     @else
                         <div class="inline-block border-2 border-green-600 rounded-xl px-8 py-2 text-center font-black text-xl tracking-wide uppercase text-green-700">
@@ -379,9 +399,9 @@
                         <p>৩। চালান করার ৩০ দিনের মধ্যে ইট ডেলিভারি নিতে হবে।</p>
                     </div>
                     @if($challan->due > 0)
-                        <div class="border-2 border-red-500 rounded-xl p-3 text-center">
-                            <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ :</p>
-                            <p class="text-lg font-black text-red-600 mt-0.5">{{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : now()->addDay()->format('d-m-Y') }}</p>
+                        <div class="border-2 border-red-500 rounded-xl p-3 text-center space-y-1">
+                            <p class="text-base font-black text-red-600">বাকি: ৳ {{ number_format($challan->due) }}</p>
+                            <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ : {{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : '—' }}</p>
                         </div>
                     @else
                         <div class="inline-block border-2 border-green-600 rounded-xl px-8 py-2 text-center font-black text-xl tracking-wide uppercase text-green-700">
@@ -415,9 +435,12 @@
         </div>
         </div>
 
-    {{-- ==================== MODE 3: POS Single Thermal Slip (Aligned Left) ==================== --}}
+    {{-- ======================================================================= --}}
+    {{-- 📄 MODE 3: POS SINGLE THERMAL SLIP PRINT LAYOUT                         --}}
+    {{--    (থার্মাল প্রিন্টার কাস্টমার সিঙ্গেল রসিদ প্রিন্ট)                   --}}
+    {{-- ======================================================================= --}}
     @elseif($type === 'pos-customer')
-        <div class="max-w-[300px] mr-auto ml-0 bg-white p-2 text-gray-900 font-sans text-xs space-y-3 border-0 shadow-none text-left">
+        <div class="max-w-[300px] mr-auto ml-0 bg-white min-h-screen p-2 text-gray-900 font-sans text-xs space-y-3 border-0 shadow-none text-left">
             <div class="text-center space-y-1 border-b border-dashed border-gray-400 pb-2">
                 <p class="text-[11px] underline font-bold text-gray-800">চালান রশিদ</p>
                 <h2 class="text-xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
@@ -463,7 +486,10 @@
             </div>
         </div>
 
-    {{-- ==================== MODE 4: POS Dual Stacked Slips (Aligned Left) ==================== --}}
+    {{-- ======================================================================= --}}
+    {{-- 📄 MODE 4: POS DUAL STACKED SLIPS PRINT LAYOUT                          --}}
+    {{--    (থার্মাল প্রিন্টার কাস্টমার + অফিস ডাবল রসিদ স্ট্যাকড প্রিন্ট)       --}}
+    {{-- ======================================================================= --}}
     @elseif($type === 'pos-dual')
         <div class="max-w-[300px] mr-auto ml-0 space-y-4 font-sans text-xs border-0 shadow-none text-left">
             <!-- Customer Slip Top -->
@@ -566,7 +592,10 @@
             </div>
         </div>
 
-    {{-- ==================== MODE 5: Generic Table Report ==================== --}}
+    {{-- ======================================================================= --}}
+    {{-- 📄 MODE 5: GENERIC TABLE REPORT & STATEMENT PRINT LAYOUT                --}}
+    {{--    (কাস্টমার স্টেটমেন্ট ও ড্যাশবোর্ড ফিল্টারড রিপোর্ট প্রিন্ট)        --}}
+    {{-- ======================================================================= --}}
     @else
         <div class="bg-white p-4 text-gray-900 space-y-6 border-0">
             <div class="flex justify-between items-start border-b-2 border-gray-800 pb-3">

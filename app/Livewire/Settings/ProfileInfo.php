@@ -28,12 +28,15 @@ class ProfileInfo extends Component
 
 
 
+    // Edit Toggle
+    public bool $isEditing = false;
+
     public function mount()
     {
         // Set default settings if not exists
         $defaults = [
             'company_name_bn' => 'ডেমো ব্রিকস',
-            'company_name_en' => 'DEMO',
+            'company_name_en' => 'Bricks Land',
             'address' => 'হিলালীপাড়া,কাটাবাড়ি,গোবিন্দগঞ্জ',
             'owner_name' => 'মোঃ মানিক মিয়া',
             'owner_phone' => '01918908070',
@@ -50,25 +53,42 @@ class ProfileInfo extends Component
             }
         }
 
-        $this->company_name_bn = Setting::get('company_name_bn');
-        $this->company_name_en = Setting::get('company_name_en');
-        $this->address = Setting::get('address');
-        $this->owner_name = Setting::get('owner_name');
-        $this->owner_phone = Setting::get('owner_phone');
-        $this->invoice_phones = Setting::get('invoice_phones');
+        $this->company_name_bn = Setting::get('company_name_bn', 'ডেমো ব্রিকস');
+        $this->company_name_en = Setting::get('company_name_en', 'Bricks Land');
+        $this->address = Setting::get('address', 'হিলালীপাড়া,কাটাবাড়ি,গোবিন্দগঞ্জ');
+        $this->owner_name = Setting::get('owner_name', 'মোঃ মানিক মিয়া');
+        $this->owner_phone = Setting::get('owner_phone', '01918908070');
+        $this->invoice_phones = Setting::get('invoice_phones', '01901349901,01901349906');
 
         $this->client_id = Setting::get('client_id');
         $this->monthly_fee = Setting::get('monthly_fee');
         $this->sms_rate = Setting::get('sms_rate');
         $this->next_payment_date = Setting::get('next_payment_date');
 
+        $this->isEditing = false;
+    }
 
+    public function enableEditing()
+    {
+        $this->isEditing = true;
+    }
+
+    public function cancelEditing()
+    {
+        $this->company_name_bn = Setting::get('company_name_bn', 'ডেমো ব্রিকস');
+        $this->company_name_en = Setting::get('company_name_en', 'Bricks Land');
+        $this->address = Setting::get('address', 'হিলালীপাড়া,কাটাবাড়ি,গোবিন্দগঞ্জ');
+        $this->owner_name = Setting::get('owner_name', 'মোঃ মানিক মিয়া');
+        $this->owner_phone = Setting::get('owner_phone', '01918908070');
+        $this->invoice_phones = Setting::get('invoice_phones', '01901349901,01901349906');
+
+        $this->isEditing = false;
     }
 
     public function save()
     {
         // Block action if logged in as Demo
-        if (Auth::user()->hasRole('demo')) {
+        if (Auth::check() && Auth::user()->hasRole('demo')) {
             session()->flash('message', 'ডেমো মোডে প্রতিষ্ঠানের তথ্য পরিবর্তন করা সম্ভব নয়।');
             return;
         }
@@ -96,7 +116,10 @@ class ProfileInfo extends Component
         Setting::set('owner_phone', $this->owner_phone);
         Setting::set('invoice_phones', $this->invoice_phones);
 
+        $this->isEditing = false;
+
         session()->flash('message', 'প্রতিষ্ঠানের তথ্য সফলভাবে আপডেট করা হয়েছে।');
+        $this->dispatch('show-toast', message: 'প্রতিষ্ঠানের তথ্য সফলভাবে আপডেট করা হয়েছে।');
     }
 
 

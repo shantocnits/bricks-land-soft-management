@@ -1,11 +1,28 @@
-{{-- ==================== PRINT PREVIEW MODAL (Single Invoice / Delivery) ==================== --}}
+{{-- 
+========================================================================================
+🖨️ PROJECT UNIVERSAL PRINT PREVIEW MODAL COMPONENT (x-print-modal)
+========================================================================================
+File Path: resources/views/components/print-modal.blade.php
+Used In Pages: 
+  - All Challans Page (@see livewire.challan.all-challan)
+  - Today Challans Page (@see livewire.challan.today-challan)
+  - Pending Challans Page (@see livewire.challan.pending-challan)
+  - Customer Profile Page (@see livewire.challan.customer-profile)
+  - Delivery Print Actions (Single & Dual Delivery Receipts)
+========================================================================================
+--}}
+@props([
+    'showPrintModal' => false,
+    'printChallan' => null,
+    'isDeliveryPrint' => false,
+])
+
 @if($showPrintModal && $printChallan)
 @php
-    $setting = \App\Models\Setting::first();
-    $companyName = $setting->site_title ?? $setting->company_name ?? 'ডেমো ব্রিকস';
-    $companyAddress = $setting->company_address ?? 'হিলালিপাড়া,কাটাবাড়ি,গোবیندগঞ্জ';
-    $companyPhone = $setting->company_phone ?? '০১৯০১৩৪৯৯০১,০১৯০১৩৪৯৯০৬';
-    $proprietor = $setting->proprietor_name ?? 'মেঃ মানিক মিয়া';
+    $companyName = \App\Models\Setting::get('company_name_bn', 'ডেমো ব্রিকস');
+    $companyAddress = \App\Models\Setting::get('address', 'হিলালীপাড়া,কাটাবাড়ি,গোবیندগঞ্জ');
+    $companyPhone = \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901,01901349906');
+    $proprietor = \App\Models\Setting::get('owner_name', 'মোঃ মানিক মিয়া');
 
     $latestDelivery = null;
     if ($printChallan) {
@@ -18,10 +35,13 @@
     $deliveryNo = $latestDelivery ? $latestDelivery->delivery_no : '১';
 @endphp
 
+<!-- Modal Overlay Box -->
 <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity overflow-y-auto" x-cloak>
     <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 my-8 overflow-hidden transition-all" @click.away="$wire.closePrintModal()">
         
-        <!-- Top Options Bar -->
+        <!-- ======================================================================= -->
+        <!-- 🔘 TOP CONTROL BAR: 4 PRINT FORMAT BUTTONS                              -->
+        <!-- ======================================================================= -->
         <div class="relative bg-slate-950 p-4 border-b border-slate-800 flex flex-col items-center gap-3 text-white">
             
             <!-- Close Modal Cross Button at Top Right -->
@@ -36,9 +56,9 @@
                 প্রিন্ট অপশন সিলেক্ট করুন
             </h3>
             
-            <!-- 4 Horizontal Serial Print Action Buttons -->
+            <!-- 4 Horizontal Action Buttons -->
             <div class="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2.5 w-full pr-8 sm:pr-0">
-                <!-- 1. A4 Customer -->
+                <!-- 1. A4 Customer Button -->
                 <button type="button" 
                         onclick="printChallanArea('print-a4-customer')"
                         class="flex-1 sm:flex-initial px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap">
@@ -46,7 +66,7 @@
                     A4 (কাস্টমার)
                 </button>
 
-                <!-- 2. A4 Both -->
+                <!-- 2. A4 Dual (Customer + Office) Button -->
                 <button type="button" 
                         onclick="printChallanArea('print-a4-dual')"
                         class="flex-1 sm:flex-initial px-4 py-2 bg-[#034C3C] hover:bg-[#023E31] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap">
@@ -54,7 +74,7 @@
                     A4 (কাস্টমার+অফিস)
                 </button>
 
-                <!-- 3. POS Customer -->
+                <!-- 3. POS Customer Button -->
                 <button type="button" 
                         onclick="printChallanArea('print-pos-customer')"
                         class="flex-1 sm:flex-initial px-4 py-2 bg-[#E05A16] hover:bg-[#BE4B11] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap">
@@ -62,7 +82,7 @@
                     POS (কাস্টমার)
                 </button>
 
-                <!-- 4. POS Both -->
+                <!-- 4. POS Dual (Customer + Office) Button -->
                 <button type="button" 
                         onclick="printChallanArea('print-pos-dual')"
                         class="flex-1 sm:flex-initial px-4 py-2 bg-[#D97706] hover:bg-[#B45309] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap">
@@ -72,10 +92,12 @@
             </div>
         </div>
 
-        <!-- On-Screen Modal Fixed Preview Area -->
+        <!-- ======================================================================= -->
+        <!-- 👁️ ON-SCREEN MODAL PREVIEW AREA (LIVE IN-MODAL DISPLAY)                -->
+        <!-- ======================================================================= -->
         <div class="p-4 sm:p-6 bg-slate-950 max-h-[78vh] overflow-y-auto">
             @if(isset($isDeliveryPrint) && $isDeliveryPrint)
-                {{-- DELIVERY RECEIPT PREVIEW --}}
+                {{-- 🚚 ON-SCREEN LIVE PREVIEW: DELIVERY RECEIPT --}}
                 <div class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 text-gray-900 space-y-6 shadow-xl max-w-3xl mx-auto font-sans">
                     <div class="flex justify-between items-start border-b border-gray-200 pb-4">
                         <div class="flex items-center gap-3">
@@ -168,7 +190,7 @@
                 </div>
 
             @else
-                {{-- INVOICE PREVIEW --}}
+                {{-- 🧾 ON-SCREEN LIVE PREVIEW: STANDARD CHALLAN / INVOICE --}}
                 <div class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 text-gray-900 space-y-6 shadow-xl max-w-3xl mx-auto font-sans">
                     <div class="flex justify-between items-start border-b border-gray-200 pb-4">
                         <div class="flex items-center gap-3">
@@ -242,9 +264,9 @@
                                 <p>৩। চালান করার ৩০ দিনের মধ্যে ইট ডেলিভারি নিতে হবে।</p>
                             </div>
                             @if($printChallan->due > 0)
-                                <div class="border-2 border-red-500 rounded-xl p-3 text-center">
-                                    <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ :</p>
-                                    <p class="text-lg font-black text-red-600 mt-0.5">{{ $printChallan->due_payment_date ? \Carbon\Carbon::parse($printChallan->due_payment_date)->format('d-m-Y') : now()->addDay()->format('d-m-Y') }}</p>
+                                <div class="border-2 border-red-500 rounded-xl p-3 text-center space-y-1">
+                                    <p class="text-base font-black text-red-600">বাকি: ৳ {{ number_format($printChallan->due) }}</p>
+                                    <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ : {{ $printChallan->due_payment_date ? \Carbon\Carbon::parse($printChallan->due_payment_date)->format('d-m-Y') : '—' }}</p>
                                 </div>
                             @else
                                 <div class="inline-block border-2 border-green-600 rounded-xl px-8 py-2.5 text-center font-black text-xl tracking-wide uppercase text-green-700">
@@ -276,9 +298,11 @@
 
     </div>
 
-    <!-- 4 Hidden Print Layout Containers (Clean Printable Templates for Paper - No outer borders/padding) -->
+    <!-- ======================================================================= -->
+    <!-- 📄 4 HIDDEN PRINT PAPER LAYOUT CONTAINERS (TARGETS FOR printChallanArea)-->
+    <!-- ======================================================================= -->
     
-    <!-- 1. A4 Customer Delivery Print Paper Layout -->
+    <!-- 📄 PRINT LAYOUT 1: A4 Single Customer Copy (#print-a4-customer) -->
     <div id="print-a4-customer" class="hidden">
         @if(isset($isDeliveryPrint) && $isDeliveryPrint)
             <style>
@@ -287,16 +311,14 @@
                         size: A4 portrait !important;
                         margin: 5mm !important;
                     }
-                     html, body {
-                width: 297mm !important;
-                height: 210mm !important;
-                background: #ffffff !important;
-                color: #000000 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
+                    html, body {
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
                 }
             </style>
             <div class="bg-white p-4 text-gray-900 space-y-6 max-w-4xl mx-auto font-sans">
@@ -368,7 +390,7 @@
                     </table>
                 </div>
 
-                <!-- Notes & Delivery Info Grid (Borderless Boxes) -->
+                <!-- Notes & Delivery Info Grid -->
                 <div class="grid grid-cols-2 gap-6 items-start pt-1">
                     <div class="bg-white rounded-xl p-3 text-[11px] text-gray-800 space-y-1">
                         <p class="font-bold underline mb-1 text-gray-900">বিশেষ দ্রষ্টব্যঃ</p>
@@ -400,25 +422,23 @@
         @endif
     </div>
 
-    <!-- 2. A4 Both Delivery Print Paper Layout (Customer + Office - Landscape) -->
+    <!-- 📄 PRINT LAYOUT 2: A4 Dual Copies Customer + Office Landscape (#print-a4-dual) -->
     <div id="print-a4-dual" class="hidden">
-    @if(isset($isDeliveryPrint) && $isDeliveryPrint)
-        <style type="text/css" media="print">
-            @page {
-                size: A4 landscape !important;
-                margin: 5mm !important;
-            }
-            html, body {
-                width: 297mm !important;
-                height: 210mm !important;
-                background: #ffffff !important;
-                color: #000000 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-        </style>
+        @if(isset($isDeliveryPrint) && $isDeliveryPrint)
+            <style type="text/css" media="print">
+                @page {
+                    size: A4 landscape !important;
+                    margin: 5mm !important;
+                }
+                html, body {
+                    background: #ffffff !important;
+                    color: #000000 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+            </style>
             <div class="bg-white p-2 text-gray-900 max-w-full mx-auto font-sans">
                 <div class="grid grid-cols-2 gap-6 relative">
                     <!-- Middle Dashed Divider Line -->
@@ -566,7 +586,7 @@
         @endif
     </div>
 
-    <!-- 3. POS Customer Delivery Print Paper Layout -->
+    <!-- 📄 PRINT LAYOUT 3: POS Thermal Customer Receipt (#print-pos-customer) -->
     <div id="print-pos-customer" class="hidden">
         @if(isset($isDeliveryPrint) && $isDeliveryPrint)
             <style>
@@ -575,9 +595,17 @@
                         size: 80mm auto !important;
                         margin: 2mm !important;
                     }
+                    html, body {
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
                 }
             </style>
-            <div class="max-w-[300px] mr-auto ml-0 bg-white p-2 text-gray-900 font-sans text-xs space-y-3 text-left">
+            <div class="max-w-[300px] mr-auto ml-0 bg-white min-h-screen p-2 text-gray-900 font-sans text-xs space-y-3 text-left">
                 <div class="text-center space-y-1 border-b border-dashed border-gray-400 pb-2">
                     <p class="text-[11px] underline font-bold text-gray-800">ডেলিভারি রশিদ</p>
                     <h2 class="text-xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
@@ -621,14 +649,22 @@
         @endif
     </div>
 
-    <!-- 4. POS Dual Stacked Delivery Print Paper Layout (Customer + Office) -->
+    <!-- 📄 PRINT LAYOUT 4: POS Thermal Dual Stacked Customer + Office Slips (#print-pos-dual) -->
     <div id="print-pos-dual" class="hidden">
         @if(isset($isDeliveryPrint) && $isDeliveryPrint)
             <style>
                 @media print {
                     @page {
                         size: A4 portrait !important;
-                        margin: 4mm !important;
+                        margin: 5mm !important;
+                    }
+                    html, body {
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
                     }
                 }
             </style>
@@ -722,4 +758,5 @@
         @endif
     </div>
 
+</div>
 @endif

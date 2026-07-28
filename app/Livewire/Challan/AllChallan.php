@@ -283,6 +283,12 @@ class AllChallan extends Component
 
     public function updatedLedgerId($value)
     {
+        $this->selectLedger($value);
+    }
+
+    public function selectLedger($value)
+    {
+        $this->ledger_id = $value;
         if ($this->customer_type === 'old' && $value) {
             $ledger = Ledger::find($value);
             if ($ledger) {
@@ -298,6 +304,10 @@ class AllChallan extends Component
                     $this->customer_address = 'খতিয়ান গ্রাহক';
                 }
             }
+        } elseif (!$value) {
+            $this->customer_name = '';
+            $this->customer_phone = '';
+            $this->customer_address = '';
         }
     }
 
@@ -418,7 +428,7 @@ class AllChallan extends Component
                 \App\Models\VehicleRent::create([
                     'address' => trim($this->customer_address),
                     'area' => null,
-                    'fare' => floatval($this->transport_rent ?: 0),
+                    'fare' => 0,
                 ]);
             }
         }
@@ -438,6 +448,97 @@ class AllChallan extends Component
         session()->flash('message', $msg);
         $this->dispatch('show-toast', ['message' => $msg]);
         $this->closeModal();
+    }
+
+    public function saveAndPrint()
+    {
+        $this->validate([
+            'customer_name' => 'required|string|max:255',
+            'items' => 'required|array|min:1',
+            'items.*.category_name' => 'required|string',
+            'items.*.quantity' => 'required|numeric|min:1',
+            'items.*.rate' => 'required|numeric|min:0',
+        ], [
+            'customer_name.required' => 'কাস্টমারের নাম আবশ্যক।',
+            'items.required' => 'কমপক্ষে একটি আইটেম যুক্ত করুন।',
+            'items.*.category_name.required' => 'শ্রেণি আবশ্যক।',
+            'items.*.quantity.required' => 'পরিমাণ আবশ্যক।',
+        ]);
+
+        $challanData = [
+            'customer_type' => $this->customer_type,
+            'customer_phone' => $this->customer_phone,
+            'customer_name' => $this->customer_name,
+            'customer_address' => $this->customer_address,
+            'challan_no' => $this->challan_no ?: $this->generateChallanNo(),
+            'date' => $this->date ?: now()->toDateString(),
+            'challan_type' => $this->challan_type,
+            'notes' => $this->notes,
+            'value' => $this->value,
+            'total_value' => $this->value,
+            'rent' => $this->rent ?: 0,
+            'transport_rent' => $this->transport_rent ?: 0,
+            'discount' => $this->discount ?: 0,
+            'grand_total' => $this->grand_total,
+            'cash' => $this->cash ?: 0,
+            'due' => $this->due,
+            'send_sms' => $this->send_sms,
+            'due_payment_date' => $this->due_payment_date ?: null,
+        ];
+
+        if ($this->editingId) {
+            $challan = Challan::findOrFail($this->editingId);
+            $oldCash = intval($challan->cash);
+            $newCash = intval($this->cash ?: 0);
+            if ($oldCash != $newCash) {
+                \App\Models\ActivityLog::log(
+                    'পেমেন্ট আপডেট',
+                    "পেমেন্ট আপডেট (আইডি: {$challan->id}) • রেট: {$oldCash} -> {$newCash}"
+                );
+            }
+            $challan->update($challanData);
+            $challan->items()->delete();
+        } else {
+            $challan = Challan::create($challanData);
+            if ($this->customer_type === 'new' && !empty($this->customer_name)) {
+                Ledger::firstOrCreate(
+                    ['name' => trim($this->customer_name)],
+                    ['group' => 'চালান গ্রাহক', 'rate' => 0, 'divisor' => 1]
+                );
+            }
+        }
+
+        if (!empty($this->customer_address)) {
+            $existingRent = \App\Models\VehicleRent::where('address', trim($this->customer_address))->first();
+            if (!$existingRent) {
+                \App\Models\VehicleRent::create([
+                    'address' => trim($this->customer_address),
+                    'area' => null,
+                    'fare' => 0,
+                ]);
+            }
+        }
+
+        foreach ($this->items as $item) {
+            ChallanItem::create([
+                'challan_id' => $challan->id,
+                'category_name' => $item['category_name'],
+                'rate' => $item['rate'],
+                'quantity' => $item['quantity'],
+                'amount' => $item['amount'],
+                'delivered_quantity' => $item['delivered_quantity'] ?? 0,
+            ]);
+        }
+
+        $msg = $this->editingId ? 'চালান সফলভাবে আপডেট করা হয়েছে।' : 'চালান সফলভাবে সংরক্ষিত হয়েছে।';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', ['message' => $msg]);
+        $this->closeModal();
+
+        // Open print modal after save
+        $this->printChallan = Challan::with('items')->find($challan->id);
+        $this->isDeliveryPrint = false;
+        $this->showPrintModal = true;
     }
 
     public function edit($id)
@@ -575,8 +676,64 @@ class AllChallan extends Component
         $this->dispatch('show-toast', ['message' => $msg]);
     }
 
-    public $showPrintModal = false;
+    public function saveDeliveryAndPrint()
+    {
+        $this->validate([
+            'todayDeliveryQty' => 'required|integer|min:1',
+            'deliveryNo' => 'required',
+            'deliveryDate' => 'required|date'
+        ]);
+
+        $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
+        $challan = null;
+        if ($item) {
+            $challan = $item->challan;
+
+            \App\Models\Delivery::create([
+                'delivery_no' => $this->deliveryNo,
+                'challan_id' => $challan->id,
+                'challan_item_id' => $item->id,
+                'category_name' => $item->category_name,
+                'quantity' => intval($this->todayDeliveryQty),
+                'delivery_date' => $this->deliveryDate,
+                'next_delivery_date' => $this->nextDeliveryDate ?: null,
+                'notes' => $this->deliveryNotes,
+                'driver_name' => $this->driverName,
+                'driver_phone' => $this->driverPhone,
+                'vehicle_no' => $this->vehicleNo,
+                'vehicle_rent' => floatval($this->vehicleRent),
+                'sms_sent' => $this->smsToCustomer,
+            ]);
+
+            $item->increment('delivered_quantity', intval($this->todayDeliveryQty));
+
+            $qtyStrBn = str_replace(
+                ['0','1','2','3','4','5','6','7','8','9'],
+                ['০','১','২','৩','৪','৫','৬','৭','৮','৯'],
+                number_format($this->todayDeliveryQty)
+            );
+            \App\Models\ActivityLog::log(
+                'নতুন ডেলিভারি',
+                "চালান নং {$challan->challan_no}। শ্রেণি {$item->category_name}। ডেলিভারি পরিমাণঃ {$qtyStrBn}"
+            );
+        }
+
+        $this->showDeliveryModal = false;
+        $msg = 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', ['message' => $msg]);
+
+        // Open delivery print modal
+        if ($challan) {
+            $this->printChallan = Challan::with('items')->find($challan->id);
+            $this->isDeliveryPrint = true;
+            $this->showPrintModal = true;
+        }
+    }
+
     public $printChallan = null;
+    public $showPrintModal = false;
+    public $isDeliveryPrint = false;
 
     public function openPrintModal($challanId)
     {

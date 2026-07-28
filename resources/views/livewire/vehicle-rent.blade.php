@@ -65,7 +65,7 @@
                                 {{ $rent->area ?: '' }}
                             </td>
                             <td class="py-3 px-4 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                ৳ {{ toBanglaNum($rent->fare) }}
+                                {{ ($rent->fare && floatval($rent->fare) > 0) ? '৳ ' . toBanglaNum($rent->fare) : '' }}
                             </td>
                             <td class="py-3 px-4 text-center">
                                 <button 
@@ -114,7 +114,7 @@
                     </div>
                     <div class="flex items-center justify-between text-xs pt-1">
                         <span class="text-gray-500 dark:text-slate-400">এরিয়া: <strong class="text-rose-400">{{ $rent->area ?: '—' }}</strong></span>
-                        <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">ভাড়া: ৳ {{ toBanglaNum($rent->fare) }}</span>
+                        <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">ভাড়া: {{ ($rent->fare && floatval($rent->fare) > 0) ? '৳ ' . toBanglaNum($rent->fare) : '—' }}</span>
                     </div>
                 </div>
             @empty

@@ -36,8 +36,8 @@
         </div>
         <div class="transition-all duration-300 overflow-hidden whitespace-nowrap flex-grow flex items-center" :class="{ 'opacity-100 max-w-full block': sidebarOpen, 'opacity-0 max-w-0 hidden': !sidebarOpen }">
             <div>
-                <h1 class="font-bold text-lg tracking-wider capitalize">bricks <span class="text-primary-400">land</span></h1>
-                <p class="text-[10px] text-primary-300 font-light truncate">ডেমো ব্রিকস, কলোনী বাজার, লালমনিরহাট</p>
+                <h1 class="font-bold text-lg tracking-wider capitalize">{{ \App\Models\Setting::get('company_name_en', 'Bricks Land') }}</h1>
+                <p class="text-[10px] text-primary-300 font-light truncate">{{ \App\Models\Setting::get('company_name_bn', 'ডেমো ব্রিকস') }}, {{ \App\Models\Setting::get('address', 'হিলালীপাড়া,কাটাবাড়ি,গোবিন্দগঞ্জ') }}</p>
             </div>
         </div>
 

@@ -151,10 +151,12 @@
                                              @mouseenter="openTooltip = true; rect = $el.getBoundingClientRect()" 
                                              @mouseleave="openTooltip = false"
                                              class="relative flex items-center justify-end gap-1.5 cursor-pointer">
-                                            <span>{{ number_format($item->quantity) }}</span>
-                                            <span class="w-3.5 h-3.5 rounded-full bg-primary-500 text-white flex items-center justify-center shrink-0">
-                                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                                            </span>
+                                            <span class="{{ $challan->due <= 0 ? 'text-primary dark:text-primary-400 font-bold' : '' }}">{{ number_format($item->quantity) }}</span>
+                                            @if($challan->due <= 0)
+                                                <span class="w-3.5 h-3.5 rounded-full bg-primary-500 text-white flex items-center justify-center shrink-0">
+                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                                </span>
+                                            @endif
                                             
                                             <!-- Teleported Tooltip box -->
                                             <template x-teleport="body">
@@ -169,8 +171,8 @@
                                                     <div class="space-y-1">
                                                         <div class="flex justify-between"><span>শ্রেণি:</span> <span class="text-primary dark:text-primary-400 font-bold">{{ $item->category_name }}</span></div>
                                                         <div class="flex justify-between"><span>পরিমাণ:</span> <span class="font-bold">{{ number_format($item->quantity) }}</span></div>
-                                                        <div class="flex justify-between"><span>ডেলিভারি:</span> <span class="text-blue-600 dark:text-blue-400 font-bold">{{ number_format($item->quantity) }}</span></div>
-                                                        <div class="flex justify-between"><span>ডেলিভারি বাকি:</span> <span class="text-red-500 font-bold">০</span></div>
+                                                        <div class="flex justify-between"><span>ডেলিভারি:</span> <span class="text-blue-600 dark:text-blue-400 font-bold">{{ number_format($item->delivered_quantity ?? 0) }}</span></div>
+                                                        <div class="flex justify-between"><span>ডেলিভারি বাকি:</span> <span class="{{ ($item->quantity - ($item->delivered_quantity ?? 0)) > 0 ? 'text-red-500' : 'text-green-500' }} font-bold">{{ number_format($item->quantity - ($item->delivered_quantity ?? 0)) }}</span></div>
                                                     </div>
                                                 </div>
                                             </template>
@@ -554,7 +556,7 @@
                                                class="w-full py-1.5 px-3 text-xs rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-808 dark:text-white focus:outline-none focus:border-primary-500 font-sans">
                                     </div>
                                     <div class="max-h-48 overflow-y-auto py-1">
-                                        <button type="button" @click="$wire.set('ledger_id', ''); $wire.updatedLedgerId(''); openLedger = false; searchLedger = ''"
+                                        <button type="button" @click="$wire.selectLedger(''); openLedger = false; searchLedger = ''"
                                                 class="w-full text-left px-3 py-2 hover:bg-primary-50/30 dark:hover:bg-primary-950/20 text-xs font-semibold text-gray-400 dark:text-gray-505 font-sans cursor-pointer block">
                                             গ্রাহক নির্বাচন করুন...
                                         </button>
@@ -564,7 +566,7 @@
                                         @foreach($orderedLedgers as $ledger)
                                             <button type="button"
                                                     x-show="searchLedger === '' || '{{ $ledger->name }}'.toLowerCase().includes(searchLedger.toLowerCase())"
-                                                    @click="$wire.set('ledger_id', '{{ $ledger->id }}'); $wire.updatedLedgerId('{{ $ledger->id }}'); openLedger = false; searchLedger = ''"
+                                                    @click="$wire.selectLedger('{{ $ledger->id }}'); openLedger = false; searchLedger = ''"
                                                     class="w-full text-left px-3 py-2 hover:bg-primary-50/30 dark:hover:bg-primary-950/20 text-xs font-semibold text-gray-808 dark:text-white hover:text-primary-dark dark:hover:text-primary-400 transition-all font-sans cursor-pointer block">
                                                 {{ $ledger->name }}
                                             </button>
@@ -695,7 +697,7 @@
                                     </div>
 
                                     <div class="col-span-4 relative" x-data="{ openCat: false, triggerRect: null }">
-                                        <span class="md:hidden block font-bold text-gray-505 mb-1 text-[11px]">শ্রেণিঃ</span>
+
                                         <button type="button" @click="openCat = !openCat; triggerRect = $el.getBoundingClientRect()"
                                                 class="w-full flex items-center justify-between py-2 px-3 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-gray-808 dark:text-white focus:outline-none focus:border-primary-500 cursor-pointer">
                                             <span x-text="($wire.items && $wire.items[{{ $index }}] && $wire.items[{{ $index }}].category_name) ? $wire.items[{{ $index }}].category_name : '{{ !empty($item['category_name']) ? $item['category_name'] : 'শ্রেণি নির্বাচন করুন...' }}'"></span>
@@ -738,21 +740,21 @@
                                     </div>
 
                                     <div class="col-span-2">
-                                        <span class="md:hidden block font-bold text-gray-505 mb-1 text-[11px]">রেটঃ</span>
+
                                         <input type="number" step="0.01" wire:model.live="items.{{ $index }}.rate" placeholder="৮০" @focus="$el.select()"
                                                class="w-full py-1.5 px-2.5 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-right text-xs font-semibold focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all text-gray-808 dark:text-white font-sans">
                                     </div>
                                     <div class="col-span-2">
-                                        <span class="md:hidden block font-bold text-gray-550 mb-1 text-[11px]">পরিমাণঃ</span>
+
                                         <input type="number" wire:model.live="items.{{ $index }}.quantity" placeholder="০" @focus="$el.select()"
                                                class="w-full py-1.5 px-2.5 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-right text-xs font-semibold focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all text-gray-808 dark:text-white font-sans">
                                     </div>
                                     <div class="col-span-2 text-right font-sans font-bold text-gray-700 dark:text-slate-300">
-                                        <span class="md:hidden font-bold text-gray-555 float-left text-[11px]">মূল্যঃ</span>
+                                        <span x-data="{ show: window.innerWidth < 768 }" x-show="show" @resize.window="show = window.innerWidth < 768" x-cloak class="font-bold text-gray-555 float-left text-[11px]">মূল্যঃ</span>
                                         ৳{{ number_format(floatval($item['amount'] ?? 0), 2) }}
                                     </div>
-                                    <!-- Desktop delete column only -->
-                                    <div class="col-span-1 text-center hidden md:flex justify-center items-center">
+                                    <!-- Delete column -->
+                                    <div class="col-span-1 text-center flex justify-center items-center">
                                         @if(!$loop->first)
                                             <button type="button" wire:click="removeItem({{ $index }})" class="p-1 text-gray-408 hover:text-red-500 transition-all cursor-pointer bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 rounded-lg">
                                                 <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -826,7 +828,7 @@
                     <div class="flex items-center justify-end gap-3 pt-5 border-t border-gray-200 dark:border-slate-800 mt-6">
                         <button type="button" wire:click="resetForm" class="px-6 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-white hover:bg-red-500 border border-gray-255 dark:border-slate-750 rounded-lg cursor-pointer transition-all font-sans font-bold">ক্লিয়ার</button>
                         <button type="submit" class="px-6 py-2 bg-[#009E74] hover:bg-[#008763] text-white text-xs font-bold rounded-lg cursor-pointer transition-all shadow-md active:scale-95 font-sans flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>সেভ করুন</button>
-                        <button type="button" wire:click="save" class="px-6 py-2 bg-[#009E74] hover:bg-[#008763] text-white text-xs font-bold rounded-lg cursor-pointer transition-all shadow-md active:scale-95 font-sans flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট</button>
+                        <button type="button" wire:click="saveAndPrint" class="px-6 py-2 bg-[#009E74] hover:bg-[#008763] text-white text-xs font-bold rounded-lg cursor-pointer transition-all shadow-md active:scale-95 font-sans flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট</button>
                     </div>
                 </form>
             </div>
@@ -854,10 +856,10 @@
         <div class="print-page">
             <!-- Company Header -->
             <div class="print-header">
-                <h1 class="print-company">ডেমো ব্রিকস</h1>
-                <p class="print-sub">হিলালিপাড়া, কাটাবাড়ি, গোবিন্দগঞ্জ</p>
-                <p class="print-sub">০১৯০১৩৪৯৯০১, ০১৯০১৩৪৯৯০৬</p>
-                <p class="print-sub">প্রোপাইটরঃ মোঃ মানিক মিয়া</p>
+                <h1 class="print-company">{{ \App\Models\Setting::get('company_name_bn', 'ডেমো ব্রিকস') }}</h1>
+                <p class="print-sub">{{ \App\Models\Setting::get('address', 'হিলালীপাড়া, কাটাবাড়ি, গোবিন্দগঞ্জ') }}</p>
+                <p class="print-sub">{{ \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901, 01901349906') }}</p>
+                <p class="print-sub">প্রোপাইটরঃ {{ \App\Models\Setting::get('owner_name', 'মোঃ মানিক মিয়া') }}</p>
             </div>
 
             <!-- Report Meta Row -->
@@ -1194,7 +1196,7 @@
                             </select>
                         </div>
                         <div>
-                            <input type="text" value="{{ number_format((int)$deliveryTotalQty) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-205 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
+                            <input type="text" value="{{ number_format(max(0, (int)$deliveryTotalQty - (int)$deliveredQtySoFar)) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-205 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
                         </div>
                         <div>
                             <input type="number" wire:model.live="todayDeliveryQty" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl text-center text-gray-800 dark:text-white font-bold font-sans focus:ring-2 focus:ring-primary-500/20">
@@ -1240,8 +1242,7 @@
                 <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-150 dark:border-slate-800 mt-4">
                     <button type="button" wire:click="$set('showDeliveryModal', false)" class="px-5 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer transition-all">ক্লিয়ার</button>
                     <button type="submit" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>সেভ করুন</button>
-                    <button type="button" wire:click="saveDelivery" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md">সেভ + নতুন ডেলিভারি</button>
-                    <button type="button" onclick="window.print()" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট ডেলিভারি</button>
+                    <button type="button" wire:click="saveDeliveryAndPrint" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট ডেলিভারি</button>
                 </div>
             </form>
         </div>
@@ -1324,7 +1325,7 @@
                             <tr>
                                 <td class="px-4 py-3.5 font-bold text-primary-dark dark:text-primary-400">{{ $item->category_name }}</td>
                                 <td class="px-4 py-3.5 text-right font-sans">{{ number_format($item->quantity) }}</td>
-                                <td class="px-4 py-3.5 text-right font-sans text-amber-600 font-bold">{{ number_format($item->quantity) }}</td>
+                                <td class="px-4 py-3.5 text-right font-sans text-amber-600 font-bold">{{ number_format($item->delivered_quantity ?? 0) }}</td>
                                 <td class="px-4 py-3.5 text-right font-sans">৳{{ number_format($item->rate, 2) }}</td>
                                 <td class="px-4 py-3.5 text-right font-sans font-bold">৳{{ number_format($item->amount, 2) }}</td>
                             </tr>
@@ -1336,11 +1337,22 @@
                 <!-- Bottom Stats Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                     <!-- Left card: Payment state -->
-                    <div class="border border-primary-500/20 dark:border-primary-500/10 rounded-3xl p-6 flex flex-col items-center justify-center bg-primary-50/10 dark:bg-primary-950/5">
-                        <span class="text-4xl sm:text-5xl font-black text-primary dark:text-primary-400 tracking-wider">
-                            পরিশোধ
-                        </span>
-                    </div>
+                    @if($detailsChallan->due > 0)
+                        <div class="border-2 border-red-500/80 dark:border-red-500/60 rounded-3xl p-5 flex flex-col items-center justify-center bg-red-50/20 dark:bg-red-950/10 space-y-2 min-h-[120px]">
+                            <span class="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-500 tracking-wide font-sans">
+                                বাকি: ৳ {{ number_format($detailsChallan->due) }}
+                            </span>
+                            <span class="text-xs sm:text-sm font-bold text-red-600 dark:text-red-400 font-sans">
+                                পরিশোধের তারিখ : {{ $detailsChallan->due_payment_date ? \Carbon\Carbon::parse($detailsChallan->due_payment_date)->format('d-m-Y') : '—' }}
+                            </span>
+                        </div>
+                    @else
+                        <div class="border border-primary-500/20 dark:border-primary-500/10 rounded-3xl p-6 flex flex-col items-center justify-center bg-primary-50/10 dark:bg-primary-950/5 min-h-[120px]">
+                            <span class="text-4xl sm:text-5xl font-black text-primary dark:text-primary-400 tracking-wider">
+                                পরিশোধ
+                            </span>
+                        </div>
+                    @endif
 
                     <!-- Right card: Stats list -->
                     <div class="grid grid-cols-2 gap-3 text-xs font-bold font-sans">
@@ -1380,5 +1392,5 @@
     </div>
     @endif
 
-    @include('livewire.challan.partials.print-modal')
+    <x-print-modal :showPrintModal="$showPrintModal" :printChallan="$printChallan" :isDeliveryPrint="$isDeliveryPrint ?? false" />
 </div>

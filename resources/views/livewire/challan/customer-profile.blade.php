@@ -376,11 +376,10 @@
     </div><!-- ====================== PRINT AREA ====================== -->
     <div id="customer-profile-print-area" class="hidden">
         @php
-            $setting = \App\Models\Setting::first();
-            $companyName = $setting->site_title ?? $setting->company_name ?? 'ডেমো ব্রিকস';
-            $companyAddress = $setting->company_address ?? 'হিলালিপাড়া,কাটাবাড়ি,গোবিন্দগঞ্জ';
-            $companyPhone = $setting->company_phone ?? '০১৯০১৩৪৯৯০১,০১৯০১৩৪৯৯০৬';
-            $proprietor = $setting->proprietor_name ?? 'মোঃ মানিক মিয়া';
+            $companyName = \App\Models\Setting::get('company_name_bn', 'ডেমো ব্রিকস');
+            $companyAddress = \App\Models\Setting::get('address', 'হিলালীপাড়া,কাটাবাড়ি,গোবিন্দগঞ্জ');
+            $companyPhone = \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901,01901349906');
+            $proprietor = \App\Models\Setting::get('owner_name', 'মোঃ মানিক মিয়া');
         @endphp
 
         <div class="print-page px-4 py-2">
@@ -678,7 +677,7 @@
                             </select>
                         </div>
                         <div>
-                            <input type="text" value="{{ number_format((int)$deliveryTotalQty) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-200 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
+                            <input type="text" value="{{ number_format(max(0, (int)$deliveryTotalQty - (int)$deliveredQtySoFar)) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-200 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
                         </div>
                         <div>
                             <input type="number" wire:model.live="todayDeliveryQty" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl text-center text-gray-800 dark:text-white font-bold font-sans focus:ring-2 focus:ring-primary-500/20">
@@ -724,8 +723,7 @@
                 <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-150 dark:border-slate-800 mt-4">
                     <button type="button" wire:click="$set('showDeliveryModal', false)" class="px-5 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer transition-all">ক্লিয়ার</button>
                     <button type="submit" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>সেভ করুন</button>
-                    <button type="button" wire:click="saveDelivery" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md">সেভ + নতুন ডেলিভারি</button>
-                    <button type="button" onclick="window.print()" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট ডেলিভারি</button>
+                    <button type="button" wire:click="saveDeliveryAndPrint" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট ডেলিভারি</button>
                 </div>
             </form>
         </div>
@@ -808,7 +806,7 @@
                             <tr>
                                 <td class="px-4 py-3.5 font-bold text-primary-dark dark:text-primary-400">{{ $item->category_name }}</td>
                                 <td class="px-4 py-3.5 text-right font-sans">{{ number_format($item->quantity) }}</td>
-                                <td class="px-4 py-3.5 text-right font-sans text-amber-600 font-bold">{{ number_format($item->quantity) }}</td>
+                                <td class="px-4 py-3.5 text-right font-sans text-amber-600 font-bold">{{ number_format($item->delivered_quantity ?? 0) }}</td>
                                 <td class="px-4 py-3.5 text-right font-sans">৳{{ number_format($item->rate, 2) }}</td>
                                 <td class="px-4 py-3.5 text-right font-sans font-bold">৳{{ number_format($item->amount, 2) }}</td>
                             </tr>
@@ -820,11 +818,22 @@
                 <!-- Bottom Stats Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                     <!-- Left card: Payment state -->
-                    <div class="border border-primary-500/20 dark:border-primary-500/10 rounded-3xl p-6 flex flex-col items-center justify-center bg-primary-50/10 dark:bg-primary-950/5">
-                        <span class="text-4xl sm:text-5xl font-black text-primary dark:text-primary-400 tracking-wider">
-                            পরিশোধ
-                        </span>
-                    </div>
+                    @if($detailsChallan->due > 0)
+                        <div class="border-2 border-red-500/80 dark:border-red-500/60 rounded-3xl p-5 flex flex-col items-center justify-center bg-red-50/20 dark:bg-red-950/10 space-y-2 min-h-[120px]">
+                            <span class="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-500 tracking-wide font-sans">
+                                বাকি: ৳ {{ number_format($detailsChallan->due) }}
+                            </span>
+                            <span class="text-xs sm:text-sm font-bold text-red-600 dark:text-red-400 font-sans">
+                                পরিশোধের তারিখ : {{ $detailsChallan->due_payment_date ? \Carbon\Carbon::parse($detailsChallan->due_payment_date)->format('d-m-Y') : '—' }}
+                            </span>
+                        </div>
+                    @else
+                        <div class="border border-primary-500/20 dark:border-primary-500/10 rounded-3xl p-6 flex flex-col items-center justify-center bg-primary-50/10 dark:bg-primary-950/5 min-h-[120px]">
+                            <span class="text-4xl sm:text-5xl font-black text-primary dark:text-primary-400 tracking-wider">
+                                পরিশোধ
+                            </span>
+                        </div>
+                    @endif
 
                     <!-- Right card: Stats list -->
                     <div class="grid grid-cols-2 gap-3 text-xs font-bold font-sans">
@@ -1134,5 +1143,5 @@
     </style>
 
     <!-- Include Print Preview Modal for Single Challan/Delivery Row -->
-    @include('livewire.challan.partials.print-modal')
+    <x-print-modal :showPrintModal="$showPrintModal" :printChallan="$printChallan" :isDeliveryPrint="$isDeliveryPrint ?? false" />
 </div>
