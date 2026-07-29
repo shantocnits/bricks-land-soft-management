@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use App\Models\Ledger;
+use App\Models\Setting;
 
 class PaymentKhata extends Component
 {
@@ -19,6 +21,9 @@ class PaymentKhata extends Component
     public bool $showKhotiyanModal = false;
     public bool $showNewKhotiyanModal = false;
     public bool $showReportModal = false;
+
+    // Delete confirmation
+    public ?int $confirmingDeleteId = null;
 
     // Form inputs (New Payment / Edit Payment)
     public ?int $editingId = null;
@@ -169,43 +174,27 @@ class PaymentKhata extends Component
 
     public function mount()
     {
-        $this->dateFilter = '2026-07-18';
-        $this->paymentDate = '2026-07-18';
-        $this->newLedgerSerial = count($this->ledgers) + 1;
+        $this->dateFilter = now()->format('Y-m-d');
+        $this->paymentDate = now()->format('Y-m-d');
 
-        // Initialize ledger groups map
-        foreach ($this->ledgers as $ledger) {
-            if (in_array($ledger, ['মেল', 'লোড মিস্ত্রি', 'তেইলি লেবার', 'লেবার খরচ'])) {
-                $this->ledgerGroupsMap[$ledger] = 'লেবার';
-            } elseif (in_array($ledger, ['বেজা মাটি', 'সাদা মাটি', 'লাল মাটি'])) {
-                $this->ledgerGroupsMap[$ledger] = 'মাটি';
-            } elseif (in_array($ledger, ['ভাটি স্টাফ', 'স্টাফ খরচ'])) {
-                $this->ledgerGroupsMap[$ledger] = 'স্টাফ';
-            } else {
-                $this->ledgerGroupsMap[$ledger] = 'অন্যান্য';
-            }
+        // Load ledger groups from Setting DB (same source as LedgerAdd settings tab)
+        $groupsJson = Setting::get('ledger_groups');
+        if ($groupsJson) {
+            $this->ledgerGroups = json_decode($groupsJson, true) ?: ['লেবার', 'মাটি', 'স্টাফ', 'খরচ', 'কাস্টমার', 'অন্যান্য'];
+        } else {
+            $this->ledgerGroups = ['লেবার', 'মাটি', 'স্টাফ', 'খরচ', 'কাস্টমার', 'অন্যান্য'];
         }
 
-        // ডিফল্ট কোনো টাইপ ম্যাপ করা নেই
-        $this->explicitTypesMap = [];
+        // Default first group
+        $this->newLedgerGroup = count($this->ledgerGroups) > 0 ? $this->ledgerGroups[0] : '';
 
         // Seed default payments to database if empty
         if (\App\Models\Payment::count() === 0) {
-            foreach ($this->paymentsList as $p) {
-                \App\Models\Payment::create([
-                    'date' => $p['date'],
-                    'ledger' => $p['ledger'],
-                    'desc' => $p['desc'],
-                    'qty' => $p['qty'],
-                    'rate' => $p['rate'],
-                    'total' => $p['total'],
-                    'advance' => $p['advance'],
-                    'deduction' => $p['deduction'],
-                    'payment' => $p['payment'],
-                    'purchase_receive' => $p['purchase_receive'],
-                    'doc_url' => $p['doc_url'],
-                    'has_doc' => $p['has_doc']
-                ]);
+            $seeds = [
+                ['date' => '18/07/2026', 'ledger' => '১ নং মেল', 'desc' => 'কয়লা লোড করার বিল পেমেন্ট', 'qty' => 1500, 'rate' => 12, 'total' => 18000, 'advance' => 5000, 'deduction' => 1000, 'payment' => 12000, 'purchase_receive' => 18000, 'doc_url' => 'https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?auto=format&fit=crop&w=800&q=80', 'has_doc' => true],
+            ];
+            foreach ($seeds as $p) {
+                \App\Models\Payment::create($p);
             }
         }
 
@@ -232,15 +221,21 @@ class PaymentKhata extends Component
     {
         $this->selectedLedger = $ledger;
         $this->showKhotiyanModal = false;
-        $this->dispatch('show-toast', message: 'খতিয়ান নির্বাচন করা হয়েছে।', type: 'success');
+
+        $dbLedger = Ledger::where('name', $ledger)->first();
+        if ($dbLedger && $dbLedger->rate) {
+            $this->rate = (float)$dbLedger->rate;
+            $this->calculateTotalBill();
+        }
     }
 
-    // Dynamic Lists Actions (Add/Delete)
+    // Dynamic Group Actions (synced to Setting DB)
     public function addGroup(string $name)
     {
         $name = trim($name);
         if ($name !== '' && !in_array($name, $this->ledgerGroups)) {
-            $this->ledgerGroups[] = $name;
+            array_unshift($this->ledgerGroups, $name);
+            Setting::set('ledger_groups', json_encode($this->ledgerGroups));
             $this->newLedgerGroup = $name;
             $this->dispatch('show-toast', message: 'গ্রুপ যুক্ত করা হয়েছে।', type: 'success');
         }
@@ -249,66 +244,19 @@ class PaymentKhata extends Component
     public function deleteGroup(string $name)
     {
         $this->ledgerGroups = array_values(array_filter($this->ledgerGroups, fn($g) => $g !== $name));
+        Setting::set('ledger_groups', json_encode($this->ledgerGroups));
         if ($this->newLedgerGroup === $name) {
-            $this->newLedgerGroup = 'অন্যান্য';
+            $this->newLedgerGroup = count($this->ledgerGroups) > 0 ? $this->ledgerGroups[0] : '';
         }
         $this->dispatch('show-toast', message: 'গ্রুপ মুছে ফেলা হয়েছে।', type: 'success');
     }
 
-    public function addType(string $name)
-    {
-        $name = trim($name);
-        if ($name !== '') {
-            if (!in_array($name, $this->ledgerTypes)) {
-                $this->ledgerTypes[] = $name;
-            }
-            $this->newLedgerType = $name;
-            
-            if ($this->newLedgerName !== '') {
-                $this->explicitTypesMap[trim($this->newLedgerName)] = $name;
-            }
-            
-            $this->dispatch('show-toast', message: 'টাইপ যুক্ত করা হয়েছে এবং সিলেক্ট করা হয়েছে।', type: 'success');
-        }
-    }
-
-    public function deleteType(string $name)
-    {
-        $this->ledgerTypes = array_values(array_filter($this->ledgerTypes, fn($t) => $t !== $name));
-        if ($this->newLedgerType === $name) {
-            $this->newLedgerType = '';
-        }
-        
-        foreach ($this->explicitTypesMap as $ledger => $type) {
-            if ($type === $name) {
-                unset($this->explicitTypesMap[$ledger]);
-            }
-        }
-        
-        $this->dispatch('show-toast', message: 'টাইপ মুছে ফেলা হয়েছে।', type: 'success');
-    }
-
-    public function openNewKhotiyanModal()
+    public function openNewKhotiyanModal(string $preselectedGroup = '')
     {
         $this->editingLedgerOldName = null;
         $this->newLedgerName = '';
-        $this->newLedgerGroup = 'অন্যান্য';
-        $this->newLedgerType = '';
-        $this->newLedgerSerial = count($this->ledgers) + 1;
-        $this->showNewKhotiyanModal = true;
-    }
-
-    public function openEditLedgerModal(string $ledgerName)
-    {
-        $this->editingLedgerOldName = $ledgerName;
-        $this->newLedgerName = $ledgerName;
-        $this->newLedgerGroup = isset($this->ledgerGroupsMap[$ledgerName]) ? $this->ledgerGroupsMap[$ledgerName] : 'অন্যান্য';
-        
-        $index = array_search($ledgerName, $this->ledgers);
-        $this->newLedgerSerial = $index !== false ? $index + 1 : count($this->ledgers) + 1;
-        
-        $this->newLedgerType = isset($this->explicitTypesMap[$ledgerName]) ? $this->explicitTypesMap[$ledgerName] : '';
-        
+        $this->newLedgerGroup = $preselectedGroup ?: (count($this->ledgerGroups) > 0 ? $this->ledgerGroups[0] : '');
+        $this->newLedgerSerial = sprintf('%02d', Ledger::count() + 1);
         $this->showNewKhotiyanModal = true;
     }
 
@@ -322,81 +270,47 @@ class PaymentKhata extends Component
 
         $name = trim($this->newLedgerName);
         $group = $this->newLedgerGroup;
-        $type = trim($this->newLedgerType);
 
         if ($this->editingLedgerOldName) {
-            $oldName = $this->editingLedgerOldName;
-            
-            // Update ledgers list
-            foreach ($this->ledgers as $key => $lName) {
-                if ($lName === $oldName) {
-                    $this->ledgers[$key] = $name;
-                    break;
-                }
-            }
-
-            // Update active inputs
-            if ($this->selectedLedger === $oldName) {
+            // Update in database
+            Ledger::where('name', $this->editingLedgerOldName)->update([
+                'name' => $name,
+                'group' => $group,
+                'serial' => intval($this->newLedgerSerial),
+            ]);
+            // Also update payment records
+            \App\Models\Payment::where('ledger', $this->editingLedgerOldName)->update(['ledger' => $name]);
+            $this->paymentsList = \App\Models\Payment::all()->toArray();
+            if ($this->selectedLedger === $this->editingLedgerOldName) {
                 $this->selectedLedger = $name;
             }
-
-            // Update payments list
-            foreach ($this->paymentsList as &$pay) {
-                if ($pay['ledger'] === $oldName) {
-                    $pay['ledger'] = $name;
-                }
-            }
-            \App\Models\Payment::where('ledger', $oldName)->update(['ledger' => $name]);
-            $this->paymentsList = \App\Models\Payment::all()->toArray();
-
-            // Update groups map
-            unset($this->ledgerGroupsMap[$oldName]);
-            $this->ledgerGroupsMap[$name] = $group;
-
-            // Update explicitTypesMap link
-            unset($this->explicitTypesMap[$oldName]);
-            if ($type !== '') {
-                $this->explicitTypesMap[$name] = $type;
-                if (!in_array($type, $this->ledgerTypes)) {
-                    $this->ledgerTypes[] = $type;
-                }
-            }
-
             $this->showNewKhotiyanModal = false;
             $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে আপডেট করা হয়েছে।', type: 'success');
         } else {
-            if (!in_array($name, $this->ledgers)) {
-                $this->ledgers[] = $name;
-            }
-            $this->ledgerGroupsMap[$name] = $group;
-            
-            if ($type !== '') {
-                $this->explicitTypesMap[$name] = $type;
-                if (!in_array($type, $this->ledgerTypes)) {
-                    $this->ledgerTypes[] = $type;
-                }
-            }
-            
+            // Create in database
+            Ledger::create([
+                'serial' => intval($this->newLedgerSerial),
+                'name' => $name,
+                'group' => $group,
+                'rate' => 0.00,
+                'divisor' => 1,
+            ]);
             $this->selectedLedger = $name;
             $this->showNewKhotiyanModal = false;
+            $this->showKhotiyanModal = false;
             $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে যোগ করা হয়েছে।', type: 'success');
         }
     }
 
-    public function deleteLedger(string $ledgerName)
+    public function deleteLedger($id)
     {
-        $this->ledgers = array_values(array_filter($this->ledgers, function ($name) use ($ledgerName) {
-            return $name !== $ledgerName;
-        }));
-
-        if ($this->selectedLedger === $ledgerName) {
-            $this->selectedLedger = '';
+        $ledger = is_numeric($id) ? Ledger::find($id) : Ledger::where('name', $id)->first();
+        if ($ledger) {
+            if ($this->selectedLedger === $ledger->name) {
+                $this->selectedLedger = '';
+            }
+            $ledger->delete();
         }
-
-        if (isset($this->explicitTypesMap[$ledgerName])) {
-            unset($this->explicitTypesMap[$ledgerName]);
-        }
-
         $this->dispatch('show-toast', message: 'খতিয়ান মুছে ফেলা হয়েছে।', type: 'success');
     }
 
@@ -443,7 +357,6 @@ class PaymentKhata extends Component
             }
 
             $this->showPaymentModal = true;
-            $this->dispatch('show-toast', message: 'পেমেন্ট সম্পাদনা মোড চালু হয়েছে।', type: 'success');
         }
     }
 
@@ -536,14 +449,42 @@ class PaymentKhata extends Component
             'quantity', 'rate', 'totalBill', 'advance',
             'deduction', 'paymentAmount', 'purchaseReceive', 'documentFile', 'editingId'
         ]);
-        $this->paymentDate = '2026-07-18';
+        $this->paymentDate = now()->format('Y-m-d');
+    }
+
+    public function confirmDelete(int $id)
+    {
+        if (auth()->check() && auth()->user()->hasRole('demo')) {
+            $this->dispatch('show-toast', message: 'ডেমো মোডে পেমেন্ট মুছে ফেলা সম্ভব নয়।', type: 'danger');
+            return;
+        }
+        $this->confirmingDeleteId = $id;
+    }
+
+    public function cancelDelete()
+    {
+        $this->confirmingDeleteId = null;
+    }
+
+    public function deletePaymentConfirmed()
+    {
+        if (auth()->check() && auth()->user()->hasRole('demo')) {
+            $this->dispatch('show-toast', message: 'ডেমো মোডে পেমেন্ট মুছে ফেলা সম্ভব নয়।', type: 'danger');
+            $this->confirmingDeleteId = null;
+            return;
+        }
+
+        if ($this->confirmingDeleteId) {
+            \App\Models\Payment::destroy($this->confirmingDeleteId);
+            $this->paymentsList = \App\Models\Payment::all()->toArray();
+            $this->dispatch('show-toast', message: 'পেমেন্ট সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
+            $this->confirmingDeleteId = null;
+        }
     }
 
     public function deletePayment(int $id)
     {
-        \App\Models\Payment::destroy($id);
-        $this->paymentsList = \App\Models\Payment::all()->toArray();
-        $this->dispatch('show-toast', message: 'পেমেন্ট ডিলিট করা হয়েছে।', type: 'success');
+        $this->confirmDelete($id);
     }
 
     public function getReportDataProperty()
@@ -592,9 +533,7 @@ class PaymentKhata extends Component
 
     public function render()
     {
-        $this->subItemsMap = $this->getSubItemsMap();
-
-        // Filter payments list based on search
+        // Filter payments list based on search and date filter
         $filteredPayments = array_filter($this->paymentsList, function ($payment) {
             $matchesSearch = true;
             if ($this->search !== '') {
@@ -602,7 +541,12 @@ class PaymentKhata extends Component
                 $matchesSearch = str_contains(strtolower($payment['ledger']), $term) ||
                                 str_contains(strtolower($payment['desc']), $term);
             }
-            return $matchesSearch;
+            $matchesDate = true;
+            if (!empty($this->dateFilter)) {
+                $formattedFilter = date('d/m/Y', strtotime($this->dateFilter));
+                $matchesDate = ($payment['date'] === $formattedFilter || $payment['date'] === $this->dateFilter);
+            }
+            return $matchesSearch && $matchesDate;
         });
 
         // Calculate total payments sum
@@ -610,19 +554,56 @@ class PaymentKhata extends Component
             return $carry + $item['payment'];
         }, 0);
 
-        // Filter ledgers search
-        $filteredLedgers = array_filter($this->ledgers, function ($ledger) {
-            if ($this->khotiyanSearch === '') return true;
-            return str_contains(strtolower($ledger), strtolower($this->khotiyanSearch));
-        });
+        // Load ledgers from DB
+        $dbLedgers = Ledger::orderByRaw('CASE WHEN serial IS NULL THEN 1 ELSE 0 END, serial ASC, id ASC')->get();
 
-        // Paginate payments (Dynamic rows based on perPage)
+        // Get groups from settings or DB
+        $groupsJson = Setting::get('ledger_groups');
+        $allGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
+        $dbGroups = $dbLedgers->pluck('group')->unique()->toArray();
+        $mergedGroups = array_values(array_unique(array_merge($allGroups, $dbGroups)));
+
+        $groupedLedgers = [];
+        foreach ($mergedGroups as $grp) {
+            if (trim($grp) !== '') {
+                $groupedLedgers[$grp] = [];
+            }
+        }
+
+        foreach ($dbLedgers as $ledger) {
+            $g = $ledger->group ?: 'অন্যান্য';
+            if (!isset($groupedLedgers[$g])) {
+                $groupedLedgers[$g] = [];
+            }
+            $groupedLedgers[$g][] = [
+                'id' => $ledger->id,
+                'name' => $ledger->name,
+                'group' => $ledger->group,
+                'rate' => $ledger->rate,
+                'serial' => $ledger->serial,
+            ];
+        }
+
+        // Search filter if khotiyanSearch is filled
+        if (!empty($this->khotiyanSearch)) {
+            $term = strtolower(trim($this->khotiyanSearch));
+            foreach ($groupedLedgers as $gName => &$items) {
+                $matchesGroup = str_contains(strtolower($gName), $term);
+                if (!$matchesGroup) {
+                    $items = array_values(array_filter($items, function ($item) use ($term) {
+                        return str_contains(strtolower($item['name']), $term);
+                    }));
+                }
+            }
+        }
+
+        // Paginate payments
         $paginatedPayments = array_slice($filteredPayments, 0, $this->perPage);
 
         return view('livewire.payment-khata', [
             'payments' => $paginatedPayments,
             'totalPaymentsSum' => $totalPaymentsSum,
-            'filteredLedgers' => $filteredLedgers
+            'groupedLedgers' => $groupedLedgers
         ]);
     }
 }

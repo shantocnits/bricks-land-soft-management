@@ -16,6 +16,7 @@ class CategoryRate extends Component
     public $search = '';
     public $showModal = false;
     public $editingCategoryId = null;
+    public $confirmingDeleteId = null;
 
     // Dynamic dropdown options management
     public $typeOptions = [];
@@ -73,19 +74,21 @@ class CategoryRate extends Component
     public function addType()
     {
         $newType = trim($this->newTypeInput);
-        if ($newType !== '' && !in_array($newType, $this->typeOptions)) {
-            $this->typeOptions[] = $newType;
-            Setting::set('category_types', json_encode($this->typeOptions));
+        if ($newType !== '') {
+            if (!in_array($newType, $this->typeOptions)) {
+                array_unshift($this->typeOptions, $newType);
+                Setting::set('category_types', json_encode($this->typeOptions));
+            }
             $this->type = $newType;
             $this->newTypeInput = '';
-            session()->flash('type_message', 'নতুন টাইপ যুক্ত করা হয়েছে।');
+            $this->dispatch('show-toast', message: 'নতুন টাইপ যুক্ত করা হয়েছে।', type: 'success');
         }
     }
 
     public function deleteType($typeToDelete)
     {
         if (count($this->typeOptions) <= 1) {
-            session()->flash('type_error', 'কমপক্ষে একটি ধরন থাকতে হবে।');
+            $this->dispatch('show-toast', message: 'কমপক্ষে একটি ধরন থাকতে হবে।', type: 'danger');
             return;
         }
 
@@ -95,7 +98,7 @@ class CategoryRate extends Component
         if ($this->type === $typeToDelete) {
             $this->type = $this->typeOptions[0];
         }
-        session()->flash('type_message', 'ধরন মুছে ফেলা হয়েছে।');
+        $this->dispatch('show-toast', message: 'ধরন মুছে ফেলা হয়েছে।', type: 'success');
     }
 
     public function openAddModal()
@@ -116,7 +119,7 @@ class CategoryRate extends Component
     {
         // Block action if logged in as Demo
         if (auth()->user()->hasRole('demo')) {
-            session()->flash('message', 'ডেমো মোডে কোনো শ্রেণি পরিবর্তন করা সম্ভব নয়।');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে কোনো শ্রেণি পরিবর্তন করা সম্ভব নয়।', type: 'danger');
             $this->showModal = false;
             return;
         }
@@ -131,7 +134,7 @@ class CategoryRate extends Component
                     'type' => $this->type,
                     'rate' => $this->rate,
                 ]);
-                session()->flash('message', 'শ্রেণি সফলভাবে আপডেট করা হয়েছে।');
+                $this->dispatch('show-toast', message: 'শ্রেণি সফলভাবে আপডেট করা হয়েছে।', type: 'success');
             }
         } else {
             Category::create([
@@ -139,7 +142,7 @@ class CategoryRate extends Component
                 'type' => $this->type,
                 'rate' => $this->rate,
             ]);
-            session()->flash('message', 'নতুন শ্রেণি সফলভাবে যুক্ত করা হয়েছে।');
+            $this->dispatch('show-toast', message: 'নতুন শ্রেণি সফলভাবে যুক্ত করা হয়েছে।', type: 'success');
         }
 
         $this->showModal = false;
@@ -150,7 +153,7 @@ class CategoryRate extends Component
     {
         // Block action if logged in as Demo
         if (auth()->user()->hasRole('demo')) {
-            session()->flash('message', 'ডেমো মোডে শ্রেণি সংশোধন করা সম্ভব নয়।');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে শ্রেণি সংশোধন করা সম্ভব নয়।', type: 'danger');
             return;
         }
 
@@ -168,16 +171,35 @@ class CategoryRate extends Component
     {
         // Block action if logged in as Demo
         if (auth()->user()->hasRole('demo')) {
-            session()->flash('message', 'ডেমো মোডে শ্রেণি মুছে ফেলা সম্ভব নয়।');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে শ্রেণি মুছে ফেলা সম্ভব নয়।', type: 'danger');
+            return;
+        }
+        $this->confirmingDeleteId = $id;
+    }
+
+    public function cancelDelete()
+    {
+        $this->confirmingDeleteId = null;
+    }
+
+    public function deleteCategoryConfirmed()
+    {
+        // Block action if logged in as Demo
+        if (auth()->user()->hasRole('demo')) {
+            $this->dispatch('show-toast', message: 'ডেমো মোডে শ্রেণি মুছে ফেলা সম্ভব নয়।', type: 'danger');
+            $this->confirmingDeleteId = null;
             return;
         }
 
-        $category = Category::find($id);
-        if ($category) {
-            \App\Models\ActivityLog::log('শ্রেণি ডিলিট', "{$category->name} শ্রেণিটিকে ডিলিট করা হয়েছে যার মূল্য ছিল {$category->rate} এবং শ্রেণির ধরন ছিল {$category->type}");
-            $category->delete();
+        if ($this->confirmingDeleteId) {
+            $category = Category::find($this->confirmingDeleteId);
+            if ($category) {
+                \App\Models\ActivityLog::log('শ্রেণি ডিলিট', "{$category->name} শ্রেণিটিকে ডিলিট করা হয়েছে যার মূল্য ছিল {$category->rate} এবং শ্রেণির ধরন ছিল {$category->type}");
+                $category->delete();
+            }
+            $this->dispatch('show-toast', message: 'শ্রেণি সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
+            $this->confirmingDeleteId = null;
         }
-        session()->flash('message', 'শ্রেণি সফলভাবে মুছে ফেলা হয়েছে।');
         $this->resetForm();
     }
 

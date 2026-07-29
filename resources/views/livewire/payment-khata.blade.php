@@ -1,28 +1,5 @@
 <div class="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
 
-    <!-- Toast Notification Popup (Fast transition) -->
-    <div
-        x-data="{ show: false, message: '', type: 'success' }"
-        x-init="window.addEventListener('show-toast', e => { message = e.detail.message; type = e.detail.type || 'success'; show = true; setTimeout(() => show = false, 3000); })"
-        x-show="show"
-        x-transition:enter="transition ease-out duration-100"
-        x-transition:enter-start="opacity-0 -translate-y-2"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-75"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 -translate-y-2"
-        class="fixed top-5 left-1/2 -translate-x-1/2 z-[999999] p-4 rounded-xl border flex items-center gap-3 max-w-sm w-[90vw] md:w-auto"
-        :class="type==='danger' ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-955/90 dark:border-red-900' : 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-[#034C3C]/95 dark:border-[#034C3C] dark:text-emerald-50'"
-        x-cloak>
-        <span class="p-1.5 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-[#023E31]">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-        </span>
-        <p class="text-xs font-bold flex-1 font-sans" x-text="message"></p>
-        <button @click="show = false" class="text-gray-400 hover:text-gray-600 cursor-pointer ml-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-    </div>
-
     <!-- Page Header Bar (Matches TodayChallan exactly, shadow removed) -->
     <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 px-4 sm:px-6 py-3 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-colors duration-300">
         <div>
@@ -156,7 +133,7 @@
                                     </button>
 
                                     <button 
-                                        wire:click="deletePayment({{ $pay['id'] }})"
+                                        wire:click="confirmDelete({{ $pay['id'] }})"
                                         class="inline-flex text-red-500 hover:text-red-755 hover:scale-110 transition-all cursor-pointer focus:outline-none"
                                         title="ডিলিট করুন">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
@@ -225,7 +202,7 @@
                                 📝 এডিট
                             </button>
                             <button 
-                                wire:click="deletePayment({{ $pay['id'] }})"
+                                wire:click="confirmDelete({{ $pay['id'] }})"
                                 class="text-red-500 hover:text-red-755 font-bold flex items-center gap-0.5 cursor-pointer focus:outline-none">
                                 🗑️ মুছুন
                             </button>
@@ -457,7 +434,8 @@
                     </div>
                 </div>
 
-                <!-- Payment Date -->
+                @if($editingId)
+                <!-- Payment Date (Shown only in Payment Edit Modal) -->
                 <div>
                     <label class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">পেমেন্টের তারিখ <span class="text-red-500">*</span></label>
                     <div class="relative flex items-center">
@@ -474,6 +452,7 @@
                         </span>
                     </div>
                 </div>
+                @endif
 
                 <!-- Footer Buttons -->
                 <div class="flex items-center gap-3.5 pt-4 border-t border-gray-100 dark:border-slate-800/60">
@@ -547,81 +526,67 @@
                     </button>
                 </div>
 
-                <!-- Ledgers Grid Selector (Optimized with a single parent wrapper tracking state) -->
-                <div x-data="{ 
-                    activeHover: null, 
-                    hoverRect: null, 
-                    activeAction: null, 
-                    actionRect: null,
-                    hoverStay: false,
-                    hoverTypes: []
-                }" class="relative">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[380px] overflow-y-auto pr-1">
-                        @foreach ($filteredLedgers as $ledg)
-                        <div @mouseenter="
-                                activeHover = '{{ $ledg }}';
-                                hoverTypes = {{ json_encode(isset($subItemsMap[$ledg]) ? $subItemsMap[$ledg] : []) }};
-                                hoverRect = $el.getBoundingClientRect();
-                             " 
-                             @mouseleave="
-                                setTimeout(() => { if (activeHover === '{{ $ledg }}' && !hoverStay) activeHover = null; }, 120)
-                             "
-                             class="relative">
-                             
-                            <button 
-                                type="button"
-                                wire:click="selectLedger('{{ $ledg }}')"
-                                class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 text-gray-705 dark:text-slate-205 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 font-bold rounded-xl text-xs font-sans text-center transition-all cursor-pointer border border-gray-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
-                                <span class="truncate">{{ $ledg }}</span>
-                                
-                                <!-- Pencil Icon to trigger Action Menu dropdown -->
-                                <span @click.stop="
-                                        activeAction = (activeAction === '{{ $ledg }}' ? null : '{{ $ledg }}');
-                                        actionRect = $el.getBoundingClientRect();
-                                     " 
-                                      class="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg cursor-pointer transition-all shrink-0" title="অ্যাকশন">
-                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-indigo-655" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                                    </svg>
-                                </span>
+                <!-- Ledger Group Boxes: each box shows a group, hover reveals ledger names with rates -->
+                <div x-data="{ hoverGroup: null, dropRect: null, staying: false }" class="relative">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto pr-1">
+                        @forelse($groupedLedgers as $groupName => $groupLedgers)
+                        <div 
+                            @mouseenter="hoverGroup = '{{ $groupName }}'; dropRect = $el.getBoundingClientRect();"
+                            @mouseleave="setTimeout(() => { if (hoverGroup === '{{ $groupName }}' && !staying) hoverGroup = null; }, 150)"
+                            class="relative">
+                            <!-- Group Box Card -->
+                            <div class="w-full px-3 pt-2.5 pb-2 bg-slate-50 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 border border-gray-150 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-800 rounded-2xl cursor-pointer transition-all group/box flex flex-col gap-1 min-h-[72px]">
+                                <div class="flex items-start justify-between gap-1">
+                                    <span class="text-[11px] font-extrabold text-gray-700 dark:text-slate-200 group-hover/box:text-emerald-700 dark:group-hover/box:text-emerald-400 font-sans leading-tight line-clamp-2">{{ $groupName }}</span>
+                                    <span class="shrink-0 text-[9px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 rounded-full px-1.5 py-0.5 font-black font-mono leading-none mt-0.5">{{ count($groupLedgers) }}</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-auto">
+                                    <span class="text-[9px] text-gray-400 dark:text-slate-500 font-sans italic">{{ count($groupLedgers) > 0 ? 'hover করুন' : 'খালি' }}</span>
+                                    <button type="button" wire:click="openNewKhotiyanModal('{{ $groupName }}')"
+                                            @click.stop
+                                            class="text-[9px] bg-emerald-600 hover:bg-emerald-700 text-white px-1.5 py-0.5 rounded font-black font-sans cursor-pointer leading-none transition-colors">
+                                        + নতুন
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="col-span-4 py-10 text-center text-gray-400 font-sans text-xs">কোনো গ্রুপ পাওয়া যায়নি।</div>
+                        @endforelse
+                    </div>
+
+                    <!-- Hover Dropdown: shows ledger names with rates for the hovered group -->
+                    @teleport('body')
+                    <div 
+                        x-show="hoverGroup !== null"
+                        @mouseenter="staying = true"
+                        @mouseleave="staying = false; hoverGroup = null"
+                        class="fixed z-[9999999] w-64 bg-[#0f1c2e] dark:bg-slate-900 border border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden font-sans"
+                        :style="dropRect ? ('left: ' + Math.max(8, Math.min(dropRect.left + dropRect.width/2 - 128, window.innerWidth - 272)) + 'px; top: ' + (dropRect.bottom + 6) + 'px;') : ''"
+                        x-cloak>
+                        <!-- Dropdown header -->
+                        <div class="flex items-center justify-between px-3 py-2 bg-emerald-700/20 border-b border-slate-700/60">
+                            <span class="text-[10px] font-black text-emerald-400 uppercase tracking-wider" x-text="hoverGroup"></span>
+                            <span class="text-[9px] text-slate-400 font-sans">খতিয়ান নির্বাচন করুন</span>
+                        </div>
+                        @foreach($groupedLedgers as $gName => $gLedgers)
+                        <div x-show="hoverGroup === '{{ $gName }}'" class="max-h-56 overflow-y-auto py-1">
+                            @forelse($gLedgers as $gLedg)
+                            <button type="button"
+                                    wire:click="selectLedger('{{ $gLedg['name'] }}')"
+                                    @click="hoverGroup = null; staying = false"
+                                    class="w-full flex items-center justify-between px-3 py-2 hover:bg-emerald-700/20 transition-colors text-left cursor-pointer group/item">
+                                <span class="text-xs font-semibold text-slate-200 group-hover/item:text-emerald-300 font-sans truncate">{{ $gLedg['name'] }}</span>
+                                @if(!empty($gLedg['rate']))
+                                <span class="shrink-0 text-[10px] text-emerald-400 font-mono font-black ml-2">৳{{ number_format($gLedg['rate'], 2) }}</span>
+                                @endif
                             </button>
+                            @empty
+                            <div class="px-3 py-3 text-center text-[10px] text-slate-500 italic">খালি</div>
+                            @endforelse
                         </div>
                         @endforeach
                     </div>
-
-                    <!-- Single Teleported Hover Dropdown (Blade teleport for robust Livewire 3 support) -->
-                    @teleport('body')
-                        <div x-show="activeHover && hoverTypes.length > 0 && activeAction !== activeHover" 
-                             @mouseenter="hoverStay = true"
-                             @mouseleave="hoverStay = false; activeHover = null;"
-                             @close-hover-menu.window="activeHover = null"
-                             class="fixed z-[9999999] w-48 bg-[#182235] dark:bg-slate-900 border border-slate-700 dark:border-slate-800 rounded-xl shadow-2xl py-1 text-left font-sans"
-                             :style="hoverRect ? ('left: ' + hoverRect.left + 'px; top: ' + hoverRect.bottom + 'px; position: fixed;') : ''"
-                             x-cloak>
-                            <div class="px-2.5 py-1 border-b border-slate-700 dark:border-slate-850 text-[10px] font-black text-gray-400 font-sans uppercase">সাব-আইটেমসমূহ</div>
-                            <div class="max-h-48 overflow-y-auto"
-                                 x-html="hoverTypes.map(subItem => `<button type='button' onclick='window.Livewire.find(\u0022{{ $this->id() }}\u0022).selectLedger(\u0022${subItem}\u0022); window.dispatchEvent(new CustomEvent(\u0022close-hover-menu\u0022));' class='w-full text-left px-3 py-1.5 text-xs font-black text-white dark:text-white hover:bg-emerald-600 dark:hover:bg-slate-750 hover:text-white dark:hover:text-emerald-400 transition-colors font-sans'>📄 ${subItem}</button>`).join('')"></div>
-                        </div>
-                    @endteleport
-
-                    <!-- Single Teleported Click Action Dropdown (Blade teleport for robust Livewire 3 support) -->
-                    @teleport('body')
-                        <div x-show="activeAction" 
-                             @click.outside="activeAction = null"
-                             class="fixed z-[9999999] w-36 bg-[#182235] dark:bg-slate-900 border border-slate-700 dark:border-slate-800 rounded-xl shadow-2xl py-1 text-left font-sans"
-                             :style="actionRect ? ('left: ' + actionRect.left + 'px; top: ' + actionRect.bottom + 'px; position: fixed;') : ''"
-                             x-cloak>
-                            <button type="button" 
-                                    @click="$wire.openEditLedgerModal(activeAction); activeAction = null;"
-                                    class="w-full text-left px-3 py-1.5 text-xs font-black text-indigo-400 hover:bg-indigo-950/40 transition-colors font-sans">
-                                ✏️ এডিট করুন
-                            </button>
-                            <button type="button" 
-                                    @click="$wire.deleteLedger(activeAction); activeAction = null;"
-                                    class="w-full text-left px-3 py-1.5 text-xs font-black text-red-400 hover:bg-red-955/40 transition-colors font-sans">
-                                🗑️ মুছে ফেলুন
-                            </button>
-                        </div>
                     @endteleport
                 </div>
 
@@ -724,52 +689,7 @@
                     @endteleport
                 </div>
 
-                <!-- Customizable Type Dropdown field -->
-                <div x-data="{ openType: false, newTypeName: '', rect: null }" class="relative">
-                    <label class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">টাইপ</label>
-                    <button @click="openType = !openType; rect = $el.getBoundingClientRect()" type="button" 
-                            class="w-full flex items-center justify-between gap-2.5 px-4 py-3 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white font-bold rounded-xl text-sm border border-gray-200 dark:border-slate-700 focus:outline-none transition-all cursor-pointer">
-                        <span class="font-sans" x-text="$wire.newLedgerType ? $wire.newLedgerType : 'টাইপ নির্বাচন করুন'"></span>
-                        <svg class="w-4 h-4 transition-transform duration-200 text-gray-555" :class="{ 'rotate-180': openType }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-                    
-                    @teleport('body')
-                        <div x-show="openType" 
-                             @click.outside="openType = false"
-                             class="fixed z-[99999999] bg-white dark:bg-slate-900 border border-gray-255 dark:border-slate-800 shadow-2xl p-2.5"
-                             :style="rect ? ('left: ' + rect.left + 'px; top: ' + rect.bottom + 'px; width: ' + rect.width + 'px; position: fixed;') : ''"
-                             x-cloak>
-                            
-                            <!-- Search & Add new option -->
-                            <div class="flex items-center gap-1.5 mb-2.5">
-                                <input type="text" x-model="newTypeName" placeholder="নতুন টাইপ..."
-                                       class="flex-grow px-3 py-1.5 text-xs rounded-lg border border-gray-255 dark:border-slate-700 bg-gray-55 dark:bg-slate-955 text-gray-855 dark:text-white focus:outline-none font-sans font-semibold">
-                                <button type="button" @click="$wire.addType(newTypeName); newTypeName = ''"
-                                        class="px-3 py-1.5 bg-[#034C3C] text-white rounded-lg text-xs font-black cursor-pointer font-sans leading-none">
-                                    + অ্যাড
-                                </button>
-                            </div>
 
-                            <!-- Options List -->
-                            <div class="space-y-0.5 max-h-36 overflow-y-auto pr-1">
-                                @foreach($ledgerTypes as $lType)
-                                <div class="flex items-center justify-between px-3 py-1.5 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg text-xs transition-colors">
-                                    <button type="button" @click="$wire.set('newLedgerType', '{{ $lType }}'); openType = false"
-                                            class="flex-grow text-left font-black text-gray-855 dark:text-white font-sans">
-                                        {{ $lType }}
-                                    </button>
-                                    <button type="button" @click="$wire.deleteType('{{ $lType }}')"
-                                            class="text-red-500 hover:text-red-700 p-0.5 cursor-pointer leading-none">
-                                        ✕
-                                    </button>
-                                </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endteleport
-                </div>
 
                 <!-- Action buttons -->
                 <div class="flex items-center gap-3.5 pt-4 border-t border-gray-100 dark:border-slate-800/60">
@@ -882,6 +802,46 @@
                             <span class="font-bold text-gray-800 dark:text-white font-mono">৳ {{ number_format($report['total_purchase_rec']) }}</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    @endteleport
+
+    <!-- Delete Confirmation Modal -->
+    @teleport('body')
+        <div x-data="{ open: @entangle('confirmingDeleteId') }"
+             x-show="open"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+             x-cloak>
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xs w-full border border-gray-100 dark:border-slate-800 shadow-2xl p-6 text-center space-y-4 font-sans"
+                 x-show="open"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100">
+                <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-gray-800 dark:text-white">আপনি কি পেমেন্টটি মুছে ফেলতে চান?</h3>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">এই কার্যক্রমটি পরবর্তীতে পুনরুদ্ধার করা যাবে না।</p>
+                </div>
+                <div class="flex items-center justify-center gap-3 pt-1">
+                    <button type="button" wire:click="cancelDelete"
+                            class="flex-1 py-2 px-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer">
+                        না
+                    </button>
+                    <button type="button" wire:click="deletePaymentConfirmed"
+                            class="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer">
+                        হ্যাঁ
+                    </button>
                 </div>
             </div>
         </div>

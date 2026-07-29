@@ -14,22 +14,6 @@
 
     <!-- Main Beautiful Full Width Grid -->
     <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-colors duration-300">
-        @if (session()->has('user_message'))
-            <div x-data="{ show: true }"
-                 x-show="show"
-                 x-init="setTimeout(() => show = false, 3000)"
-                 x-transition:leave="transition ease-in duration-300"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-400 rounded-2xl text-xs font-semibold flex items-center gap-2 shadow-sm"
-                 x-cloak>
-                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span>{{ session('user_message') }}</span>
-            </div>
-        @endif
-
         <form wire:submit.prevent="saveUserProfile" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <!-- Left Side: Profile Photo Upload (lg:col-span-4) -->
             <div class="lg:col-span-4 flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-slate-950/40 rounded-2xl border border-gray-100 dark:border-slate-800/80">

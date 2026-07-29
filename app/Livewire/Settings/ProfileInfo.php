@@ -89,7 +89,7 @@ class ProfileInfo extends Component
     {
         // Block action if logged in as Demo
         if (Auth::check() && Auth::user()->hasRole('demo')) {
-            session()->flash('message', 'ডেমো মোডে প্রতিষ্ঠানের তথ্য পরিবর্তন করা সম্ভব নয়।');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে প্রতিষ্ঠানের তথ্য পরিবর্তন করা সম্ভব নয়।', type: 'danger');
             return;
         }
 
@@ -118,8 +118,7 @@ class ProfileInfo extends Component
 
         $this->isEditing = false;
 
-        session()->flash('message', 'প্রতিষ্ঠানের তথ্য সফলভাবে আপডেট করা হয়েছে।');
-        $this->dispatch('show-toast', message: 'প্রতিষ্ঠানের তথ্য সফলভাবে আপডেট করা হয়েছে।');
+        $this->dispatch('show-toast', message: 'প্রতিষ্ঠানের তথ্য সফলভাবে আপডেট করা হয়েছে।', type: 'success');
     }
 
 

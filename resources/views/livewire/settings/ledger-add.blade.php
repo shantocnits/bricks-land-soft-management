@@ -1,21 +1,7 @@
 <div class="space-y-6">
-    <!-- Success Alert -->
-    @if (session()->has('message'))
-        <div x-data="{ show: true }"
-             x-show="show"
-             x-init="setTimeout(() => show = false, 3000)"
-             x-transition:leave="transition ease-in duration-300"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-400 rounded-2xl flex items-center gap-3 text-sm shadow-sm"
-             x-cloak>
-            <span class="font-medium">{{ session('message') }}</span>
-        </div>
-    @endif
-
     <!-- Full-width Table Card -->
-    <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-colors duration-300">
-        <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-4 mb-6">
+    <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-4 sm:p-6 shadow-sm transition-colors duration-300">
+        <div class="flex flex-col md:flex-row items-start md:items-center gap-2 justify-between border-b border-gray-100 dark:border-slate-800 pb-4 mb-6">
             <div>
                 <h3 class="font-bold text-sm text-gray-800 dark:text-white">খতিয়ান তালিকা</h3>
                 <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 font-sans">সকল খতিয়ান একসাথে দেখুন ও পরিচালনা করুন</p>
@@ -45,11 +31,12 @@
             </div>
         </div>
 
-        <!-- Table -->
-        <div class="overflow-x-auto">
+        <!-- Desktop Table View -->
+        <div class="hidden sm:block overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
                 <thead>
                     <tr class="bg-gray-50 dark:bg-slate-950 border-b border-gray-100 dark:border-slate-800 text-gray-500 dark:text-slate-400 font-bold">
+                        <th class="px-4 py-3 text-center w-14">সিরিয়াল</th>
                         <th class="px-4 py-3">খতিয়ানের নাম</th>
                         <th class="px-4 py-3 text-center">গ্রুপ</th>
                         <th class="px-4 py-3 text-right">রেট</th>
@@ -60,6 +47,9 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-slate-800/80">
                     @forelse($ledgers as $ledger)
                         <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/25 transition-colors">
+                            <td class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-slate-300">
+                                {{ $loop->iteration }}
+                            </td>
                             <td class="px-4 py-3 font-semibold text-gray-800 dark:text-slate-200">
                                 {{ $ledger->name }}
                             </td>
@@ -88,8 +78,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/>
                                         </svg>
                                     </button>
-                                    <button wire:click="deleteLedger({{ $ledger->id }})"
-                                            onclick="confirm('খতিয়ানটি মুছে ফেলবেন?') || event.stopImmediatePropagation()"
+                                    <button wire:click="confirmDelete({{ $ledger->id }})"
                                             class="p-1.5 border border-red-100 dark:border-red-950/30 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 rounded-lg transition-all cursor-pointer"
                                             title="মুছে ফেলুন">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -101,13 +90,63 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500 italic">
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500 italic">
                                 কোনো খতিয়ান যুক্ত করা হয়নি।
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- Mobile Box Cards View -->
+        <div class="sm:hidden grid grid-cols-1 gap-3">
+            @forelse($ledgers as $ledger)
+                <div class="bg-gray-50/60 dark:bg-slate-950/40 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-gray-700 dark:text-slate-300 text-xs">
+                                {{ $loop->iteration }}.
+                            </span>
+                            <span class="font-bold text-gray-800 dark:text-white text-xs">{{ $ledger->name }}</span>
+                        </div>
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold
+                            @if($ledger->group === 'কাস্টমার') bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50
+                            @elseif($ledger->group === 'সরবরাহকারী') bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50
+                            @elseif($ledger->group === 'খরচ') bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50
+                            @elseif($ledger->group === 'আয়') bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50
+                            @else bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300 border border-gray-200 dark:border-slate-700 @endif">
+                            {{ $ledger->group }}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs pt-2 border-t border-gray-100 dark:border-slate-800/60 font-sans">
+                        <div>
+                            <span class="text-gray-400 font-normal">রেট: </span>
+                            <span class="font-bold text-gray-800 dark:text-white">{{ $ledger->rate ? '৳ ' . number_format($ledger->rate, 2) : '—' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 font-normal">ভাজক: </span>
+                            <span class="font-bold text-gray-800 dark:text-white">{{ $ledger->divisor }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-slate-800/60">
+                        <button wire:click="editLedger({{ $ledger->id }})"
+                                class="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer">
+                            ✏️ এডিট
+                        </button>
+                        <button wire:click="confirmDelete({{ $ledger->id }})"
+                                class="px-3 py-1.5 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer">
+                            🗑️ মুছুন
+                        </button>
+                    </div>
+                </div>
+            @empty
+                <div class="py-8 text-center text-gray-400 dark:text-gray-500 italic text-xs">
+                    কোনো খতিয়ান যুক্ত করা হয়নি।
+                </div>
+            @endforelse
         </div>
     </div>
 
@@ -134,103 +173,163 @@
                  x-transition:leave-start="opacity-100 scale-100"
                  x-transition:leave-end="opacity-0 scale-95 translate-y-4">
 
-                <!-- Close -->
-                <button type="button" @click="open = false; $wire.cancelEdit()"
-                        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-
-                <h3 class="text-base font-bold text-gray-800 dark:text-white mb-5 border-b border-gray-100 dark:border-slate-800 pb-2 font-sans">
-                    {{ $editingLedgerId ? 'খতিয়ান সংশোধন করুন' : 'নতুন খতিয়ান যুক্ত করুন' }}
-                </h3>
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-4 mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-slate-900 dark:bg-slate-800 flex items-center justify-center text-white shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-extrabold text-gray-800 dark:text-white font-sans">
+                                {{ $editingLedgerId ? 'খতিয়ান সংশোধন করুন' : 'নতুন খতিয়ান' }}
+                            </h3>
+                            <p class="text-[11px] text-gray-400 dark:text-gray-500 font-sans mt-0.5">সঠিক তথ্য দিয়ে খাতা তৈরি করুন</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="open = false; $wire.cancelEdit()"
+                            class="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
 
                 <form wire:submit.prevent="save" class="space-y-4">
-                    <!-- Name -->
+                    <!-- Row 1: Serial & Group -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">সিরিয়াল</label>
+                            <input type="text" wire:model="serial" placeholder="01"
+                                   class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-mono font-semibold">
+                            @error('serial') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Group Dropdown: Dynamic with filter/add & Folder Icon -->
+                        <div class="relative" x-data="{ open2: false }">
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">খতিয়ানের গ্রুপ</label>
+                            <button type="button" @click="open2 = !open2"
+                                    class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none cursor-pointer text-left transition-all">
+                                <span x-text="$wire.group || 'গ্রুপ বাছুন বা টাইপ করুন'" class="truncate"></span>
+                                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0" :class="{ 'rotate-180': open2 }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open2" @click.away="open2 = false" x-transition
+                                 class="absolute left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 z-50 overflow-hidden min-w-[220px]" x-cloak>
+                                <!-- Single Filter + Add Input (Fixed flex container so button never overflows right) -->
+                                <div class="p-2 border-b border-gray-100 dark:border-slate-800 flex items-center gap-1.5">
+                                    <input type="text" wire:model="newGroupInput"
+                                           placeholder="ফিল্টার বা নতুন গ্রুপ..."
+                                           class="flex-1 min-w-0 py-1.5 px-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 transition-all font-sans font-medium"
+                                           wire:keydown.enter.prevent="addGroup">
+                                    <button type="button" wire:click="addGroup"
+                                            class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex-shrink-0 whitespace-nowrap">
+                                        + অ্যাড
+                                    </button>
+                                </div>
+                                <!-- Options list with folder icon -->
+                                <div class="max-h-40 overflow-y-auto py-1">
+                                    @foreach($groupOptions as $opt)
+                                        <div class="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all cursor-pointer flex items-center gap-2"
+                                             x-show="$wire.newGroupInput === '' || '{{ $opt }}'.toLowerCase().includes($wire.newGroupInput.toLowerCase())"
+                                             @click="$wire.set('group', '{{ $opt }}'); open2 = false; $wire.set('newGroupInput', '')">
+                                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0A2.25 2.25 0 004.5 15h15a2.25 2.25 0 002.25-2.25m-19.5 0v.243a2.25 2.25 0 00.864 1.765l.775.62c.39.312.617.781.617 1.274v1.848a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25v-1.848c0-.493.227-.962.617-1.274l.775-.62a2.25 2.25 0 00.864-1.765V12.75M3.75 6h4.875c.621 0 1.15.402 1.314 1.002L10.3 8.5H20.25A2.25 2.25 0 0122.5 10.75v.75H1.5v-.75A2.25 2.25 0 013.75 6z"/>
+                                            </svg>
+                                            <span class="text-xs font-semibold text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans block truncate">
+                                                {{ $opt }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @error('group') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Name -->
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">খতিয়ানের নাম</label>
-                        <input type="text" wire:model="name" placeholder="যেমন: কয়লা ক্রয় খতিয়ান"
+                        <input type="text" wire:model="name" placeholder="খতিয়ানের নাম লিখুন"
                                class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-semibold">
                         @error('name') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Group Dropdown: Dynamic with filter/add/delete -->
-                    <div class="relative" x-data="{ open2: false, groupSearch: '', groupVal: @entangle('group') }">
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">গ্রুপ / ধরন</label>
-                        <button type="button" @click="open2 = !open2"
-                                class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none cursor-pointer text-left transition-all">
-                            <span x-text="groupVal || 'গ্রুপ নির্বাচন করুন'"></span>
-                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': open2 }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                        <div x-show="open2" @click.away="open2 = false" x-transition
-                             class="absolute left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 z-50 overflow-hidden" x-cloak>
-                            <!-- Single Filter + Add Input -->
-                            <div class="p-2 border-b border-gray-100 dark:border-slate-800 flex gap-2">
-                                <input type="text" wire:model="newGroupInput"
-                                       placeholder="ফিল্টার বা নতুন গ্রুপ..."
-                                       class="flex-1 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 transition-all font-sans"
-                                       wire:keydown.enter.prevent="addGroup">
-                                <button type="button" wire:click="addGroup"
-                                        class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex-shrink-0">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <!-- Options filtered by newGroupInput -->
-                            <div class="max-h-40 overflow-y-auto py-1">
-                                @foreach($groupOptions as $opt)
-                                    <div class="flex items-center justify-between px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all"
-                                         x-show="$wire.newGroupInput === '' || '{{ $opt }}'.toLowerCase().includes($wire.newGroupInput.toLowerCase())">
-                                        <button type="button" @click="groupVal = '{{ $opt }}'; open2 = false; $wire.set('newGroupInput', '')"
-                                                class="flex-1 text-left text-xs font-semibold text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans">
-                                            {{ $opt }}
-                                        </button>
-                                        <button type="button" wire:click="deleteGroup('{{ $opt }}')"
-                                                onclick="confirm('এই গ্রুপটি মুছবেন?') || event.stopImmediatePropagation()"
-                                                class="ml-2 p-1 text-gray-400 hover:text-red-500 transition-all rounded-lg cursor-pointer flex-shrink-0">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                        @error('group') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
-                    </div>
-
-                    <!-- Rate & Divisor side by side -->
+                    <!-- Row 3: Rate & Divisor side by side -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">রেট (ঐচ্ছিক)</label>
-                            <input type="number" step="0.01" wire:model="rate" placeholder="৳ 0.00"
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">খতিয়ানের রেট</label>
+                            <input type="number" step="0.01" wire:model="rate" placeholder="খতিয়ানের রেট"
                                    class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-semibold">
                             @error('rate') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">পরিমাণ ভাজক</label>
-                            <input type="number" min="1" wire:model="divisor" placeholder="যেমন: 1"
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">পরিমাণ ভাজক (যদি থাকে)</label>
+                            <input type="number" min="1" wire:model="divisor" placeholder="পরিমাণ ভাজক"
                                    class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-semibold">
                             @error('divisor') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                         </div>
                     </div>
 
+                    <!-- Note section -->
+                    <div class="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-2xl text-[11px] text-amber-700 dark:text-amber-400 font-medium font-sans leading-relaxed">
+                        Note: কত পরিমাণ কাজের জন্য এই রেট দেওয়া হবে সেটা উল্লেখ করুন পরিমাণ ভাজকে। যেমন ৮০০ টাকা যদি প্রোডাকশন রেট হয় তাহলে ১০০০ ইট কাটার জন্য ৮০০ টাকা পাবে তাই পরিমাণ ভাজকে হবে ১০০০
+                    </div>
+
                     <!-- Actions -->
-                    <div class="flex items-center justify-end gap-2 pt-4 border-t border-gray-100 dark:border-slate-800">
-                        <button type="button" @click="open = false; $wire.cancelEdit()"
-                                class="px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 hover:text-gray-900 dark:hover:text-white text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans">
-                            বাতিল
+                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
+                        <button type="button" wire:click="resetForm"
+                                class="w-full py-3 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 text-xs font-bold rounded-2xl cursor-pointer transition-all font-sans text-center">
+                            ক্লিয়ার
                         </button>
                         <button type="submit"
-                                class="px-6 py-2 bg-primary text-white text-xs font-bold rounded-xl cursor-pointer shadow-md hover:bg-emerald-600 transition-all font-sans">
-                            সংরক্ষণ করুন
+                                class="w-full py-3 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white text-xs font-extrabold rounded-2xl cursor-pointer shadow-md transition-all font-sans text-center">
+                            {{ $editingLedgerId ? 'সংরক্ষণ করুন' : 'এড করুন' }}
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </template>
+
+    <!-- Delete Confirmation Modal -->
+    <template x-teleport="body">
+        <div x-data="{ open: @entangle('confirmingDeleteId') }"
+             x-show="open"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+             x-cloak>
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xs w-full border border-gray-100 dark:border-slate-800 shadow-2xl p-6 text-center space-y-4 font-sans"
+                 x-show="open"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100">
+                <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-gray-800 dark:text-white">আপনি কি খতিয়ানটি মুছে ফেলতে চান?</h3>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">এই কার্যক্রমটি পরবর্তীতে পুনরুদ্ধার করা যাবে না।</p>
+                </div>
+                <div class="flex items-center justify-center gap-3 pt-1">
+                    <button type="button" wire:click="cancelDelete"
+                            class="flex-1 py-2 px-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer">
+                        না
+                    </button>
+                    <button type="button" wire:click="deleteLedgerConfirmed"
+                            class="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer">
+                        হ্যাঁ
+                    </button>
+                </div>
             </div>
         </div>
     </template>

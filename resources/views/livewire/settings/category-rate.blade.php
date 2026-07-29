@@ -1,18 +1,4 @@
 <div class="space-y-6">
-    <!-- Success Alert -->
-    @if (session()->has('message'))
-        <div x-data="{ show: true }"
-             x-show="show"
-             x-init="setTimeout(() => show = false, 3000)"
-             x-transition:leave="transition ease-in duration-300"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-400 rounded-2xl flex items-center gap-3 text-sm shadow-sm"
-             x-cloak>
-            <span class="font-medium">{{ session('message') }}</span>
-        </div>
-    @endif
-
     <!-- Page Header Bar -->
     <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors duration-300 shadow-sm">
         <div class="flex items-center gap-3">
@@ -40,8 +26,8 @@
 
     <!-- Table Card -->
     <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm transition-colors duration-300">
-        <!-- Table -->
-        <div class="overflow-x-auto">
+        <!-- Desktop Table View -->
+        <div class="hidden sm:block overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
                 <thead>
                     <tr class="bg-emerald-600 text-white border-b border-gray-100 dark:border-slate-800 font-bold font-sans">
@@ -78,7 +64,6 @@
                                         </svg>
                                     </button>
                                     <button wire:click="deleteCategory({{ $category->id }})"
-                                            onclick="confirm('শ্রেণিটি মুছে ফেলবেন?') || event.stopImmediatePropagation()"
                                             class="p-1.5 border border-red-100 dark:border-red-950/30 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 rounded-lg transition-all cursor-pointer"
                                             title="মুছে ফেলুন">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -97,6 +82,45 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- Mobile Box Cards View -->
+        <div class="sm:hidden p-4 grid grid-cols-1 gap-3">
+            @forelse($categories as $category)
+                <div class="bg-gray-50/60 dark:bg-slate-950/40 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-3 font-sans">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] font-mono">
+                                #{{ $loop->iteration }}
+                            </span>
+                            <span class="font-bold text-gray-800 dark:text-white text-xs">{{ $category->name }}</span>
+                        </div>
+                        <span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 rounded-full text-[10px] font-bold border border-emerald-100 dark:border-emerald-900/40">
+                            {{ $category->type }}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs pt-2 border-t border-gray-100 dark:border-slate-800/60">
+                        <span class="text-gray-400 font-normal">রেট:</span>
+                        <span class="font-bold text-gray-800 dark:text-white">৳ {{ floatval($category->rate) }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-slate-800/60">
+                        <button wire:click="editCategory({{ $category->id }})"
+                                class="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1">
+                            ✏️ এডিট
+                        </button>
+                        <button wire:click="deleteCategory({{ $category->id }})"
+                                class="px-3 py-1.5 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 rounded-lg text-xs font-bold flex items-center gap-1">
+                            🗑️ মুছুন
+                        </button>
+                    </div>
+                </div>
+            @empty
+                <div class="py-8 text-center text-gray-400 dark:text-gray-500 italic text-xs">
+                    কোনো শ্রেণি যুক্ত করা হয়নি।
+                </div>
+            @endforelse
         </div>
 
         <!-- Pagination Footer -->
@@ -163,11 +187,11 @@
                     </div>
 
                     <!-- Type Dropdown: Dynamic with filter/add/delete -->
-                    <div class="relative" x-data="{ open3: false, typeVal: @entangle('type') }">
+                    <div class="relative" x-data="{ open3: false }">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">শ্রেণির ধরন</label>
                         <button type="button" @click="open3 = !open3"
                                 class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none cursor-pointer text-left transition-all">
-                            <span x-text="typeVal || 'ধরন নির্বাচন করুন'"></span>
+                            <span x-text="$wire.type || 'ধরন নির্বাচন করুন'"></span>
                             <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': open3 }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                             </svg>
@@ -192,7 +216,7 @@
                                 @foreach($typeOptions as $opt)
                                     <div class="flex items-center justify-between px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all"
                                          x-show="$wire.newTypeInput === '' || '{{ $opt }}'.toLowerCase().includes($wire.newTypeInput.toLowerCase())">
-                                        <button type="button" @click="typeVal = '{{ $opt }}'; open3 = false; $wire.set('newTypeInput', '')"
+                                        <button type="button" @click="$wire.set('type', '{{ $opt }}'); open3 = false; $wire.set('newTypeInput', '')"
                                                 class="flex-1 text-left text-xs font-semibold text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans">
                                             {{ $opt }}
                                         </button>
@@ -230,6 +254,46 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </template>
+
+    <!-- Delete Confirmation Modal -->
+    <template x-teleport="body">
+        <div x-data="{ open: @entangle('confirmingDeleteId') }"
+             x-show="open"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+             x-cloak>
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xs w-full border border-gray-100 dark:border-slate-800 shadow-2xl p-6 text-center space-y-4 font-sans"
+                 x-show="open"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100">
+                <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-gray-800 dark:text-white">আপনি কি শ্রেণিটি মুছে ফেলতে চান?</h3>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">এই কার্যক্রমটি পরবর্তীতে পুনরুদ্ধার করা যাবে না।</p>
+                </div>
+                <div class="flex items-center justify-center gap-3 pt-1">
+                    <button type="button" wire:click="cancelDelete"
+                            class="flex-1 py-2 px-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer">
+                        না
+                    </button>
+                    <button type="button" wire:click="deleteCategoryConfirmed"
+                            class="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer">
+                        হ্যাঁ
+                    </button>
+                </div>
             </div>
         </div>
     </template>

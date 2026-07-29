@@ -30,7 +30,7 @@ class MyProfile extends Component
     {
         // Block action if logged in as Demo
         if (Auth::user()->hasRole('demo')) {
-            session()->flash('user_message', 'ডেমো মোডে প্রোফাইল তথ্য পরিবর্তন করা সম্ভব নয়।');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে প্রোফাইল তথ্য পরিবর্তন করা সম্ভব নয়।', type: 'danger');
             return;
         }
 
@@ -65,7 +65,7 @@ class MyProfile extends Component
 
         $user->save();
 
-        session()->flash('user_message', 'আপনার প্রোফাইল তথ্য সফলভাবে আপডেট করা হয়েছে।');
+        $this->dispatch('show-toast', message: 'আপনার প্রোফাইল তথ্য সফলভাবে আপডেট করা হয়েছে।', type: 'success');
     }
 
     public function render()
