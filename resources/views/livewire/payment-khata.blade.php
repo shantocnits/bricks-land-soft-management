@@ -87,68 +87,68 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-slate-800 font-sans">
                         @forelse ($payments as $idx => $pay)
-                        <tr class="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/10 transition-colors text-xs">
-                            <td class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-455 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $idx + 1 }}</td>
-                            <td class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-400 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $pay['date'] ?? '18/07/2026' }}</td>
-                            <td class="px-3 py-3.5 text-center font-bold text-[#034C3C] dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $pay['ledger'] }}</td>
-                            <td class="px-3 py-3.5 text-center text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 max-w-[220px] truncate" title="{{ $pay['desc'] }}">{{ $pay['desc'] }}</td>
-                            
-                            <td class="px-3 py-3.5 text-right font-semibold text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">{{ number_format($pay['qty']) }}</td>
-                            <td class="px-3 py-3.5 text-right font-semibold text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['rate']) }}</td>
-                            
-                            <td class="px-3 py-3.5 text-right font-bold text-gray-900 dark:text-white border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['total']) }}</td>
-                            <td class="px-3 py-3.5 text-right font-semibold text-amber-600 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['advance']) }}</td>
-                            <td class="px-3 py-3.5 text-right font-semibold text-red-500 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['deduction']) }}</td>
-                            <td class="px-3 py-3.5 text-right font-black text-emerald-600 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['payment']) }}</td>
-                            <td class="px-3 py-3.5 text-right font-bold text-gray-900 dark:text-white border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['purchase_receive']) }}</td>
-                            <td class="px-3 py-3.5 text-center border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                @if ($pay['has_doc'])
-                                <a href="{{ $pay['doc_url'] }}" target="_blank" class="inline-flex text-emerald-600 hover:text-emerald-700 hover:scale-110 transition-transform" title="ডকুমেন্ট দেখুন">
-                                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
-                                    </svg>
-                                </a>
-                                @else
-                                <span class="text-gray-350 dark:text-slate-850 text-[10px]">-</span>
-                                @endif
-                            </td>
-                            <td class="px-3 py-3.5 text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    <button 
-                                        wire:click="editPayment({{ $pay['id'] }})"
-                                        class="inline-flex text-indigo-600 hover:text-indigo-850 hover:scale-110 transition-all cursor-pointer focus:outline-none"
-                                        title="সম্পাদনা">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                                        </svg>
-                                    </button>
-                                    
-                                    <button 
-                                        wire:click="$set('showKhotiyanModal', true)"
-                                        class="inline-flex text-emerald-600 hover:text-emerald-800 hover:scale-110 transition-all cursor-pointer focus:outline-none"
-                                        title="খতিয়ান পরিবর্তন">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                                        </svg>
-                                    </button>
+                            <tr class="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/10 transition-colors text-xs">
+                                <td class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-455 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $idx + 1 }}</td>
+                                <td class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-400 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $pay['date'] ?? '18/07/2026' }}</td>
+                                <td class="px-3 py-3.5 text-center font-bold text-[#034C3C] dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $pay['ledger'] }}</td>
+                                <td class="px-3 py-3.5 text-center text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 max-w-[220px] truncate" title="{{ $pay['desc'] }}">{{ $pay['desc'] }}</td>
 
-                                    <button 
-                                        wire:click="confirmDelete({{ $pay['id'] }})"
-                                        class="inline-flex text-red-500 hover:text-red-755 hover:scale-110 transition-all cursor-pointer focus:outline-none"
-                                        title="ডিলিট করুন">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                                <td class="px-3 py-3.5 text-right font-semibold text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">{{ number_format($pay['qty']) }}</td>
+                                <td class="px-3 py-3.5 text-right font-semibold text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['rate']) }}</td>
+
+                                <td class="px-3 py-3.5 text-right font-bold text-gray-900 dark:text-white border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['total']) }}</td>
+                                <td class="px-3 py-3.5 text-right font-semibold text-amber-600 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['advance']) }}</td>
+                                <td class="px-3 py-3.5 text-right font-semibold text-red-500 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['deduction']) }}</td>
+                                <td class="px-3 py-3.5 text-right font-black text-emerald-600 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['payment']) }}</td>
+                                <td class="px-3 py-3.5 text-right font-bold text-gray-900 dark:text-white border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">৳ {{ number_format($pay['purchase_receive']) }}</td>
+                                <td class="px-3 py-3.5 text-center border-r border-gray-150 dark:border-slate-800 last:border-r-0">
+                                    @if ($pay['has_doc'])
+                                        <a href="{{ $pay['doc_url'] }}" target="_blank" class="inline-flex text-emerald-600 hover:text-emerald-700 hover:scale-110 transition-transform" title="ডকুমেন্ট দেখুন">
+                                            <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+                                            </svg>
+                                        </a>
+                                    @else
+                                        <span class="text-gray-350 dark:text-slate-850 text-[10px]">-</span>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-3.5 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button 
+                                            wire:click="editPayment({{ $pay['id'] }})"
+                                            class="inline-flex text-indigo-600 hover:text-indigo-850 hover:scale-110 transition-all cursor-pointer focus:outline-none"
+                                            title="সম্পাদনা">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                            </svg>
+                                        </button>
+
+                                        <button 
+                                            wire:click="$set('showKhotiyanModal', true)"
+                                            class="inline-flex text-emerald-600 hover:text-emerald-800 hover:scale-110 transition-all cursor-pointer focus:outline-none"
+                                            title="খতিয়ান পরিবর্তন">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                                            </svg>
+                                        </button>
+
+                                        <button 
+                                            wire:click="confirmDelete({{ $pay['id'] }})"
+                                            class="inline-flex text-red-500 hover:text-red-755 hover:scale-110 transition-all cursor-pointer focus:outline-none"
+                                            title="ডিলিট করুন">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                         @empty
-                        <tr>
-                            <td colspan="13" class="px-5 py-12 text-center text-gray-400 font-sans text-sm">
-                                কোনো পেমেন্ট রেকর্ড খুঁজে পাওয়া যায়নি।
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="13" class="px-5 py-12 text-center text-gray-400 font-sans text-sm">
+                                    কোনো পেমেন্ট রেকর্ড খুঁজে পাওয়া যায়নি।
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -157,62 +157,62 @@
             <!-- Mobile View: Box Type Layout -->
             <div class="lg:hidden p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/50 dark:bg-slate-950/20">
                 @forelse ($payments as $pay)
-                <div class="bg-gray-50/80 dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm space-y-3 transition-colors">
-                    <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800/60 pb-2">
-                        <span class="text-xs font-black text-[#034C3C] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-955/40 px-2.5 py-1 rounded-md">{{ $pay['ledger'] }}</span>
-                        <span class="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">৳ {{ number_format($pay['payment']) }}</span>
-                    </div>
-                    
-                    <p class="text-xs text-gray-555 dark:text-slate-400 leading-relaxed font-sans">{{ $pay['desc'] }}</p>
-                    
-                    <div class="grid grid-cols-2 gap-2 text-[11px] bg-gray-100 dark:bg-slate-955 p-2.5 rounded-lg border border-gray-150 dark:border-slate-800/60 font-mono">
-                        <div>
-                            <span class="text-gray-450 block uppercase text-[9px] font-sans font-bold">তারিখ</span>
-                            <span class="text-gray-650 dark:text-slate-400 font-semibold">{{ $pay['date'] ?? '18/07/2026' }}</span>
+                    <div class="bg-gray-50/80 dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm space-y-3 transition-colors">
+                        <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800/60 pb-2">
+                            <span class="text-xs font-black text-[#034C3C] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-955/40 px-2.5 py-1 rounded-md">{{ $pay['ledger'] }}</span>
+                            <span class="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">৳ {{ number_format($pay['payment']) }}</span>
                         </div>
-                        <div>
-                            <span class="text-gray-455 block uppercase text-[9px] font-sans font-bold">মোট বিল</span>
-                            <span class="text-gray-655 dark:text-slate-400 font-bold">৳ {{ number_format($pay['total']) }}</span>
-                        </div>
-                        <div class="mt-1">
-                            <span class="text-gray-455 block uppercase text-[9px] font-sans font-bold">পরিমাণ @ রেট</span>
-                            <span class="text-gray-655 dark:text-slate-400 font-semibold">{{ number_format($pay['qty']) }} @ ৳ {{ number_format($pay['rate']) }}</span>
-                        </div>
-                        <div class="mt-1">
-                            <span class="text-gray-455 block uppercase text-[9px] font-sans font-bold">ক্রয়/রেশি</span>
-                            <span class="text-gray-655 dark:text-slate-400 font-semibold">৳ {{ number_format($pay['purchase_receive']) }}</span>
-                        </div>
-                    </div>
 
-                    <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800/40 text-[11px] font-sans">
-                        <div class="flex items-center gap-2">
-                            @if ($pay['has_doc'])
-                            <a href="{{ $pay['doc_url'] }}" target="_blank" class="inline-flex text-emerald-600 hover:text-emerald-700 font-bold items-center gap-1">
-                                📂 ফাইল দেখুন
-                            </a>
-                            @else
-                            <span class="text-gray-400">কোন ফাইল নেই</span>
-                            @endif
+                        <p class="text-xs text-gray-555 dark:text-slate-400 leading-relaxed font-sans">{{ $pay['desc'] }}</p>
+
+                        <div class="grid grid-cols-2 gap-2 text-[11px] bg-gray-100 dark:bg-slate-955 p-2.5 rounded-lg border border-gray-150 dark:border-slate-800/60 font-mono">
+                            <div>
+                                <span class="text-gray-450 block uppercase text-[9px] font-sans font-bold">তারিখ</span>
+                                <span class="text-gray-650 dark:text-slate-400 font-semibold">{{ $pay['date'] ?? '18/07/2026' }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-455 block uppercase text-[9px] font-sans font-bold">মোট বিল</span>
+                                <span class="text-gray-655 dark:text-slate-400 font-bold">৳ {{ number_format($pay['total']) }}</span>
+                            </div>
+                            <div class="mt-1">
+                                <span class="text-gray-455 block uppercase text-[9px] font-sans font-bold">পরিমাণ @ রেট</span>
+                                <span class="text-gray-655 dark:text-slate-400 font-semibold">{{ number_format($pay['qty']) }} @ ৳ {{ number_format($pay['rate']) }}</span>
+                            </div>
+                            <div class="mt-1">
+                                <span class="text-gray-455 block uppercase text-[9px] font-sans font-bold">ক্রয়/রেশি</span>
+                                <span class="text-gray-655 dark:text-slate-400 font-semibold">৳ {{ number_format($pay['purchase_receive']) }}</span>
+                            </div>
                         </div>
-                        
-                        <div class="flex items-center gap-3">
-                            <button 
-                                wire:click="editPayment({{ $pay['id'] }})"
-                                class="text-indigo-600 hover:text-indigo-850 font-bold flex items-center gap-0.5 cursor-pointer focus:outline-none">
-                                📝 এডিট
-                            </button>
-                            <button 
-                                wire:click="confirmDelete({{ $pay['id'] }})"
-                                class="text-red-500 hover:text-red-755 font-bold flex items-center gap-0.5 cursor-pointer focus:outline-none">
-                                🗑️ মুছুন
-                            </button>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800/40 text-[11px] font-sans">
+                            <div class="flex items-center gap-2">
+                                @if ($pay['has_doc'])
+                                    <a href="{{ $pay['doc_url'] }}" target="_blank" class="inline-flex text-emerald-600 hover:text-emerald-700 font-bold items-center gap-1">
+                                        📂 ফাইল দেখুন
+                                    </a>
+                                @else
+                                    <span class="text-gray-400">কোন ফাইল নেই</span>
+                                @endif
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <button 
+                                    wire:click="editPayment({{ $pay['id'] }})"
+                                    class="text-indigo-600 hover:text-indigo-850 font-bold flex items-center gap-0.5 cursor-pointer focus:outline-none">
+                                    📝 এডিট
+                                </button>
+                                <button 
+                                    wire:click="confirmDelete({{ $pay['id'] }})"
+                                    class="text-red-500 hover:text-red-755 font-bold flex items-center gap-0.5 cursor-pointer focus:outline-none">
+                                    🗑️ মুছুন
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
                 @empty
-                <div class="py-10 text-center text-gray-400 font-sans text-xs col-span-full">
-                    কোনো পেমেন্ট রেকর্ড খুঁজে পাওয়া যায়নি।
-                </div>
+                    <div class="py-10 text-center text-gray-400 font-sans text-xs col-span-full">
+                        কোনো পেমেন্ট রেকর্ড খুঁজে পাওয়া যায়নি।
+                    </div>
                 @endforelse
             </div>
 
@@ -252,12 +252,12 @@
                              x-cloak>
                             <div class="py-1">
                                 @foreach ([10, 20, 30, 50] as $size)
-                                <button type="button" 
-                                        wire:click="$set('perPage', {{ $size }})"
-                                        @click="open = false"
-                                        class="w-full text-left px-3 py-2 text-xs font-bold text-gray-805 dark:text-white hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
-                                    {{ $size }} পেমেন্ট / পেজ
-                                </button>
+                                    <button type="button" 
+                                            wire:click="$set('perPage', {{ $size }})"
+                                            @click="open = false"
+                                            class="w-full text-left px-3 py-2 text-xs font-bold text-gray-805 dark:text-white hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
+                                        {{ $size }} পেমেন্ট / পেজ
+                                    </button>
                                 @endforeach
                             </div>
                         </div>
@@ -269,6 +269,7 @@
     </div>
 
     <!-- Modal 1: "নতুন পেমেন্ট" modal form -->
+    <template x-teleport="body">
     <div 
         x-data="{ show: @entangle('showPaymentModal') }"
         x-show="show" 
@@ -337,12 +338,12 @@
                                  x-cloak>
                                 <div class="py-1">
                                     @foreach (['রেগুলার', 'অগ্রিম', 'বাকি'] as $type)
-                                    <button type="button" 
-                                            wire:click="$set('paymentType', '{{ $type }}')"
-                                            @click="open = false;"
-                                            class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-855 dark:text-white hover:bg-emerald-50 dark:hover:bg-slate-700 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
-                                        {{ $type }}
-                                    </button>
+                                        <button type="button" 
+                                                wire:click="$set('paymentType', '{{ $type }}')"
+                                                @click="open = false;"
+                                                class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-855 dark:text-white hover:bg-emerald-50 dark:hover:bg-slate-700 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
+                                            {{ $type }}
+                                        </button>
                                     @endforeach
                                 </div>
                             </div>
@@ -435,23 +436,23 @@
                 </div>
 
                 @if($editingId)
-                <!-- Payment Date (Shown only in Payment Edit Modal) -->
-                <div>
-                    <label class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">পেমেন্টের তারিখ <span class="text-red-500">*</span></label>
-                    <div class="relative flex items-center">
-                        <input type="text"
-                               data-flatpickr
-                               data-wire-prop="paymentDate"
-                               data-default="{{ $paymentDate }}"
-                               wire:model="paymentDate"
-                               placeholder="তারিখ"
-                               readonly
-                               class="w-full pl-3 pr-8 py-3 text-sm rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans font-semibold cursor-pointer">
-                        <span class="absolute right-3.5 top-3.5 text-emerald-500 pointer-events-none">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        </span>
+                    <!-- Payment Date (Shown only in Payment Edit Modal) -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">পেমেন্টের তারিখ <span class="text-red-500">*</span></label>
+                        <div class="relative flex items-center">
+                            <input type="text"
+                                   data-flatpickr
+                                   data-wire-prop="paymentDate"
+                                   data-default="{{ $paymentDate }}"
+                                   wire:model="paymentDate"
+                                   placeholder="তারিখ"
+                                   readonly
+                                   class="w-full pl-3 pr-8 py-3 text-sm rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans font-semibold cursor-pointer">
+                            <span class="absolute right-3.5 top-3.5 text-emerald-500 pointer-events-none">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            </span>
+                        </div>
                     </div>
-                </div>
                 @endif
 
                 <!-- Footer Buttons -->
@@ -473,8 +474,10 @@
 
         </div>
     </div>
+    </template>
 
     <!-- Modal 2: "খতিয়ান নির্বাচন করুন" sub-modal -->
+    <template x-teleport="body">
     <div 
         x-data="{ show: @entangle('showKhotiyanModal') }"
         x-show="show" 
@@ -526,25 +529,49 @@
                     </button>
                 </div>
 
-                <!-- Ledger Group Boxes: each box shows a group, hover reveals ledger names with rates -->
+                <!-- Professional Group Box Cards Grid -->
                 <div x-data="{ hoverGroup: null, dropRect: null, staying: false }" class="relative">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto pr-1">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[420px] overflow-y-auto pr-1">
                         @forelse($groupedLedgers as $groupName => $groupLedgers)
                         <div 
-                            @mouseenter="hoverGroup = '{{ $groupName }}'; dropRect = $el.getBoundingClientRect();"
-                            @mouseleave="setTimeout(() => { if (hoverGroup === '{{ $groupName }}' && !staying) hoverGroup = null; }, 150)"
+                            @mouseenter="hoverGroup = {{ json_encode($groupName) }}; dropRect = $el.getBoundingClientRect();"
+                            @mouseleave="setTimeout(() => { if (hoverGroup === {{ json_encode($groupName) }} && !staying) hoverGroup = null; }, 150)"
                             class="relative">
+                            
                             <!-- Group Box Card -->
-                            <div class="w-full px-3 pt-2.5 pb-2 bg-slate-50 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 border border-gray-150 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-800 rounded-2xl cursor-pointer transition-all group/box flex flex-col gap-1 min-h-[72px]">
-                                <div class="flex items-start justify-between gap-1">
-                                    <span class="text-[11px] font-extrabold text-gray-700 dark:text-slate-200 group-hover/box:text-emerald-700 dark:group-hover/box:text-emerald-400 font-sans leading-tight line-clamp-2">{{ $groupName }}</span>
-                                    <span class="shrink-0 text-[9px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 rounded-full px-1.5 py-0.5 font-black font-mono leading-none mt-0.5">{{ count($groupLedgers) }}</span>
+                            <div @click="hoverGroup = (hoverGroup === {{ json_encode($groupName) }} ? null : {{ json_encode($groupName) }}); dropRect = $el.getBoundingClientRect();"
+                                 class="w-full px-3.5 pt-3 pb-2.5 bg-slate-50 dark:bg-slate-800/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-gray-200 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-2xl cursor-pointer transition-all group/box flex flex-col justify-between min-h-[78px] shadow-2xs relative">
+                                
+                                <!-- Group Name & Count Badge -->
+                                <div class="flex items-start justify-between gap-1.5 pr-6">
+                                    <span class="text-xs font-extrabold text-gray-800 dark:text-slate-100 group-hover/box:text-emerald-700 dark:group-hover/box:text-emerald-400 font-sans leading-tight line-clamp-2">
+                                        {{ $groupName }}
+                                    </span>
+                                    <span class="shrink-0 text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 rounded-full px-2 py-0.5 font-black font-mono leading-none">
+                                        {{ count($groupLedgers) }}
+                                    </span>
                                 </div>
-                                <div class="flex items-center justify-between mt-auto">
-                                    <span class="text-[9px] text-gray-400 dark:text-slate-500 font-sans italic">{{ count($groupLedgers) > 0 ? 'hover করুন' : 'খালি' }}</span>
-                                    <button type="button" wire:click="openNewKhotiyanModal('{{ $groupName }}')"
+
+                                <!-- Right Side Trash/Delete Icon -->
+                                <button type="button" 
+                                        wire:click.stop="confirmDeleteGroup({{ json_encode($groupName) }})"
+                                        @click.stop
+                                        title="গ্রুপ মুছুন"
+                                        class="absolute top-2.5 right-2 w-6 h-6 flex items-center justify-center rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer z-10">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Helper label & Add button -->
+                                <div class="flex items-center justify-between mt-2 pt-1 border-t border-gray-150 dark:border-slate-700/50">
+                                    <span class="text-[9px] text-gray-400 dark:text-slate-500 font-sans italic">
+                                        {{ count($groupLedgers) > 0 ? 'hover/ক্লিক করুন' : 'খালি' }}
+                                    </span>
+                                    <button type="button" 
+                                            wire:click.stop="openNewKhotiyanModal({{ json_encode($groupName) }})"
                                             @click.stop
-                                            class="text-[9px] bg-emerald-600 hover:bg-emerald-700 text-white px-1.5 py-0.5 rounded font-black font-sans cursor-pointer leading-none transition-colors">
+                                            class="text-[9px] bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-0.5 rounded-md font-black font-sans cursor-pointer leading-none transition-colors">
                                         + নতুন
                                     </button>
                                 </div>
@@ -555,46 +582,50 @@
                         @endforelse
                     </div>
 
-                    <!-- Hover Dropdown: shows ledger names with rates for the hovered group -->
-                    @teleport('body')
+                    <!-- Hover Dropdown: shows all khotiyans under this group with rates -->
+                    <template x-teleport="body">
                     <div 
                         x-show="hoverGroup !== null"
                         @mouseenter="staying = true"
                         @mouseleave="staying = false; hoverGroup = null"
-                        class="fixed z-[9999999] w-64 bg-[#0f1c2e] dark:bg-slate-900 border border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden font-sans"
+                        class="fixed z-[9999999] w-64 bg-[#0f1c2e] dark:bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden font-sans"
                         :style="dropRect ? ('left: ' + Math.max(8, Math.min(dropRect.left + dropRect.width/2 - 128, window.innerWidth - 272)) + 'px; top: ' + (dropRect.bottom + 6) + 'px;') : ''"
                         x-cloak>
-                        <!-- Dropdown header -->
-                        <div class="flex items-center justify-between px-3 py-2 bg-emerald-700/20 border-b border-slate-700/60">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between px-3.5 py-2 bg-emerald-700/20 border-b border-slate-700/60">
                             <span class="text-[10px] font-black text-emerald-400 uppercase tracking-wider" x-text="hoverGroup"></span>
                             <span class="text-[9px] text-slate-400 font-sans">খতিয়ান নির্বাচন করুন</span>
                         </div>
                         @foreach($groupedLedgers as $gName => $gLedgers)
-                        <div x-show="hoverGroup === '{{ $gName }}'" class="max-h-56 overflow-y-auto py-1">
+                        <div x-show="hoverGroup === {{ json_encode($gName) }}" class="max-h-56 overflow-y-auto py-1">
                             @forelse($gLedgers as $gLedg)
                             <button type="button"
-                                    wire:click="selectLedger('{{ $gLedg['name'] }}')"
-                                    @click="hoverGroup = null; staying = false"
-                                    class="w-full flex items-center justify-between px-3 py-2 hover:bg-emerald-700/20 transition-colors text-left cursor-pointer group/item">
-                                <span class="text-xs font-semibold text-slate-200 group-hover/item:text-emerald-300 font-sans truncate">{{ $gLedg['name'] }}</span>
-                                @if(!empty($gLedg['rate']))
-                                <span class="shrink-0 text-[10px] text-emerald-400 font-mono font-black ml-2">৳{{ number_format($gLedg['rate'], 2) }}</span>
-                                @endif
+                                    wire:click="selectLedger({{ json_encode($gLedg['name']) }})"
+                                    @click="hoverGroup = null; staying = false; showKhotiyanModal = false"
+                                    class="w-full flex items-center justify-between px-3.5 py-2 hover:bg-emerald-700/20 transition-colors text-left cursor-pointer group/item">
+                                <span class="text-xs font-semibold text-slate-200 group-hover/item:text-emerald-300 font-sans truncate">
+                                    {{ $gLedg['name'] }}
+                                </span>
+                                <span class="shrink-0 text-[10px] text-emerald-400 font-mono font-black ml-2">
+                                    {{ !empty($gLedg['rate']) ? '৳ ' . number_format($gLedg['rate'], 2) : '—' }}
+                                </span>
                             </button>
                             @empty
-                            <div class="px-3 py-3 text-center text-[10px] text-slate-500 italic">খালি</div>
+                            <div class="px-3 py-3 text-center text-[10px] text-slate-500 italic">কোনো খতিয়ান যুক্ত নেই</div>
                             @endforelse
                         </div>
                         @endforeach
                     </div>
-                    @endteleport
+                    </template>
                 </div>
 
             </div>
         </div>
     </div>
+    </template>
 
     <!-- Modal 4: "নতুন খতিয়ান / সম্পাদনা খতিয়ান" modal form -->
+    <template x-teleport="body">
     <div 
         x-data="{ show: @entangle('showNewKhotiyanModal') }"
         x-show="show" 
@@ -653,7 +684,7 @@
                         </svg>
                     </button>
                     
-                    @teleport('body')
+                    <template x-teleport="body">
                         <div x-show="openGroup" 
                              @click.outside="openGroup = false"
                              class="fixed z-[99999999] bg-white dark:bg-slate-900 border border-gray-205 dark:border-slate-800 shadow-2xl p-2.5"
@@ -671,25 +702,23 @@
                             </div>
 
                             <!-- Options List -->
-                            <div class="space-y-0.5 max-h-36 overflow-y-auto pr-1">
+                            <div class="space-y-0.5 max-h-60 overflow-y-auto pr-1">
                                 @foreach($ledgerGroups as $group)
-                                <div class="flex items-center justify-between px-3 py-1.5 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg text-xs transition-colors">
-                                    <button type="button" @click="$wire.set('newLedgerGroup', '{{ $group }}'); openGroup = false"
-                                            class="flex-grow text-left font-black text-gray-855 dark:text-white font-sans">
-                                        {{ $group }}
-                                    </button>
-                                    <button type="button" @click="$wire.deleteGroup('{{ $group }}')"
-                                            class="text-red-500 hover:text-red-700 p-0.5 cursor-pointer leading-none">
-                                        ✕
-                                    </button>
-                                </div>
+                                    <div class="flex items-center justify-between px-3 py-2 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg text-xs transition-colors">
+                                        <button type="button" @click="$wire.set('newLedgerGroup', {{ json_encode($group) }}); openGroup = false"
+                                                class="flex-grow text-left font-black text-gray-855 dark:text-white font-sans">
+                                            {{ $group }}
+                                        </button>
+                                        <button type="button" @click="$wire.deleteGroup({{ json_encode($group) }})"
+                                                class="text-red-500 hover:text-red-700 p-0.5 cursor-pointer leading-none">
+                                            ✕
+                                        </button>
+                                    </div>
                                 @endforeach
                             </div>
                         </div>
-                    @endteleport
+                    </template>
                 </div>
-
-
 
                 <!-- Action buttons -->
                 <div class="flex items-center gap-3.5 pt-4 border-t border-gray-100 dark:border-slate-800/60">
@@ -710,9 +739,10 @@
 
         </div>
     </div>
+    </template>
 
     <!-- Modal 3: "গ্রুপ অনুযায়ী পেমেন্ট রিপোর্ট" -->
-    @teleport('body')
+    <template x-teleport="body">
         <div x-data="{ open: @entangle('showReportModal') }"
              x-show="open"
              @click.self="open = false"
@@ -805,10 +835,10 @@
                 </div>
             </div>
         </div>
-    @endteleport
+    </template>
 
     <!-- Delete Confirmation Modal -->
-    @teleport('body')
+    <template x-teleport="body">
         <div x-data="{ open: @entangle('confirmingDeleteId') }"
              x-show="open"
              x-transition:enter="transition ease-out duration-300"
@@ -845,6 +875,37 @@
                 </div>
             </div>
         </div>
-    @endteleport
+    </template>
+
+    <!-- Group Delete Confirmation Modal (হ্যাঁ / না) -->
+    @if($showDeleteConfirmModal)
+    <template x-teleport="body">
+    <div class="fixed inset-0 z-[99999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs font-sans">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xs w-full p-6 border border-gray-100 dark:border-slate-800 shadow-2xl text-center space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-extrabold text-gray-800 dark:text-white">গ্রুপ মুছে ফেলার নিশ্চিতকরণ</h3>
+                <p class="text-xs text-gray-500 dark:text-slate-400 mt-1 font-medium">
+                    আপনি কি নিশ্চিতভাবে <span class="font-bold text-rose-600 dark:text-rose-400">'{{ $groupToDelete }}'</span> গ্রুপটি মুছে ফেলতে চান?
+                </p>
+            </div>
+            <div class="flex items-center justify-center gap-3 pt-1">
+                <button type="button" wire:click="cancelDeleteGroup"
+                        class="flex-1 py-2 px-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer">
+                    না (No)
+                </button>
+                <button type="button" wire:click="deleteGroupConfirmed"
+                        class="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl transition-all shadow-md cursor-pointer">
+                    হ্যাঁ (Yes)
+                </button>
+            </div>
+        </div>
+    </div>
+    </template>
+    @endif
 
 </div>

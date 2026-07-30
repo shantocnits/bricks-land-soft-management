@@ -124,20 +124,71 @@
         </div>
 
         <!-- Pagination Footer -->
-        <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900 flex items-center justify-between text-xs">
+        <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
             <div class="text-gray-500 dark:text-gray-400 font-sans font-semibold">
-                মোট শ্রেণি {{ count($categories) }} টি
+                মোট শ্রেণি {{ $totalCount }} টি
             </div>
+
+            <!-- Page Controls -->
             <div class="flex items-center gap-1 font-sans">
-                <button type="button" class="w-6 h-6 flex items-center justify-center rounded-lg border border-gray-200 dark:border-slate-800 text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer">&lt;</button>
-                <button type="button" class="w-6 h-6 flex items-center justify-center rounded-lg bg-emerald-600 text-white font-bold cursor-pointer shadow-sm">১</button>
-                <button type="button" class="w-6 h-6 flex items-center justify-center rounded-lg border border-gray-200 dark:border-slate-800 text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer">&gt;</button>
+                <button type="button" 
+                        wire:click="setPage({{ $currentPage - 1 }})"
+                        @if($currentPage <= 1) disabled @endif
+                        class="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all">
+                    &lt;
+                </button>
+                
+                @for($p = 1; $p <= $totalPages; $p++)
+                    <button type="button" 
+                            wire:click="setPage({{ $p }})"
+                            class="w-7 h-7 flex items-center justify-center rounded-lg font-bold text-xs transition-all cursor-pointer {{ $currentPage == $p ? 'bg-emerald-600 text-white shadow-sm' : 'border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800' }}">
+                        {{ $p }}
+                    </button>
+                @endfor
+
+                <button type="button" 
+                        wire:click="setPage({{ $currentPage + 1 }})"
+                        @if($currentPage >= $totalPages) disabled @endif
+                        class="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all">
+                    &gt;
+                </button>
             </div>
-            <div class="flex items-center gap-1.5 border border-gray-200 dark:border-slate-800 rounded-xl px-3 py-1 bg-white dark:bg-slate-900 shadow-sm text-gray-500 dark:text-gray-400 font-sans font-semibold">
-                <span>{{ count($categories) }} শ্রেণি / পেজ</span>
-                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                </svg>
+
+            <!-- Per Page Dropdown (Project Root Dropdown Design) -->
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" type="button" 
+                        class="flex items-center justify-between gap-2 px-3.5 py-1.5 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 font-bold rounded-xl text-xs border border-gray-200 dark:border-slate-800 focus:outline-none transition-all shadow-xs cursor-pointer">
+                    <span>
+                        @if($perPage === 'all')
+                            সব (All)
+                        @else
+                            {{ $perPage }} শ্রেণি / পেজ
+                        @endif
+                    </span>
+                    <svg class="w-3.5 h-3.5 transition-transform duration-200 text-gray-400" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                
+                <div x-show="open" 
+                     @click.outside="open = false"
+                     class="absolute bottom-full mb-1.5 right-0 z-[999] w-40 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden focus:outline-none"
+                     x-cloak>
+                    <div class="py-1">
+                        @foreach ([10, 20, 30, 50, 'all'] as $size)
+                        <button type="button" 
+                                wire:click="setPerPage('{{ $size }}')"
+                                @click="open = false"
+                                class="w-full text-left px-3 py-2 text-xs font-bold text-gray-800 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans {{ $perPage == $size ? 'bg-emerald-50/60 dark:bg-slate-800/80 text-emerald-700 dark:text-emerald-400' : '' }}">
+                            @if($size === 'all')
+                                সব (All)
+                            @else
+                                {{ $size }} শ্রেণি / পেজ
+                            @endif
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
             </div>
         </div>
     </div>

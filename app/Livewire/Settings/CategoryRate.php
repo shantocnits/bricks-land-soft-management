@@ -209,6 +209,20 @@ class CategoryRate extends Component
         $this->resetForm();
     }
 
+    public $perPage = 10;
+    public $page = 1;
+
+    public function setPerPage($size)
+    {
+        $this->perPage = $size;
+        $this->page = 1;
+    }
+
+    public function setPage($page)
+    {
+        $this->page = max(1, (int)$page);
+    }
+
     public function resetForm()
     {
         $this->reset(['name', 'rate', 'editingCategoryId']);
@@ -223,8 +237,28 @@ class CategoryRate extends Component
                   ->orWhere('type', 'like', '%' . $this->search . '%');
         }
 
+        $allCategories = $query->get();
+        $totalCount = $allCategories->count();
+
+        if ($this->perPage === 'all' || $this->perPage == 0) {
+            $categories = $allCategories;
+            $totalPages = 1;
+            $this->page = 1;
+        } else {
+            $perPageInt = (int)$this->perPage > 0 ? (int)$this->perPage : 10;
+            $totalPages = max(1, (int)ceil($totalCount / $perPageInt));
+            if ($this->page > $totalPages) {
+                $this->page = $totalPages;
+            }
+            $offset = ($this->page - 1) * $perPageInt;
+            $categories = $allCategories->slice($offset, $perPageInt);
+        }
+
         return view('livewire.settings.category-rate', [
-            'categories' => $query->get()
+            'categories' => $categories,
+            'totalCount' => $totalCount,
+            'totalPages' => $totalPages,
+            'currentPage' => $this->page,
         ]);
     }
 }
