@@ -37,6 +37,7 @@ class PaymentKhata extends Component
     public string $paymentDate = '';
     public $quantity = '';
     public $rate = '';
+    public $divisor = 1;
     public $totalBill = '';
     public $advance = '';
     public $deduction = '';
@@ -60,6 +61,8 @@ class PaymentKhata extends Component
     public string $newLedgerName = '';
     public string $newLedgerGroup = 'অন্যান্য';
     public string $newLedgerType = '';
+    public $newLedgerRate = '';
+    public $newLedgerDivisor = 1;
     public ?string $editingLedgerOldName = null;
     public array $ledgerGroupsMap = [];
 
@@ -167,12 +170,55 @@ class PaymentKhata extends Component
         $this->calculateTotalBill();
     }
 
+    public function updatedTotalBill()
+    {
+        $this->recalculatePaymentAndDiff(true);
+    }
+
+    public function updatedDeduction()
+    {
+        $this->recalculatePaymentAndDiff(true);
+    }
+
+    public function updatedPaymentAmount()
+    {
+        $this->recalculatePaymentAndDiff(false);
+    }
+
     public function calculateTotalBill()
     {
         $q = floatval($this->quantity ?: 0);
         $r = floatval($this->rate ?: 0);
-        $calc = $q * $r;
-        $this->totalBill = $calc > 0 ? $calc : '';
+        $d = floatval($this->divisor ?: 1);
+        if ($d <= 0) {
+            $d = 1;
+        }
+
+        if ($q > 0 || $r > 0) {
+            $calc = ($q / $d) * $r;
+            $this->totalBill = $calc > 0 ? $calc : '';
+        }
+
+        $this->recalculatePaymentAndDiff(true);
+    }
+
+    public function recalculatePaymentAndDiff($autoPayment = true)
+    {
+        $total = floatval($this->totalBill ?: 0);
+        $ded = floatval($this->deduction ?: 0);
+
+        if ($autoPayment) {
+            $pay = $total - $ded;
+            $this->paymentAmount = $pay > 0 ? $pay : ($total > 0 ? 0 : '');
+        }
+
+        $pay = floatval($this->paymentAmount ?: 0);
+        $diff = ($total - $ded) - $pay;
+        if ($ded > 0 && abs($diff) < 0.001) {
+            $this->purchaseReceive = $ded;
+        } else {
+            $this->purchaseReceive = $diff != 0 ? abs($diff) : ($ded > 0 ? $ded : '');
+        }
     }
 
     public function selectLedger(string $ledger)
@@ -181,8 +227,13 @@ class PaymentKhata extends Component
         $this->showKhotiyanModal = false;
 
         $dbLedger = Ledger::where('name', $ledger)->first();
-        if ($dbLedger && $dbLedger->rate) {
-            $this->rate = (float) $dbLedger->rate;
+        if ($dbLedger) {
+            $this->rate = ($dbLedger->rate !== null && $dbLedger->rate !== '' && floatval($dbLedger->rate) > 0) ? (float) $dbLedger->rate : '';
+            $this->divisor = ($dbLedger->divisor !== null && $dbLedger->divisor !== '' && floatval($dbLedger->divisor) > 0) ? floatval($dbLedger->divisor) : 1;
+            $this->calculateTotalBill();
+        } else {
+            $this->rate = '';
+            $this->divisor = 1;
             $this->calculateTotalBill();
         }
     }
@@ -264,6 +315,8 @@ class PaymentKhata extends Component
         $this->newLedgerName = '';
         $this->newLedgerGroup = $preselectedGroup ?: '';
         $this->newLedgerSerial = sprintf('%02d', Ledger::count() + 1);
+        $this->newLedgerRate = '';
+        $this->newLedgerDivisor = 1;
         $this->showNewKhotiyanModal = true;
     }
 
@@ -281,6 +334,9 @@ class PaymentKhata extends Component
             $this->dispatch('show-toast', message: 'খতিয়ানের নাম আবশ্যক।', type: 'danger');
             return;
         }
+
+        $rateVal = ($this->newLedgerRate !== '' && $this->newLedgerRate !== null) ? floatval($this->newLedgerRate) : null;
+        $divisorVal = ($this->newLedgerDivisor !== '' && $this->newLedgerDivisor !== null) ? floatval($this->newLedgerDivisor) : null;
 
         $groupsJson = Setting::get('ledger_groups');
         $existingGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
@@ -308,6 +364,8 @@ class PaymentKhata extends Component
                 'name' => $name,
                 'group' => $group,
                 'serial' => intval($this->newLedgerSerial),
+                'rate' => $rateVal,
+                'divisor' => $divisorVal,
             ]);
 
             Payment::where('ledger', $oldName)->update(['ledger' => $name]);
@@ -315,6 +373,9 @@ class PaymentKhata extends Component
 
             if ($this->selectedLedger === $oldName) {
                 $this->selectedLedger = $name;
+                $this->rate = $rateVal !== null ? $rateVal : '';
+                $this->divisor = ($divisorVal !== null && $divisorVal > 0) ? $divisorVal : 1;
+                $this->calculateTotalBill();
             }
             $this->showNewKhotiyanModal = false;
             $this->dispatch('ledger-added');
@@ -327,10 +388,14 @@ class PaymentKhata extends Component
                 'serial' => $newSerial,
                 'name' => $name,
                 'group' => $group,
-                'rate' => 0.00,
-                'divisor' => 1,
+                'rate' => $rateVal,
+                'divisor' => $divisorVal,
             ]);
             $this->selectedLedger = $name;
+            $this->rate = $rateVal !== null ? $rateVal : '';
+            $this->divisor = ($divisorVal !== null && $divisorVal > 0) ? $divisorVal : 1;
+            $this->calculateTotalBill();
+
             $this->dispatch('ledger-added');
             $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে যোগ করা হয়েছে।', type: 'success');
 
@@ -340,6 +405,8 @@ class PaymentKhata extends Component
 
         $this->newLedgerName = '';
         $this->newLedgerGroup = '';
+        $this->newLedgerRate = '';
+        $this->newLedgerDivisor = 1;
         $this->editingLedgerOldName = null;
     }
 
@@ -543,7 +610,19 @@ class PaymentKhata extends Component
     {
         $payments = $this->paymentsList;
         if ($this->reportTab === 'date') {
-            $payments = array_slice($payments, 0, 3);
+            $todayFormatted = now()->format('d/m/Y');
+            $todayDash = now()->format('Y-m-d');
+            $payments = array_values(array_filter($payments, function ($pay) use ($todayFormatted, $todayDash) {
+                if (!empty($pay['date'])) {
+                    if ($pay['date'] === $todayFormatted || $pay['date'] === $todayDash) {
+                        return true;
+                    }
+                }
+                if (!empty($pay['created_at'])) {
+                    return date('Y-m-d', strtotime($pay['created_at'])) === $todayDash;
+                }
+                return false;
+            }));
         }
 
         $byLedger = [];

@@ -123,14 +123,14 @@
                                             </svg>
                                         </button>
 
-                                        <button 
-                                            wire:click="$set('showKhotiyanModal', true)"
-                                            class="inline-flex text-emerald-600 hover:text-emerald-800 hover:scale-110 transition-all cursor-pointer focus:outline-none"
-                                            title="খতিয়ান পরিবর্তন">
+                                        <a href="/khotian?selectedLedger={{ urlencode($pay['ledger']) }}"
+                                           wire:navigate
+                                           class="inline-flex text-emerald-600 hover:text-emerald-800 hover:scale-110 transition-all cursor-pointer focus:outline-none"
+                                           title="খতিয়ান">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                                             </svg>
-                                        </button>
+                                        </a>
 
                                         <button 
                                             wire:click="confirmDelete({{ $pay['id'] }})"
@@ -369,17 +369,17 @@
                     <!-- Qty -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পরিমাণ</label>
-                        <input type="number" wire:model.live="quantity" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
+                        <input type="number" wire:model.live.debounce.300ms="quantity" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                     </div>
                     <!-- Rate -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">রেট</label>
-                        <input type="number" wire:model.live="rate" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
+                        <input type="number" wire:model.live.debounce.300ms="rate" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                     </div>
                     <!-- Total Bill -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">মোট বিল</label>
-                        <input type="text" readonly wire:model="totalBill" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-105 dark:bg-slate-955 text-[#034C3C] dark:text-emerald-455 text-xs font-black font-mono focus:outline-none">
+                        <input type="number" step="0.01" wire:model.live.debounce.300ms="totalBill" class="w-full px-3 py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-700/60 bg-emerald-50/40 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs font-black font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" placeholder="0">
                     </div>
                 </div>
 
@@ -387,19 +387,19 @@
                     <!-- Deduction -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">কর্তন</label>
-                        <input type="number" wire:model="deduction" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
+                        <input type="number" wire:model.live.debounce.300ms="deduction" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                     </div>
                     <!-- Payment -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট</label>
-                        <input type="number" wire:model="paymentAmount" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
+                        <input type="number" wire:model.live.debounce.300ms="paymentAmount" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                         @error('paymentAmount')
                             <p class="text-red-500 text-xs mt-1.5 font-semibold font-sans">{{ $message }}</p>
                         @enderror
                     </div>
-                    <!-- Purchase/Receive -->
+                    <!-- Purchase/Receive -> Payment Kom/Beshi -->
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট ক্রয়/রেশি</label>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট কম/বেশি</label>
                         <input type="number" wire:model="purchaseReceive" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                     </div>
                 </div>
@@ -418,8 +418,8 @@
                                     <span class="w-12 h-12 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-2xl">📄</span>
                                 @endif
                                 <div class="text-left overflow-hidden">
-                                    <p class="text-xs font-bold text-gray-855 dark:text-slate-205 truncate font-sans">{{ $documentFile->getClientOriginalName() }}</p>
-                                    <p class="text-[10px] text-gray-400 font-mono">{{ round($documentFile->getSize() / 1024, 1) }} KB</p>
+                                    <p class="text-xs font-bold text-gray-800 dark:text-white truncate font-sans">{{ $documentFile->getClientOriginalName() }}</p>
+                                    <p class="text-[10px] text-gray-400 font-sans font-medium">{{ round($documentFile->getSize() / 1024, 1) }} KB</p>
                                 </div>
                                 <button type="button" @click.stop="$wire.set('documentFile', null)" class="text-red-500 hover:text-red-755 p-1 cursor-pointer focus:outline-none text-xs font-black">
                                     ✕
@@ -691,6 +691,26 @@
                             </div>
                         </div>
                     </template>
+                </div>
+
+                <!-- Rate & Divisor side by side -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-slate-350 mb-1.5 font-sans">খতিয়ানের রেট</label>
+                        <input type="number" step="0.01" wire:model="newLedgerRate" placeholder="0"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-sm font-semibold font-sans focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-slate-350 mb-1.5 font-sans">পরিমাণ ভাজক (যদি থাকে)</label>
+                        <input type="number" min="1" wire:model="newLedgerDivisor" placeholder="1"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-sm font-semibold font-sans focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20">
+                    </div>
+                </div>
+
+                <!-- Notes section inside New Khotiyan Modal -->
+                <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-600 dark:text-amber-400 font-medium font-sans leading-relaxed space-y-1.5">
+                    <p><strong>নোট ১:</strong> কত পরিমাণ কাজের জন্য এই রেট দেওয়া হবে, তা 'পরিমাণ ভাজক' ঘরে উল্লেখ করুন। উদাহরণস্বরূপ: প্রোডাকশন রেট যদি ৮০০ টাকা হয় এবং তা ১০০০ ইট কাটার জন্য হয়, তবে পরিমাণ ভাজক হবে ১০০০।</p>
+                    <p><strong>নোট ২:</strong> যদি কাজ পিস (Piece) বা একক অনুযায়ী হয়, তবে পরিমাণ ভাজকের ঘরে ১ দিন। এক্ষেত্রে সিস্টেম স্বয়ংক্রিয়ভাবে প্রতি পিসের রেট অনুযায়ী মোট বিল হিসাব করবে।</p>
                 </div>
 
                 <!-- Action buttons -->

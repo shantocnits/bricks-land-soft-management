@@ -36,7 +36,7 @@ class LedgerAdd extends Component
             'name' => 'required|string|max:255',
             'group' => 'required|string|max:255',
             'rate' => 'nullable|numeric|min:0',
-            'divisor' => 'required|integer|min:1',
+            'divisor' => 'nullable|numeric|min:1',
         ];
     }
 
@@ -44,9 +44,6 @@ class LedgerAdd extends Component
         'name.required' => 'খতিয়ানের নাম আবশ্যক।',
         'group.required' => 'গ্রুপ আবশ্যক।',
         'group.in' => 'গ্রুপ নির্বাচন সঠিক নয়।',
-        'divisor.required' => 'পরিমাণ ভাজক আবশ্যক।',
-        'divisor.integer' => 'পরিমাণ ভাজক অবশ্যই একটি পূর্ণসংখ্যা হতে হবে।',
-        'divisor.min' => 'পরিমাণ ভাজক কমপক্ষে ১ হতে হবে।',
     ];
 
     public $perPage = 10;

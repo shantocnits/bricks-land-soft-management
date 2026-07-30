@@ -234,18 +234,24 @@ if (!function_exists('toKhotianDateTimeParts')) {
                                 <td class="py-3 px-4 text-right font-mono font-semibold text-gray-500 border-r border-gray-150 dark:border-slate-800">
                                     {{ $pay->purchase_receive > 0 ? '৳' . toBanglaNum(number_format($pay->purchase_receive)) : '৳০' }}
                                 </td>
-                                <td class="py-3 px-4 text-center">
-                                    @if($pay->has_doc && $pay->doc_url)
-                                        <a href="{{ asset('storage/' . $pay->doc_url) }}" target="_blank" title="সংযুক্ত ডকুমেন্ট দেখুন"
-                                           class="inline-flex items-center justify-center p-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/60 hover:bg-orange-100 transition-colors focus:outline-none">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                                            </svg>
-                                        </a>
-                                    @else
-                                        <span class="text-gray-300">-</span>
-                                    @endif
-                                </td>
+                                 <td class="py-3 px-4 text-center">
+                                     @if($pay->has_doc && $pay->doc_url)
+                                         @php
+                                             $dUrl = $pay->doc_url;
+                                             if (!str_starts_with($dUrl, 'http://') && !str_starts_with($dUrl, 'https://')) {
+                                                 $dUrl = asset($dUrl);
+                                             }
+                                         @endphp
+                                         <a href="{{ $dUrl }}" target="_blank" title="সংযুক্ত ডকুমেন্ট দেখুন"
+                                            class="inline-flex items-center justify-center p-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/60 hover:bg-orange-100 transition-colors focus:outline-none">
+                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                             </svg>
+                                         </a>
+                                     @else
+                                         <span class="text-gray-300">-</span>
+                                     @endif
+                                 </td>
                             </tr>
                         @empty
                             <tr>
