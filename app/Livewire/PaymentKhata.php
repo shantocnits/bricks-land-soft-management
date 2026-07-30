@@ -239,10 +239,23 @@ class PaymentKhata extends Component
     {
         $dbLedgers = Ledger::all();
         $groupsJson = Setting::get('ledger_groups');
-        $allGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
+        $defaultGroups = ['কাস্টমার', 'সরবরাহকারী', 'লেবার', 'মাটি', 'স্টাফ', 'খরচ', 'আয়', 'অন্যান্য'];
+        $allGroups = $groupsJson ? (json_decode($groupsJson, true) ?: $defaultGroups) : $defaultGroups;
         $dbGroups = $dbLedgers->pluck('group')->filter()->unique()->toArray();
-        $dbNames = $dbLedgers->pluck('name')->filter(fn($n) => $n !== '' && $n !== '—')->unique()->toArray();
-        $this->ledgerGroups = array_values(array_unique(array_merge($allGroups, $dbGroups, $dbNames)));
+        
+        $merged = array_merge($allGroups, $dbGroups, $defaultGroups);
+        $seen = [];
+        $unique = [];
+        foreach ($merged as $g) {
+            $trimmed = trim($g);
+            if ($trimmed === '') continue;
+            $lower = mb_strtolower($trimmed, 'UTF-8');
+            if (!isset($seen[$lower])) {
+                $seen[$lower] = true;
+                $unique[] = $trimmed;
+            }
+        }
+        $this->ledgerGroups = array_values($unique);
 
         $this->editingLedgerOldName = null;
         $this->newLedgerName = '';
@@ -253,52 +266,78 @@ class PaymentKhata extends Component
 
     public function addLedger()
     {
-        $this->validate([
-            'newLedgerName' => 'required'
-        ], [
-            'newLedgerName.required' => 'খতিয়ানের নাম লিখুন'
-        ]);
-
+        $group = trim($this->newLedgerGroup);
         $name = trim($this->newLedgerName);
-        $group = $this->newLedgerGroup;
+
+        if ($group === '') {
+            $this->dispatch('show-toast', message: 'খতিয়ানের গ্রুপ আবশ্যক।', type: 'danger');
+            return;
+        }
+
+        if ($name === '') {
+            $this->dispatch('show-toast', message: 'খতিয়ানের নাম আবশ্যক।', type: 'danger');
+            return;
+        }
 
         $groupsJson = Setting::get('ledger_groups');
         $existingGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
 
-        if (!in_array($group, $existingGroups)) {
-            array_unshift($existingGroups, $group);
-            Setting::set('ledger_groups', json_encode($existingGroups));
-            $this->ledgerGroups = $existingGroups;
+        // Check if group exists case-insensitively
+        $matchedExistingGroup = null;
+        foreach ($existingGroups as $eg) {
+            if (mb_strtolower(trim($eg), 'UTF-8') === mb_strtolower($group, 'UTF-8')) {
+                $matchedExistingGroup = $eg;
+                break;
+            }
         }
 
+        if ($matchedExistingGroup) {
+            $group = $matchedExistingGroup;
+        } else {
+            array_unshift($existingGroups, $group);
+            Setting::set('ledger_groups', json_encode($existingGroups));
+        }
+        $this->ledgerGroups = $existingGroups;
+
         if ($this->editingLedgerOldName) {
-            Ledger::where('name', $this->editingLedgerOldName)->update([
+            $oldName = $this->editingLedgerOldName;
+            Ledger::where('name', $oldName)->update([
                 'name' => $name,
                 'group' => $group,
                 'serial' => intval($this->newLedgerSerial),
             ]);
 
-            Payment::where('ledger', $this->editingLedgerOldName)->update(['ledger' => $name]);
+            Payment::where('ledger', $oldName)->update(['ledger' => $name]);
             $this->paymentsList = Payment::all()->toArray();
 
-            if ($this->selectedLedger === $this->editingLedgerOldName) {
+            if ($this->selectedLedger === $oldName) {
                 $this->selectedLedger = $name;
             }
             $this->showNewKhotiyanModal = false;
+            $this->dispatch('ledger-added');
             $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে আপডেট করা হয়েছে।', type: 'success');
         } else {
+            $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
+            $newSerial = $this->newLedgerSerial ? intval($this->newLedgerSerial) : ($maxSerial + 1);
+
             Ledger::create([
-                'serial' => intval($this->newLedgerSerial),
+                'serial' => $newSerial,
                 'name' => $name,
                 'group' => $group,
                 'rate' => 0.00,
                 'divisor' => 1,
             ]);
             $this->selectedLedger = $name;
+            $this->dispatch('ledger-added');
+            $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে যোগ করা হয়েছে।', type: 'success');
+
             $this->showNewKhotiyanModal = false;
             $this->showKhotiyanModal = false;
-            $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে যোগ করা হয়েছে।', type: 'success');
         }
+
+        $this->newLedgerName = '';
+        $this->newLedgerGroup = '';
+        $this->editingLedgerOldName = null;
     }
 
     public function deleteLedger($id)
@@ -581,6 +620,7 @@ class PaymentKhata extends Component
                 'serial' => $ledger->serial,
             ];
         }
+
 
         if (!empty($this->khotiyanSearch)) {
             $term = strtolower(trim($this->khotiyanSearch));

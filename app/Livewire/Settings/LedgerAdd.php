@@ -5,6 +5,7 @@ namespace App\Livewire\Settings;
 use Livewire\Component;
 use App\Models\Ledger;
 use App\Models\Setting;
+use App\Models\Payment;
 
 class LedgerAdd extends Component
 {
@@ -20,6 +21,10 @@ class LedgerAdd extends Component
     public $editingLedgerId = null;
     public $confirmingDeleteId = null;
 
+    // Group Manager Modal
+    public $showGroupManager = false;
+    public $confirmingDeleteGroup = null;
+
     // Dynamic dropdown options management
     public $groupOptions = [];
     public $newGroupInput = '';
@@ -28,7 +33,7 @@ class LedgerAdd extends Component
     {
         return [
             'serial' => 'nullable',
-            'name' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
             'group' => 'required|string|max:255',
             'rate' => 'nullable|numeric|min:0',
             'divisor' => 'required|integer|min:1',
@@ -36,6 +41,7 @@ class LedgerAdd extends Component
     }
 
     protected $messages = [
+        'name.required' => 'খতিয়ানের নাম আবশ্যক।',
         'group.required' => 'গ্রুপ আবশ্যক।',
         'group.in' => 'গ্রুপ নির্বাচন সঠিক নয়।',
         'divisor.required' => 'পরিমাণ ভাজক আবশ্যক।',
@@ -71,16 +77,21 @@ class LedgerAdd extends Component
             ->values()
             ->toArray();
 
-        $dbNames = Ledger::whereNotNull('name')
-            ->pluck('name')
-            ->map(fn($n) => trim($n))
-            ->filter(fn($n) => $n !== '' && $n !== '—')
-            ->unique()
-            ->values()
-            ->toArray();
+        $merged = array_merge($savedGroups, $dbGroups, $defaultGroups);
+        
+        $seen = [];
+        $unique = [];
+        foreach ($merged as $g) {
+            $trimmed = trim($g);
+            if ($trimmed === '') continue;
+            $lower = mb_strtolower($trimmed, 'UTF-8');
+            if (!isset($seen[$lower])) {
+                $seen[$lower] = true;
+                $unique[] = $trimmed;
+            }
+        }
 
-        $merged = array_values(array_unique(array_merge($savedGroups, $dbGroups, $dbNames, $defaultGroups)));
-        $this->groupOptions = array_values(array_filter($merged, fn($g) => trim($g) !== ''));
+        $this->groupOptions = array_values($unique);
     }
 
     public function mount()
@@ -144,12 +155,29 @@ class LedgerAdd extends Component
     {
         $newGroup = trim($name !== null ? $name : $this->newGroupInput);
         if ($newGroup !== '') {
+            $this->syncGroupOptions();
+
+            // Check case-insensitively if group exists
+            $existingGroup = null;
+            foreach ($this->groupOptions as $opt) {
+                if (mb_strtolower(trim($opt), 'UTF-8') === mb_strtolower($newGroup, 'UTF-8')) {
+                    $existingGroup = $opt;
+                    break;
+                }
+            }
+
+            if ($existingGroup) {
+                $this->group = $existingGroup;
+                $this->newGroupInput = '';
+                $this->dispatch('show-toast', message: '"' . $existingGroup . '" গ্রুপটি ইতিমধ্যেই বিদ্যমান।', type: 'warning');
+                return;
+            }
+
             $groupsJson = Setting::get('ledger_groups');
             $defaultGroups = ['কাস্টমার', 'সরবরাহকারী', 'লেবার', 'মাটি', 'স্টাফ', 'খরচ', 'আয়', 'অন্যান্য'];
             $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: $defaultGroups) : $defaultGroups;
 
-            // Remove $newGroup if it exists anywhere so unshifting puts it at the top
-            $savedGroups = array_values(array_diff($savedGroups, [$newGroup]));
+            $savedGroups = array_values(array_filter($savedGroups, fn($g) => mb_strtolower(trim($g), 'UTF-8') !== mb_strtolower($newGroup, 'UTF-8')));
             array_unshift($savedGroups, $newGroup);
             Setting::set('ledger_groups', json_encode($savedGroups));
 
@@ -159,6 +187,51 @@ class LedgerAdd extends Component
             $this->newGroupInput = '';
             $this->dispatch('show-toast', message: 'নতুন গ্রুপ যুক্ত করা হয়েছে।', type: 'success');
         }
+    }
+
+    public function openGroupManager()
+    {
+        $this->syncGroupOptions();
+        $this->confirmingDeleteGroup = null;
+        $this->showGroupManager = true;
+    }
+
+    public function closeGroupManager()
+    {
+        $this->showGroupManager = false;
+        $this->confirmingDeleteGroup = null;
+    }
+
+    public function askDeleteGroup($groupName)
+    {
+        $this->confirmingDeleteGroup = $groupName;
+    }
+
+    public function cancelDeleteGroup()
+    {
+        $this->confirmingDeleteGroup = null;
+    }
+
+    public function deleteGroupConfirmed()
+    {
+        $groupToDelete = $this->confirmingDeleteGroup;
+        if (!$groupToDelete) return;
+
+        if (count($this->groupOptions) <= 1) {
+            $this->dispatch('show-toast', message: 'কমপক্ষে একটি গ্রুপ থাকতে হবে।', type: 'danger');
+            $this->confirmingDeleteGroup = null;
+            return;
+        }
+
+        $this->groupOptions = array_values(array_diff($this->groupOptions, [$groupToDelete]));
+        Setting::set('ledger_groups', json_encode($this->groupOptions));
+
+        if ($this->group === $groupToDelete) {
+            $this->group = '';
+        }
+
+        $this->confirmingDeleteGroup = null;
+        $this->dispatch('show-toast', message: '"' . $groupToDelete . '" গ্রুপ মুছে ফেলা হয়েছে।', type: 'success');
     }
 
     public function deleteGroup($groupToDelete)
@@ -181,8 +254,8 @@ class LedgerAdd extends Component
     {
         $this->resetForm();
         $this->syncGroupOptions();
-        $nextSerial = Ledger::count() + 1;
-        $this->serial = sprintf('%02d', $nextSerial);
+        $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
+        $this->serial = sprintf('%02d', $maxSerial + 1);
         $this->group = '';
         $this->showModal = true;
     }
@@ -203,16 +276,16 @@ class LedgerAdd extends Component
 
         $this->validate();
 
-        $ledgerName = $this->name !== null && trim($this->name) !== '' ? trim($this->name) : '—';
+        $group = trim($this->group ?? '');
+        $name = trim($this->name ?? '');
 
-        if ($this->group && trim($this->group) !== '') {
-            $grp = trim($this->group);
+        if ($group !== '') {
             $groupsJson = Setting::get('ledger_groups');
             $defaultGroups = ['কাস্টমার', 'সরবরাহকারী', 'লেবার', 'মাটি', 'স্টাফ', 'খরচ', 'আয়', 'অন্যান্য'];
             $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: $defaultGroups) : $defaultGroups;
 
-            $savedGroups = array_values(array_diff($savedGroups, [$grp]));
-            array_unshift($savedGroups, $grp);
+            $savedGroups = array_values(array_diff($savedGroups, [$group]));
+            array_unshift($savedGroups, $group);
             Setting::set('ledger_groups', json_encode($savedGroups));
             $this->syncGroupOptions();
         }
@@ -220,24 +293,37 @@ class LedgerAdd extends Component
         if ($this->editingLedgerId) {
             $ledger = Ledger::find($this->editingLedgerId);
             if ($ledger) {
+                $oldName = $ledger->name;
                 $ledger->update([
-                    'serial' => $this->serial ? intval($this->serial) : null,
-                    'name' => $ledgerName,
-                    'group' => $this->group,
-                    'rate' => $this->rate ?: null,
-                    'divisor' => $this->divisor,
+                    'serial' => $this->serial ? intval($this->serial) : $ledger->serial,
+                    'name' => $name,
+                    'group' => $group,
+                    'rate' => $this->rate !== null && $this->rate !== '' ? floatval($this->rate) : null,
+                    'divisor' => $this->divisor ? intval($this->divisor) : 1,
                 ]);
-                $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে আপডেট করা হয়েছে।', type: 'success');
+
+                if ($oldName && $oldName !== $name) {
+                    Payment::where('ledger', $oldName)->update(['ledger' => $name]);
+                }
+
+                $this->dispatch('ledger-updated');
+                $this->dispatch('show-toast', message: 'খতিয়ান তথ্য আপডেট করা হয়েছে।', type: 'success');
             }
         } else {
+            $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
+            $newSerial = $this->serial ? intval($this->serial) : ($maxSerial + 1);
+
             Ledger::create([
-                'serial' => $this->serial ? intval($this->serial) : null,
-                'name' => $ledgerName,
-                'group' => $this->group,
-                'rate' => $this->rate ?: null,
-                'divisor' => $this->divisor,
+                'serial' => $newSerial,
+                'name' => $name,
+                'group' => $group,
+                'rate' => $this->rate !== null && $this->rate !== '' ? floatval($this->rate) : null,
+                'divisor' => $this->divisor ? intval($this->divisor) : 1,
             ]);
-            $this->dispatch('show-toast', message: 'নতুন খতিয়ান সফলভাবে যুক্ত করা হয়েছে।', type: 'success');
+
+            $this->page = 1;
+            $this->dispatch('ledger-added');
+            $this->dispatch('show-toast', message: 'নতুন খতিয়ান তৈরি করা হয়েছে।', type: 'success');
         }
 
         $this->showModal = false;
@@ -307,6 +393,11 @@ class LedgerAdd extends Component
         $this->divisor = 1;
     }
 
+    protected $listeners = [
+        'ledger-added' => '$refresh',
+        'ledger-updated' => '$refresh',
+    ];
+
     public function render()
     {
         $query = Ledger::query();
@@ -318,7 +409,7 @@ class LedgerAdd extends Component
             });
         }
 
-        $allLedgers = $query->orderByRaw('CASE WHEN serial IS NULL THEN 1 ELSE 0 END, serial ASC, id ASC')->get();
+        $allLedgers = $query->orderBy('id', 'desc')->get();
         $totalCount = $allLedgers->count();
 
         if ($this->perPage === 'all' || $this->perPage == 0) {

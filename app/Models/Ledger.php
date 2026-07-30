@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ledger extends Model
 {
-    protected $fillable = ['name', 'group', 'rate', 'divisor'];
+    protected $fillable = ['serial', 'name', 'group', 'rate', 'divisor'];
 }

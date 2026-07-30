@@ -533,48 +533,23 @@
                 <div x-data="{ hoverGroup: null, dropRect: null, staying: false }" class="relative">
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[420px] overflow-y-auto pr-1">
                         @forelse($groupedLedgers as $groupName => $groupLedgers)
+                        @php $hasItems = count($groupLedgers) > 0; @endphp
                         <div 
-                            @mouseenter="hoverGroup = {{ json_encode($groupName) }}; dropRect = $el.getBoundingClientRect();"
+                            @mouseenter="if ({{ $hasItems ? 'true' : 'false' }}) { hoverGroup = {{ json_encode($groupName) }}; dropRect = $el.getBoundingClientRect(); }"
                             @mouseleave="setTimeout(() => { if (hoverGroup === {{ json_encode($groupName) }} && !staying) hoverGroup = null; }, 150)"
                             class="relative">
                             
                             <!-- Group Box Card -->
-                            <div @click="hoverGroup = (hoverGroup === {{ json_encode($groupName) }} ? null : {{ json_encode($groupName) }}); dropRect = $el.getBoundingClientRect();"
-                                 class="w-full px-3.5 pt-3 pb-2.5 bg-slate-50 dark:bg-slate-800/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-gray-200 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-2xl cursor-pointer transition-all group/box flex flex-col justify-between min-h-[78px] shadow-2xs relative">
+                            <div @click="if ({{ $hasItems ? 'true' : 'false' }}) { hoverGroup = (hoverGroup === {{ json_encode($groupName) }} ? null : {{ json_encode($groupName) }}); dropRect = $el.getBoundingClientRect(); } else { $wire.selectLedger({{ json_encode($groupName) }}); hoverGroup = null; showKhotiyanModal = false; }"
+                                 class="w-full p-3 bg-slate-50 dark:bg-slate-800/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-gray-200 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-2xl cursor-pointer transition-all group/box flex items-center justify-between shadow-2xs relative">
                                 
                                 <!-- Group Name & Count Badge -->
-                                <div class="flex items-start justify-between gap-1.5 pr-6">
-                                    <span class="text-xs font-extrabold text-gray-800 dark:text-slate-100 group-hover/box:text-emerald-700 dark:group-hover/box:text-emerald-400 font-sans leading-tight line-clamp-2">
-                                        {{ $groupName }}
-                                    </span>
-                                    <span class="shrink-0 text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 rounded-full px-2 py-0.5 font-black font-mono leading-none">
-                                        {{ count($groupLedgers) }}
-                                    </span>
-                                </div>
-
-                                <!-- Right Side Trash/Delete Icon -->
-                                <button type="button" 
-                                        wire:click.stop="confirmDeleteGroup({{ json_encode($groupName) }})"
-                                        @click.stop
-                                        title="গ্রুপ মুছুন"
-                                        class="absolute top-2.5 right-2 w-6 h-6 flex items-center justify-center rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer z-10">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
-                                    </svg>
-                                </button>
-
-                                <!-- Helper label & Add button -->
-                                <div class="flex items-center justify-between mt-2 pt-1 border-t border-gray-150 dark:border-slate-700/50">
-                                    <span class="text-[9px] text-gray-400 dark:text-slate-500 font-sans italic">
-                                        {{ count($groupLedgers) > 0 ? 'hover/ক্লিক করুন' : 'খালি' }}
-                                    </span>
-                                    <button type="button" 
-                                            wire:click.stop="openNewKhotiyanModal({{ json_encode($groupName) }})"
-                                            @click.stop
-                                            class="text-[9px] bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-0.5 rounded-md font-black font-sans cursor-pointer leading-none transition-colors">
-                                        + নতুন
-                                    </button>
-                                </div>
+                                <span class="text-xs font-extrabold text-gray-800 dark:text-slate-100 group-hover/box:text-emerald-700 dark:group-hover/box:text-emerald-400 font-sans leading-tight line-clamp-2">
+                                    {{ $groupName }}
+                                </span>
+                                <span class="shrink-0 text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 rounded-full px-2 py-0.5 font-black font-mono leading-none ml-1.5">
+                                    {{ count($groupLedgers) }}
+                                </span>
                             </div>
                         </div>
                         @empty
@@ -582,7 +557,7 @@
                         @endforelse
                     </div>
 
-                    <!-- Hover Dropdown: shows all khotiyans under this group with rates -->
+                    <!-- Hover Dropdown: shows all khotiyans under this group -->
                     <template x-teleport="body">
                     <div 
                         x-show="hoverGroup !== null"
@@ -605,9 +580,6 @@
                                     class="w-full flex items-center justify-between px-3.5 py-2 hover:bg-emerald-700/20 transition-colors text-left cursor-pointer group/item">
                                 <span class="text-xs font-semibold text-slate-200 group-hover/item:text-emerald-300 font-sans truncate">
                                     {{ $gLedg['name'] }}
-                                </span>
-                                <span class="shrink-0 text-[10px] text-emerald-400 font-mono font-black ml-2">
-                                    {{ !empty($gLedg['rate']) ? '৳ ' . number_format($gLedg['rate'], 2) : '—' }}
                                 </span>
                             </button>
                             @empty
@@ -663,56 +635,57 @@
 
                 <!-- Name field -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 dark:text-slate-350 mb-1.5 font-sans">খতিয়ানের নাম <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-slate-350 mb-1.5 font-sans">খতিয়ানের নাম</label>
                     <input 
                         type="text" 
                         wire:model="newLedgerName"
+                        placeholder="খতিয়ানের নাম লিখুন"
                         class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-sm font-semibold font-sans focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20">
                     @error('newLedgerName')
                         <p class="text-red-500 text-xs mt-1.5 font-semibold font-sans">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <!-- Customizable Group Dropdown field -->
-                <div x-data="{ openGroup: false, newGroupName: '', rect: null }" class="relative">
+                <!-- Group Dropdown: Dynamic with filter/add & Folder Icon (Teleported to Root) -->
+                <div class="relative" x-data="{ openGroup: false, search: '', dropRect: null }">
                     <label class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">খতিয়ানের গ্রুপ</label>
-                    <button @click="openGroup = !openGroup; rect = $el.getBoundingClientRect()" type="button" 
-                            class="w-full flex items-center justify-between gap-2.5 px-4 py-3 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white font-bold rounded-xl text-sm border border-gray-200 dark:border-slate-700 focus:outline-none transition-all cursor-pointer">
-                        <span class="font-sans" x-text="$wire.newLedgerGroup ? $wire.newLedgerGroup : 'গ্রুপ নির্বাচন করুন'"></span>
-                        <svg class="w-4 h-4 transition-transform duration-200 text-gray-550" :class="{ 'rotate-180': openGroup }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <button type="button" @click="openGroup = !openGroup; dropRect = $el.getBoundingClientRect()" 
+                            class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none cursor-pointer text-left transition-all">
+                        <span x-text="$wire.newLedgerGroup || 'গ্রুপ বাছুন বা টাইপ করুন'" class="truncate"></span>
+                        <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0" :class="{ 'rotate-180': openGroup }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
                     
                     <template x-teleport="body">
-                        <div x-show="openGroup" 
-                             @click.outside="openGroup = false"
-                             class="fixed z-[99999999] bg-white dark:bg-slate-900 border border-gray-205 dark:border-slate-800 shadow-2xl p-2.5"
-                             :style="rect ? ('left: ' + rect.left + 'px; top: ' + rect.bottom + 'px; width: ' + rect.width + 'px; position: fixed;') : ''"
+                        <div x-show="openGroup" @click.outside="openGroup = false" x-transition
+                             class="fixed z-[99999999] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden font-sans"
+                             :style="dropRect ? ('left: ' + dropRect.left + 'px; top: ' + (dropRect.bottom + 6) + 'px; width: ' + dropRect.width + 'px; position: fixed;') : ''"
                              x-cloak>
-                            
-                            <!-- Search & Add new option -->
-                            <div class="flex items-center gap-1.5 mb-2.5">
-                                <input type="text" x-model="newGroupName" placeholder="নতুন গ্রুপ..."
-                                       class="flex-grow px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-950 text-gray-805 dark:text-white focus:outline-none font-sans font-semibold">
-                                <button type="button" @click="$wire.addGroup(newGroupName); newGroupName = ''"
-                                        class="px-3 py-1.5 bg-[#034C3C] text-white rounded-lg text-xs font-black cursor-pointer font-sans leading-none">
+                            <!-- Single Filter + Add Input -->
+                            <div class="p-2 border-b border-gray-100 dark:border-slate-800 flex items-center gap-1.5">
+                                <input type="text" x-model="search" wire:model="newGroupInput"
+                                       placeholder="ফিল্টার বা নতুন গ্রুপ..."
+                                       class="flex-1 min-w-0 py-1.5 px-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 transition-all font-sans font-medium"
+                                       @keydown.enter.prevent="$wire.addGroup(search); search = ''">
+                                <button type="button" @click="$wire.addGroup(search); search = ''"
+                                        class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex-shrink-0 whitespace-nowrap">
                                     + অ্যাড
                                 </button>
                             </div>
 
-                            <!-- Options List -->
-                            <div class="space-y-0.5 max-h-60 overflow-y-auto pr-1">
+                            <!-- Options List with Folder Icons (Delete removed) -->
+                            <div class="max-h-60 overflow-y-auto py-1">
                                 @foreach($ledgerGroups as $group)
-                                    <div class="flex items-center justify-between px-3 py-2 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg text-xs transition-colors">
-                                        <button type="button" @click="$wire.set('newLedgerGroup', {{ json_encode($group) }}); openGroup = false"
-                                                class="flex-grow text-left font-black text-gray-855 dark:text-white font-sans">
+                                    <div class="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all cursor-pointer flex items-center gap-2"
+                                         x-show="search === '' || {{ json_encode($group) }}.toLowerCase().includes(search.toLowerCase())"
+                                         @click="$wire.set('newLedgerGroup', {{ json_encode($group) }}); openGroup = false; search = ''">
+                                        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0A2.25 2.25 0 004.5 15h15a2.25 2.25 0 002.25-2.25m-19.5 0v.243a2.25 2.25 0 00.864 1.765l.775.62c.39.312.617.781.617 1.274v1.848a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25v-1.848c0-.493.227-.962.617-1.274l.775-.62a2.25 2.25 0 00.864-1.765V12.75M3.75 6h4.875c.621 0 1.15.402 1.314 1.002L10.3 8.5H20.25A2.25 2.25 0 0122.5 10.75v.75H1.5v-.75A2.25 2.25 0 013.75 6z"/>
+                                        </svg>
+                                        <span class="text-xs font-semibold text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans block truncate">
                                             {{ $group }}
-                                        </button>
-                                        <button type="button" @click="$wire.deleteGroup({{ json_encode($group) }})"
-                                                class="text-red-500 hover:text-red-700 p-0.5 cursor-pointer leading-none">
-                                            ✕
-                                        </button>
+                                        </span>
                                     </div>
                                 @endforeach
                             </div>
