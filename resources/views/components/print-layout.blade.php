@@ -139,7 +139,7 @@ Supported Layout Modes ($type):
                                 <td class="p-2.5 text-center font-bold font-mono">{{ $challan->challan_no }}</td>
                                 <td class="p-2.5 text-left font-semibold text-gray-900">{{ $item->category_name }}</td>
                                 <td class="p-2.5 text-center font-mono font-bold">{{ number_format($item->quantity) }}</td>
-                                <td class="p-2.5 text-right font-mono">৳ {{ number_format($item->rate, 2) }}</td>
+                                <td class="p-2.5 text-right font-mono">৳ {{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</td>
                                 <td class="p-2.5 text-right font-mono font-bold text-gray-900">৳ {{ number_format($item->amount, 0) }}</td>
                             </tr>
                         @empty
@@ -261,7 +261,7 @@ Supported Layout Modes ($type):
                                 <td class="p-2.5 text-center font-bold font-mono">{{ $challan->challan_no }}</td>
                                 <td class="p-2.5 text-left font-semibold text-gray-900">{{ $item->category_name }}</td>
                                 <td class="p-2.5 text-center font-mono font-bold">{{ number_format($item->quantity) }}</td>
-                                <td class="p-2.5 text-right font-mono">৳ {{ number_format($item->rate, 2) }}</td>
+                                <td class="p-2.5 text-right font-mono">৳ {{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</td>
                                 <td class="p-2.5 text-right font-mono font-bold text-gray-900">৳ {{ number_format($item->amount, 0) }}</td>
                             </tr>
                         @empty
@@ -379,7 +379,7 @@ Supported Layout Modes ($type):
                                 <td class="p-2.5 text-center font-bold font-mono">{{ $challan->challan_no }}</td>
                                 <td class="p-2.5 text-left font-semibold text-gray-900">{{ $item->category_name }}</td>
                                 <td class="p-2.5 text-center font-mono font-bold">{{ number_format($item->quantity) }}</td>
-                                <td class="p-2.5 text-right font-mono">৳ {{ number_format($item->rate, 2) }}</td>
+                                <td class="p-2.5 text-right font-mono">৳ {{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</td>
                                 <td class="p-2.5 text-right font-mono font-bold text-gray-900">৳ {{ number_format($item->amount, 0) }}</td>
                             </tr>
                         @empty

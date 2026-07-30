@@ -54,10 +54,10 @@
      public $challan_type = 'আজকের';
      public $notes = '';
      
-     public $rent = 0;
+     public $rent = '';
      public $transport_rent = 0;
-     public $discount = 0;
-     public $cash = 0;
+     public $discount = '';
+     public $cash = '';
      public $send_sms = false;
      public $due_payment_date = '';
  
@@ -65,9 +65,9 @@
      public $items = [];
  
      // Calculated values
-     public $value = 0;
+     public $value = '';
      public $grand_total = 0;
-     public $due = 0;
+     public $due = '';
  
      // Delivery Modal States
      public $showDeliveryModal = false;

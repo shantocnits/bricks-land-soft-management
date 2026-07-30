@@ -19,7 +19,7 @@ if (!function_exists('toBanglaNum')) {
                     <div>
                         <span class="text-[11px] font-bold text-gray-500 dark:text-slate-400 font-sans block uppercase">মোট বিক্রি (ভ্যাট সহ)</span>
                         <h3 class="text-xl sm:text-2xl font-black text-[#034C3C] dark:text-emerald-400 font-mono mt-1">
-                            ৳{{ toBanglaNum(number_format($totalGrand, 2)) }}
+                            ৳{{ toBanglaNum(number_format((float)($totalGrand), (float)($totalGrand) == (int)($totalGrand) ? 0 : 2)) }}
                         </h3>
                     </div>
                     <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-[#034C3C] dark:text-emerald-400 rounded-2xl border border-emerald-100 dark:border-emerald-900/50">
@@ -36,7 +36,7 @@ if (!function_exists('toBanglaNum')) {
                     <div>
                         <span class="text-[11px] font-bold text-gray-500 dark:text-slate-400 font-sans block uppercase">মোট জমা / পরিশোধ</span>
                         <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1">
-                            ৳{{ toBanglaNum(number_format($totalPaid, 2)) }}
+                            ৳{{ toBanglaNum(number_format((float)($totalPaid), (float)($totalPaid) == (int)($totalPaid) ? 0 : 2)) }}
                         </h3>
                     </div>
                     <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-2xl border border-emerald-100 dark:border-emerald-900/50">
@@ -53,7 +53,7 @@ if (!function_exists('toBanglaNum')) {
                     <div>
                         <span class="text-[11px] font-bold text-gray-500 dark:text-slate-400 font-sans block uppercase">মোট বাকি</span>
                         <h3 class="text-xl sm:text-2xl font-black text-rose-500 dark:text-rose-400 font-mono mt-1">
-                            ৳{{ toBanglaNum(number_format($totalDue, 2)) }}
+                            ৳{{ toBanglaNum(number_format((float)($totalDue), (float)($totalDue) == (int)($totalDue) ? 0 : 2)) }}
                         </h3>
                     </div>
                     <div class="p-3 bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 rounded-2xl border border-rose-100 dark:border-rose-900/50">
@@ -383,13 +383,13 @@ if (!function_exists('toBanglaNum')) {
                                     {{ toBanglaNum(number_format($cQty)) }}
                                 </td>
                                 <td class="py-3.5 px-4 text-right font-black text-gray-900 dark:text-white border-r border-gray-150 dark:border-slate-800 font-mono">
-                                    ৳{{ toBanglaNum(number_format($c->grand_total, 2)) }}
+                                    ৳{{ toBanglaNum(number_format((float)($c->grand_total), (float)($c->grand_total) == (int)($c->grand_total) ? 0 : 2)) }}
                                 </td>
                                 <td class="py-3.5 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800 font-mono">
-                                    ৳{{ toBanglaNum(number_format($c->cash, 2)) }}
+                                    ৳{{ toBanglaNum(number_format((float)($c->cash), (float)($c->cash) == (int)($c->cash) ? 0 : 2)) }}
                                 </td>
                                 <td class="py-3.5 px-4 text-right font-black {{ $c->due > 0 ? 'text-rose-500' : 'text-gray-500' }} font-mono">
-                                    ৳{{ toBanglaNum(number_format($c->due, 2)) }}
+                                    ৳{{ toBanglaNum(number_format((float)($c->due), (float)($c->due) == (int)($c->due) ? 0 : 2)) }}
                                 </td>
                             </tr>
                         @empty
@@ -407,9 +407,9 @@ if (!function_exists('toBanglaNum')) {
                             <tr class="bg-gray-100 dark:bg-slate-800 font-bold text-xs border-t-2 border-gray-300 dark:border-slate-700">
                                 <td colspan="6" class="py-3.5 px-4 text-right font-sans text-gray-800 dark:text-white">সর্বমোট (বর্তমান ফিল্টার):</td>
                                 <td class="py-3.5 px-4 text-center font-mono text-gray-900 dark:text-white">{{ toBanglaNum(number_format($totalQuantity)) }}</td>
-                                <td class="py-3.5 px-4 text-right font-mono text-[#034C3C] dark:text-emerald-400">৳{{ toBanglaNum(number_format($totalGrand, 2)) }}</td>
-                                <td class="py-3.5 px-4 text-right font-mono text-emerald-600">৳{{ toBanglaNum(number_format($totalPaid, 2)) }}</td>
-                                <td class="py-3.5 px-4 text-right font-mono text-rose-500">৳{{ toBanglaNum(number_format($totalDue, 2)) }}</td>
+                                <td class="py-3.5 px-4 text-right font-mono text-[#034C3C] dark:text-emerald-400">৳{{ toBanglaNum(number_format((float)($totalGrand), (float)($totalGrand) == (int)($totalGrand) ? 0 : 2)) }}</td>
+                                <td class="py-3.5 px-4 text-right font-mono text-emerald-600">৳{{ toBanglaNum(number_format((float)($totalPaid), (float)($totalPaid) == (int)($totalPaid) ? 0 : 2)) }}</td>
+                                <td class="py-3.5 px-4 text-right font-mono text-rose-500">৳{{ toBanglaNum(number_format((float)($totalDue), (float)($totalDue) == (int)($totalDue) ? 0 : 2)) }}</td>
                             </tr>
                         </tfoot>
                     @endif

@@ -87,7 +87,7 @@ if (!function_exists('toBanglaNum')) {
                     <div>
                         <span class="text-[11px] font-bold text-gray-500 dark:text-slate-400 uppercase">মোট ইনভেস্টমেন্ট</span>
                         <h3 class="text-xl sm:text-2xl font-black text-[#034C3C] dark:text-emerald-400 font-mono mt-1">
-                            ৳{{ toBanglaNum(number_format($totalInvested, 2)) }}
+                            ৳{{ toBanglaNum(number_format((float)($totalInvested), (float)($totalInvested) == (int)($totalInvested) ? 0 : 2)) }}
                         </h3>
                     </div>
                     <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-[#034C3C] dark:text-emerald-400 rounded-2xl border border-emerald-100 dark:border-emerald-900/50">
@@ -104,7 +104,7 @@ if (!function_exists('toBanglaNum')) {
                     <div>
                         <span class="text-[11px] font-bold text-gray-500 dark:text-slate-400 uppercase">পরিশোধিত / লভ্যাংশ</span>
                         <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1">
-                            ৳{{ toBanglaNum(number_format($totalRepaid, 2)) }}
+                            ৳{{ toBanglaNum(number_format((float)($totalRepaid), (float)($totalRepaid) == (int)($totalRepaid) ? 0 : 2)) }}
                         </h3>
                     </div>
                     <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-2xl border border-emerald-100 dark:border-emerald-900/50">
@@ -121,7 +121,7 @@ if (!function_exists('toBanglaNum')) {
                     <div>
                         <span class="text-[11px] font-bold text-gray-500 dark:text-slate-400 uppercase">অবশিষ্ট ইনভেস্টমেন্ট</span>
                         <h3 class="text-xl sm:text-2xl font-black text-rose-500 dark:text-rose-400 font-mono mt-1">
-                            ৳{{ toBanglaNum(number_format($netBalance, 2)) }}
+                            ৳{{ toBanglaNum(number_format((float)($netBalance), (float)($netBalance) == (int)($netBalance) ? 0 : 2)) }}
                         </h3>
                     </div>
                     <div class="p-3 bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 rounded-2xl border border-rose-100 dark:border-rose-900/50">
@@ -264,13 +264,13 @@ if (!function_exists('toBanglaNum')) {
                                         {{ toBanglaNum($inv->profit_percentage) }}%
                                     </td>
                                     <td class="py-3.5 px-4 text-right font-black text-[#034C3C] dark:text-emerald-400 font-mono border-r border-gray-150 dark:border-slate-800">
-                                        ৳{{ toBanglaNum(number_format($inv->total_invested, 2)) }}
+                                        ৳{{ toBanglaNum(number_format((float)($inv->total_invested), (float)($inv->total_invested) == (int)($inv->total_invested) ? 0 : 2)) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-right font-bold text-emerald-600 font-mono border-r border-gray-150 dark:border-slate-800">
-                                        ৳{{ toBanglaNum(number_format($inv->total_repaid, 2)) }}
+                                        ৳{{ toBanglaNum(number_format((float)($inv->total_repaid), (float)($inv->total_repaid) == (int)($inv->total_repaid) ? 0 : 2)) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-right font-black text-rose-500 font-mono border-r border-gray-150 dark:border-slate-800">
-                                        ৳{{ toBanglaNum(number_format($rem, 2)) }}
+                                        ৳{{ toBanglaNum(number_format((float)($rem), (float)($rem) == (int)($rem) ? 0 : 2)) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-center">
                                         <!-- Fixed Dark Mode Action Hover Styles -->
@@ -319,7 +319,7 @@ if (!function_exists('toBanglaNum')) {
                                         {{ $t->payment_method }}
                                     </td>
                                     <td class="py-3.5 px-4 text-right font-black font-mono border-r border-gray-150 dark:border-slate-800 {{ $t->transaction_type === 'deposit' ? 'text-[#034C3C] dark:text-emerald-400' : 'text-rose-500' }}">
-                                        ৳{{ toBanglaNum(number_format($t->amount, 2)) }}
+                                        ৳{{ toBanglaNum(number_format((float)($t->amount), (float)($t->amount) == (int)($t->amount) ? 0 : 2)) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-gray-500 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800">
                                         {{ $t->notes ?: '—' }}

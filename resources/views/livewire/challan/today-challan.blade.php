@@ -157,17 +157,17 @@
                                 </td>
                                 <td class="px-3 py-3.5 text-right text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                     @foreach($challan->items as $item)
-                                        <span class="block">৳{{ number_format($item->rate, 2) }}</span>
+                                        <span class="block">৳{{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</span>
                                     @endforeach
                                 </td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format($challan->value, 2) }}</td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format($challan->value, 2) }}</td>
-                                <td class="px-3 py-3.5 text-right text-amber-600 dark:text-amber-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format($challan->discount, 2) }}</td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format($challan->transport_rent, 2) }}</td>
-                                <td class="px-3 py-3.5 text-right font-bold text-gray-800 dark:text-slate-200 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format($challan->grand_total, 2) }}</td>
-                                <td class="px-3 py-3.5 text-right text-primary dark:text-primary-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format($challan->cash, 2) }}</td>
+                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
+                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
+                                <td class="px-3 py-3.5 text-right text-amber-600 dark:text-amber-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->discount), (float)($challan->discount) == (int)($challan->discount) ? 0 : 2) }}</td>
+                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->transport_rent), (float)($challan->transport_rent) == (int)($challan->transport_rent) ? 0 : 2) }}</td>
+                                <td class="px-3 py-3.5 text-right font-bold text-gray-800 dark:text-slate-200 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->grand_total), (float)($challan->grand_total) == (int)($challan->grand_total) ? 0 : 2) }}</td>
+                                <td class="px-3 py-3.5 text-right text-primary dark:text-primary-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->cash), (float)($challan->cash) == (int)($challan->cash) ? 0 : 2) }}</td>
                                 <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    <span class="font-bold {{ $challan->due > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400' }}">৳{{ number_format($challan->due, 2) }}</span>
+                                    <span class="font-bold {{ $challan->due > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400' }}">৳{{ number_format((float)($challan->due), (float)($challan->due) == (int)($challan->due) ? 0 : 2) }}</span>
                                 </td>
                                 <!-- Dropdown Button -->
                                 <td class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">
@@ -230,13 +230,13 @@
                                 {{ number_format($challans->sum(fn($c) => $c->items->sum('quantity'))) }}
                             </td>
                             <td class="px-3 py-3 text-right border-r border-gray-200 dark:border-slate-800 last:border-r-0">—</td>
-                            <td class="px-3 py-3 text-right text-primary-dark dark:text-primary-400 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format($challans->sum('value'), 2) }}</td>
-                            <td class="px-3 py-3 text-right text-primary-dark dark:text-primary-400 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format($challans->sum('value'), 2) }}</td>
-                            <td class="px-3 py-3 text-right text-amber-600 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format($challans->sum('discount'), 2) }}</td>
-                            <td class="px-3 py-3 text-right text-primary-dark dark:text-primary-400 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format($challans->sum('transport_rent'), 2) }}</td>
-                            <td class="px-3 py-3 text-right text-gray-800 dark:text-slate-200 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format($challans->sum('grand_total'), 2) }}</td>
-                            <td class="px-3 py-3 text-right text-primary-dark dark:text-primary-400 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format($challans->sum('cash'), 2) }}</td>
-                            <td class="px-3 py-3 text-right text-red-500 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format($challans->sum('due'), 2) }}</td>
+                            <td class="px-3 py-3 text-right text-primary-dark dark:text-primary-400 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challans->sum('value')), (float)($challans->sum('value')) == (int)($challans->sum('value')) ? 0 : 2) }}</td>
+                            <td class="px-3 py-3 text-right text-primary-dark dark:text-primary-400 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challans->sum('value')), (float)($challans->sum('value')) == (int)($challans->sum('value')) ? 0 : 2) }}</td>
+                            <td class="px-3 py-3 text-right text-amber-600 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challans->sum('discount')), (float)($challans->sum('discount')) == (int)($challans->sum('discount')) ? 0 : 2) }}</td>
+                            <td class="px-3 py-3 text-right text-primary-dark dark:text-primary-400 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challans->sum('transport_rent')), (float)($challans->sum('transport_rent')) == (int)($challans->sum('transport_rent')) ? 0 : 2) }}</td>
+                            <td class="px-3 py-3 text-right text-gray-800 dark:text-slate-200 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challans->sum('grand_total')), (float)($challans->sum('grand_total')) == (int)($challans->sum('grand_total')) ? 0 : 2) }}</td>
+                            <td class="px-3 py-3 text-right text-primary-dark dark:text-primary-400 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challans->sum('cash')), (float)($challans->sum('cash')) == (int)($challans->sum('cash')) ? 0 : 2) }}</td>
+                            <td class="px-3 py-3 text-right text-red-500 border-r border-gray-200 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challans->sum('due')), (float)($challans->sum('due')) == (int)($challans->sum('due')) ? 0 : 2) }}</td>
                             <td class="px-3 py-3"></td>
                         </tr>
                     </tfoot>
@@ -406,27 +406,27 @@
                     <div class="space-y-2 text-xs font-sans">
                         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-slate-800">
                             <span class="text-gray-600 dark:text-gray-400 font-semibold">মোট বিক্রি মূল্য</span>
-                            <span class="font-bold text-gray-800 dark:text-white">৳{{ number_format($report['total_value'], 2) }}</span>
+                            <span class="font-bold text-gray-800 dark:text-white">৳{{ number_format((float)($report['total_value']), (float)($report['total_value']) == (int)($report['total_value']) ? 0 : 2) }}</span>
                         </div>
                         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-slate-800">
                             <span class="text-amber-600 dark:text-amber-400 font-semibold">ছাড় (-)</span>
-                            <span class="font-bold text-amber-600 dark:text-amber-400">৳{{ number_format($report['total_discount'], 2) }}</span>
+                            <span class="font-bold text-amber-600 dark:text-amber-400">৳{{ number_format((float)($report['total_discount']), (float)($report['total_discount']) == (int)($report['total_discount']) ? 0 : 2) }}</span>
                         </div>
                         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-slate-800">
                             <span class="text-blue-600 dark:text-blue-400 font-semibold">মোট ভাড়া (+)</span>
-                            <span class="font-bold text-blue-600 dark:text-blue-400">৳{{ number_format($report['total_transport'], 2) }}</span>
+                            <span class="font-bold text-blue-600 dark:text-blue-400">৳{{ number_format((float)($report['total_transport']), (float)($report['total_transport']) == (int)($report['total_transport']) ? 0 : 2) }}</span>
                         </div>
                         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-slate-800">
                             <span class="text-gray-600 dark:text-gray-400 font-semibold">মোট বিক্রি (ভাড়া সহ)</span>
-                            <span class="font-bold text-gray-800 dark:text-white">৳{{ number_format($report['total_grand'], 2) }}</span>
+                            <span class="font-bold text-gray-800 dark:text-white">৳{{ number_format((float)($report['total_grand']), (float)($report['total_grand']) == (int)($report['total_grand']) ? 0 : 2) }}</span>
                         </div>
                         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-slate-800">
                             <span class="text-primary dark:text-primary-400 font-bold">নগদ</span>
-                            <span class="font-bold text-primary dark:text-primary-400">৳{{ number_format($report['total_cash'], 2) }}</span>
+                            <span class="font-bold text-primary dark:text-primary-400">৳{{ number_format((float)($report['total_cash']), (float)($report['total_cash']) == (int)($report['total_cash']) ? 0 : 2) }}</span>
                         </div>
                         <div class="flex justify-between items-center py-2">
                             <span class="text-red-500 font-bold">বাকি</span>
-                            <span class="font-bold text-red-500">৳{{ number_format($report['total_due'], 2) }}</span>
+                            <span class="font-bold text-red-500">৳{{ number_format((float)($report['total_due']), (float)($report['total_due']) == (int)($report['total_due']) ? 0 : 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -732,7 +732,7 @@
                                     </div>
                                     <div class="col-span-2 text-right font-sans font-bold text-gray-700 dark:text-slate-300">
                                         <span x-data="{ show: window.innerWidth < 768 }" x-show="show" @resize.window="show = window.innerWidth < 768" x-cloak class="font-bold text-gray-555 float-left text-[11px]">মূল্যঃ</span>
-                                        ৳{{ number_format(floatval($item['amount'] ?? 0), 2) }}
+                                        ৳{{ number_format((float)(floatval($item['amount'] ?? 0)), (float)(floatval($item['amount'] ?? 0)) == (int)(floatval($item['amount'] ?? 0)) ? 0 : 2) }}
                                     </div>
                                     <!-- Desktop delete column only -->
                                     <div class="col-span-1 text-center hidden md:flex justify-center items-center">
@@ -887,15 +887,15 @@
                                 </td>
                                 <td class="pt-cell text-right">
                                     @foreach($challan->items as $item)
-                                        <span class="block">{{ number_format($item->rate,2) }}</span>
+                                        <span class="block">{{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</span>
                                     @endforeach
                                 </td>
-                                <td class="pt-cell text-right">৳{{ number_format($challan->value,2) }}</td>
-                                <td class="pt-cell text-right">৳{{ number_format($challan->transport_rent,2) }}</td>
-                                <td class="pt-cell text-right print-amber">৳{{ number_format($challan->discount,2) }}</td>
-                                <td class="pt-cell text-right font-bold">৳{{ number_format($challan->grand_total,2) }}</td>
-                                <td class="pt-cell text-right font-semibold">৳{{ number_format($challan->cash,2) }}</td>
-                                <td class="pt-cell text-right print-red">৳{{ number_format($challan->due,2) }}</td>
+                                <td class="pt-cell text-right">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
+                                <td class="pt-cell text-right">৳{{ number_format((float)($challan->transport_rent), (float)($challan->transport_rent) == (int)($challan->transport_rent) ? 0 : 2) }}</td>
+                                <td class="pt-cell text-right print-amber">৳{{ number_format((float)($challan->discount), (float)($challan->discount) == (int)($challan->discount) ? 0 : 2) }}</td>
+                                <td class="pt-cell text-right font-bold">৳{{ number_format((float)($challan->grand_total), (float)($challan->grand_total) == (int)($challan->grand_total) ? 0 : 2) }}</td>
+                                <td class="pt-cell text-right font-semibold">৳{{ number_format((float)($challan->cash), (float)($challan->cash) == (int)($challan->cash) ? 0 : 2) }}</td>
+                                <td class="pt-cell text-right print-red">৳{{ number_format((float)($challan->due), (float)($challan->due) == (int)($challan->due) ? 0 : 2) }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="11" style="text-align:center;padding:8px;font-size:9pt;">কোনো ডেটা নেই</td></tr>
@@ -906,12 +906,12 @@
                             <td class="pt-cell" colspan="3">সর্বমোট:</td>
                             <td class="pt-cell text-right font-bold">{{ number_format($printTotal['quantity']) }}</td>
                             <td class="pt-cell">—</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($printTotal['value'],2) }}</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($printTotal['transport'],2) }}</td>
-                            <td class="pt-cell text-right font-bold print-amber">৳{{ number_format($printTotal['discount'],2) }}</td>
-                            <td class="pt-cell text-right font-bold">৳{{ number_format($printTotal['grand'],2) }}</td>
-                            <td class="pt-cell text-right font-bold print-green">৳{{ number_format($printTotal['cash'],2) }}</td>
-                            <td class="pt-cell text-right font-bold print-red">৳{{ number_format($printTotal['due'],2) }}</td>
+                            <td class="pt-cell text-right font-bold">৳{{ number_format((float)($printTotal['value']), (float)($printTotal['value']) == (int)($printTotal['value']) ? 0 : 2) }}</td>
+                            <td class="pt-cell text-right font-bold">৳{{ number_format((float)($printTotal['transport']), (float)($printTotal['transport']) == (int)($printTotal['transport']) ? 0 : 2) }}</td>
+                            <td class="pt-cell text-right font-bold print-amber">৳{{ number_format((float)($printTotal['discount']), (float)($printTotal['discount']) == (int)($printTotal['discount']) ? 0 : 2) }}</td>
+                            <td class="pt-cell text-right font-bold">৳{{ number_format((float)($printTotal['grand']), (float)($printTotal['grand']) == (int)($printTotal['grand']) ? 0 : 2) }}</td>
+                            <td class="pt-cell text-right font-bold print-green">৳{{ number_format((float)($printTotal['cash']), (float)($printTotal['cash']) == (int)($printTotal['cash']) ? 0 : 2) }}</td>
+                            <td class="pt-cell text-right font-bold print-red">৳{{ number_format((float)($printTotal['due']), (float)($printTotal['due']) == (int)($printTotal['due']) ? 0 : 2) }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -1029,7 +1029,7 @@
                             <input type="text" value="{{ number_format(max(0, (int)$deliveryTotalQty - (int)$deliveredQtySoFar)) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-205 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
                         </div>
                         <div>
-                            <input type="number" wire:model.live="todayDeliveryQty" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl text-center text-gray-800 dark:text-white font-bold font-sans focus:ring-2 focus:ring-primary-500/20">
+                            <input type="number" wire:model.live="todayDeliveryQty" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl text-center text-gray-800 dark:text-white font-bold font-sans focus:ring-2 focus:ring-primary-500/20" placeholder="0">
                         </div>
                         <div>
                             <input type="text" value="{{ number_format(max(0, (int)$deliveryTotalQty - (int)$deliveredQtySoFar - (int)$todayDeliveryQty)) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-205 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
@@ -1156,8 +1156,8 @@
                                 <td class="px-4 py-3.5 font-bold text-primary-dark dark:text-primary-400">{{ $item->category_name }}</td>
                                 <td class="px-4 py-3.5 text-right font-sans">{{ number_format($item->quantity) }}</td>
                                 <td class="px-4 py-3.5 text-right font-sans text-amber-600 font-bold">{{ number_format($item->delivered_quantity ?? 0) }}</td>
-                                <td class="px-4 py-3.5 text-right font-sans">৳{{ number_format($item->rate, 2) }}</td>
-                                <td class="px-4 py-3.5 text-right font-sans font-bold">৳{{ number_format($item->amount, 2) }}</td>
+                                <td class="px-4 py-3.5 text-right font-sans">৳{{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</td>
+                                <td class="px-4 py-3.5 text-right font-sans font-bold">৳{{ number_format((float)($item->amount), (float)($item->amount) == (int)($item->amount) ? 0 : 2) }}</td>
                             </tr>
                             @endforeach
                         </tbody>

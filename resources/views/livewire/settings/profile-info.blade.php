@@ -115,7 +115,7 @@
                 <div>
                     <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1.5 uppercase tracking-wide">মাসিক সফটওয়্যার ফি</span>
                     <div class="w-full py-3.5 px-4 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 text-xs font-bold text-gray-800 dark:text-gray-200 rounded-xl">
-                        ৳ {{ number_format($monthly_fee, 2) }}
+                        ৳ {{ number_format((float)($monthly_fee), (float)($monthly_fee) == (int)($monthly_fee) ? 0 : 2) }}
                     </div>
                 </div>
 

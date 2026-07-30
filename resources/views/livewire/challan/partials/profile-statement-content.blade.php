@@ -101,7 +101,7 @@
                     </td>
                     <td class="p-1.5 text-right font-mono border-r border-gray-200">
                         @foreach($challan->items as $item)
-                            <span class="block">৳{{ number_format($item->rate, 2) }}</span>
+                            <span class="block">৳{{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</span>
                         @endforeach
                     </td>
                     <td class="p-1.5 text-right font-mono border-r border-gray-200">৳{{ number_format($challan->transport_rent ?: 0) }}</td>

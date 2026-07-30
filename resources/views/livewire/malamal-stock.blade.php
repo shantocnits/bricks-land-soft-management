@@ -416,10 +416,10 @@ if (!function_exists('toBanglaNum')) {
                                         {{ toBanglaNum($a->lost_qty) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-right font-black font-mono text-emerald-700 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800">
-                                        ৳{{ toBanglaNum(number_format($a->unit_price, 2)) }}
+                                        ৳{{ toBanglaNum(number_format((float)($a->unit_price), (float)($a->unit_price) == (int)($a->unit_price) ? 0 : 2)) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-right font-black font-mono text-emerald-800 dark:text-emerald-300 border-r border-gray-150 dark:border-slate-800">
-                                        ৳{{ toBanglaNum(number_format($a->total_qty * $a->unit_price, 2)) }}
+                                        ৳{{ toBanglaNum(number_format((float)($a->total_qty * $a->unit_price), (float)($a->total_qty * $a->unit_price) == (int)($a->total_qty * $a->unit_price) ? 0 : 2)) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-center">
                                         <div class="flex items-center justify-center gap-1.5">

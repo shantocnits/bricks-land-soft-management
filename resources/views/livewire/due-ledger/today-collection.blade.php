@@ -97,13 +97,13 @@
                                 <td class="px-3 py-3.5 font-semibold text-gray-808 dark:text-slate-202 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $col->customer_name }}</td>
                                 <td class="px-3 py-3.5 text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $col->customer_address ?: '—' }}</td>
                                 <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    ৳{{ number_format($prevDue, 2) }}
+                                    ৳{{ number_format((float)($prevDue), (float)($prevDue) == (int)($prevDue) ? 0 : 2) }}
                                 </td>
                                 <td class="px-3 py-3.5 text-right font-bold text-primary dark:text-primary-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    ৳{{ number_format($col->cash, 2) }}
+                                    ৳{{ number_format((float)($col->cash), (float)($col->cash) == (int)($col->cash) ? 0 : 2) }}
                                 </td>
                                 <td class="px-3 py-3.5 text-right font-bold border-r border-gray-150 dark:border-slate-800 last:border-r-0 {{ $remaining > 0 ? 'text-red-500' : 'text-primary' }}">
-                                    ৳{{ number_format($remaining, 2) }}
+                                    ৳{{ number_format((float)($remaining), (float)($remaining) == (int)($remaining) ? 0 : 2) }}
                                 </td>
                                 <td class="px-3 py-3.5 text-center text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-sans">
                                     {{ $col->due_payment_date ? \Carbon\Carbon::parse($col->due_payment_date)->format('d-m-Y') : '—' }}

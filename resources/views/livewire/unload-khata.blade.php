@@ -445,7 +445,7 @@ if (!function_exists('toBanglaNum')) {
                                                 $pct = $row['total'] > 0 ? ($row[$cat->name] / $row['total']) * 100 : 0;
                                             @endphp
                                             <td class="py-3 px-4 text-center font-mono font-bold text-gray-700 dark:text-slate-300 border-r border-gray-100 dark:border-slate-800">
-                                                {{ toBanglaNum(number_format($pct, 2)) }} %
+                                                {{ toBanglaNum(number_format((float)($pct), (float)($pct) == (int)($pct) ? 0 : 2)) }} %
                                             </td>
                                         @endforeach
                                         <td class="py-3 px-4 text-center font-mono font-black text-red-500 dark:text-red-400">
@@ -470,7 +470,7 @@ if (!function_exists('toBanglaNum')) {
                                                 $grandPct = $grandTotalSum > 0 ? ($totalCatSum / $grandTotalSum) * 100 : 0;
                                             @endphp
                                             <td class="py-3 px-4 text-center font-mono font-black text-gray-808 dark:text-white border-r border-gray-200 dark:border-slate-707">
-                                                {{ toBanglaNum(number_format($grandPct, 2)) }} %
+                                                {{ toBanglaNum(number_format((float)($grandPct), (float)($grandPct) == (int)($grandPct) ? 0 : 2)) }} %
                                             </td>
                                         @endforeach
                                         <td class="py-3 px-4 text-center font-mono font-black text-red-500 dark:text-red-400">
@@ -515,10 +515,10 @@ if (!function_exists('toBanglaNum')) {
                                             {{ toBanglaNum(number_format($row['adla'])) }}
                                         </td>
                                         <td class="py-3 px-4 text-center font-mono font-black text-gray-700 dark:text-slate-300 border-r border-gray-100 dark:border-slate-800">
-                                            {{ toBanglaNum(number_format($brickPct, 2)) }} %
+                                            {{ toBanglaNum(number_format((float)($brickPct), (float)($brickPct) == (int)($brickPct) ? 0 : 2)) }} %
                                         </td>
                                         <td class="py-3 px-4 text-center font-mono font-black text-gray-700 dark:text-slate-300">
-                                            {{ toBanglaNum(number_format($adlaPct, 2)) }} %
+                                            {{ toBanglaNum(number_format((float)($adlaPct), (float)($adlaPct) == (int)($adlaPct) ? 0 : 2)) }} %
                                         </td>
                                     </tr>
                                 @empty
@@ -547,10 +547,10 @@ if (!function_exists('toBanglaNum')) {
                                             {{ toBanglaNum(number_format($totAdla)) }}
                                         </td>
                                         <td class="py-3 px-4 text-center font-mono font-black text-gray-808 dark:text-white border-r border-gray-200 dark:border-slate-707">
-                                            {{ toBanglaNum(number_format($totBrickPct, 2)) }} %
+                                            {{ toBanglaNum(number_format((float)($totBrickPct), (float)($totBrickPct) == (int)($totBrickPct) ? 0 : 2)) }} %
                                         </td>
                                         <td class="py-3 px-4 text-center font-mono font-black text-gray-808 dark:text-white">
-                                            {{ toBanglaNum(number_format($totAdlaPct, 2)) }} %
+                                            {{ toBanglaNum(number_format((float)($totAdlaPct), (float)($totAdlaPct) == (int)($totAdlaPct) ? 0 : 2)) }} %
                                         </td>
                                     </tr>
                                 @endif

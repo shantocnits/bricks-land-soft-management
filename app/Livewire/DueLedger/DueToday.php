@@ -24,9 +24,9 @@ class DueToday extends Component
     public $customer_phone = '';
     public $customer_address = '';
     public $season = '২৫-২৬';
-    public $total_due = 0;
-    public $cash = 0;
-    public $new_due = 0;
+    public $total_due = '';
+    public $cash = '';
+    public $new_due = '';
     public $due_payment_date = '';
     public $notes = '';
     public $send_sms = false;

@@ -35,13 +35,13 @@ class PaymentKhata extends Component
     public string $paymentType = '';
     public string $paymentDesc = '';
     public string $paymentDate = '';
-    public float $quantity = 0;
-    public float $rate = 0;
-    public float $totalBill = 0;
-    public float $advance = 0;
-    public float $deduction = 0;
-    public float $paymentAmount = 0;
-    public float $purchaseReceive = 0;
+    public $quantity = '';
+    public $rate = '';
+    public $totalBill = '';
+    public $advance = '';
+    public $deduction = '';
+    public $paymentAmount = '';
+    public $purchaseReceive = '';
     public $documentFile = null;
 
     // Custom List variables
@@ -169,7 +169,10 @@ class PaymentKhata extends Component
 
     public function calculateTotalBill()
     {
-        $this->totalBill = (float) $this->quantity * (float) $this->rate;
+        $q = floatval($this->quantity ?: 0);
+        $r = floatval($this->rate ?: 0);
+        $calc = $q * $r;
+        $this->totalBill = $calc > 0 ? $calc : '';
     }
 
     public function selectLedger(string $ledger)
@@ -368,13 +371,13 @@ class PaymentKhata extends Component
             $this->editingId = $id;
             $this->selectedLedger = $payment['ledger'];
             $this->paymentDesc = $payment['desc'];
-            $this->quantity = (float) $payment['qty'];
-            $this->rate = (float) $payment['rate'];
-            $this->totalBill = (float) $payment['total'];
-            $this->advance = (float) $payment['advance'];
-            $this->deduction = (float) $payment['deduction'];
-            $this->paymentAmount = (float) $payment['payment'];
-            $this->purchaseReceive = (float) $payment['purchase_receive'];
+            $this->quantity = floatval($payment['qty']) > 0 ? floatval($payment['qty']) : '';
+            $this->rate = floatval($payment['rate']) > 0 ? floatval($payment['rate']) : '';
+            $this->totalBill = floatval($payment['total']) > 0 ? floatval($payment['total']) : '';
+            $this->advance = floatval($payment['advance']) > 0 ? floatval($payment['advance']) : '';
+            $this->deduction = floatval($payment['deduction']) > 0 ? floatval($payment['deduction']) : '';
+            $this->paymentAmount = floatval($payment['payment']) > 0 ? floatval($payment['payment']) : '';
+            $this->purchaseReceive = floatval($payment['purchase_receive']) > 0 ? floatval($payment['purchase_receive']) : '';
             $this->paymentType = 'রেগুলার';
 
             if (!empty($payment['date'])) {
@@ -432,6 +435,14 @@ class PaymentKhata extends Component
             }
         }
 
+        $qty = floatval($this->quantity ?: 0);
+        $rate = floatval($this->rate ?: 0);
+        $total = floatval($this->totalBill ?: ($qty * $rate));
+        $advance = floatval($this->advance ?: 0);
+        $deduction = floatval($this->deduction ?: 0);
+        $payment = floatval($this->paymentAmount ?: 0);
+        $purchaseReceive = floatval($this->purchaseReceive ?: 0);
+
         if ($this->editingId) {
             $paymentModel = Payment::find($this->editingId);
             if ($paymentModel) {
@@ -439,13 +450,13 @@ class PaymentKhata extends Component
                     'date' => $formattedDate,
                     'ledger' => $this->selectedLedger,
                     'desc' => $this->paymentDesc,
-                    'qty' => $this->quantity,
-                    'rate' => $this->rate,
-                    'total' => $this->totalBill,
-                    'advance' => $this->advance,
-                    'deduction' => $this->deduction,
-                    'payment' => $this->paymentAmount,
-                    'purchase_receive' => $this->purchaseReceive,
+                    'qty' => $qty,
+                    'rate' => $rate,
+                    'total' => $total,
+                    'advance' => $advance,
+                    'deduction' => $deduction,
+                    'payment' => $payment,
+                    'purchase_receive' => $purchaseReceive,
                     'has_doc' => $this->documentFile ? $hasDoc : $paymentModel->has_doc,
                     'doc_url' => $this->documentFile ? $docUrl : $paymentModel->doc_url,
                 ]);
@@ -456,13 +467,13 @@ class PaymentKhata extends Component
                 'date' => $formattedDate,
                 'ledger' => $this->selectedLedger,
                 'desc' => $this->paymentDesc,
-                'qty' => $this->quantity,
-                'rate' => $this->rate,
-                'total' => $this->totalBill,
-                'advance' => $this->advance,
-                'deduction' => $this->deduction,
-                'payment' => $this->paymentAmount,
-                'purchase_receive' => $this->purchaseReceive,
+                'qty' => $qty,
+                'rate' => $rate,
+                'total' => $total,
+                'advance' => $advance,
+                'deduction' => $deduction,
+                'payment' => $payment,
+                'purchase_receive' => $purchaseReceive,
                 'doc_url' => $docUrl,
                 'has_doc' => $hasDoc
             ]);

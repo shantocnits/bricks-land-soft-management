@@ -79,7 +79,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
-                                {{ $ledger->rate ? '৳ ' . number_format($ledger->rate, 2) : '—' }}
+                                {{ $ledger->rate ? '৳ ' . number_format((float)($ledger->rate), (float)($ledger->rate) == (int)($ledger->rate) ? 0 : 2) : '—' }}
                             </td>
                             <td class="px-4 py-3 text-center font-semibold text-gray-600 dark:text-slate-300">
                                 {{ $ledger->divisor }}
@@ -146,7 +146,7 @@
                         <div>
                             <span class="text-gray-400 font-normal">রেট: </span>
                             <span
-                                class="font-bold text-gray-800 dark:text-white">{{ $ledger->rate ? '৳ ' . number_format($ledger->rate, 2) : '—' }}</span>
+                                class="font-bold text-gray-800 dark:text-white">{{ $ledger->rate ? '৳ ' . number_format((float)($ledger->rate), (float)($ledger->rate) == (int)($ledger->rate) ? 0 : 2) : '—' }}</span>
                         </div>
                         <div>
                             <span class="text-gray-400 font-normal">ভাজক: </span>
@@ -366,7 +366,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-6h6"/>
                                     </svg>
                                 </span>
-                                <input type="number" step="0.01" wire:model="rate" placeholder="খতিয়ানের রেট"
+                                <input type="number" step="0.01" wire:model="rate" placeholder="0"
                                     class="w-full py-2.5 pl-9 pr-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-semibold">
                             </div>
                             @error('rate') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror

@@ -369,12 +369,12 @@
                     <!-- Qty -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পরিমাণ</label>
-                        <input type="number" wire:model.live="quantity" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none">
+                        <input type="number" wire:model.live="quantity" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                     </div>
                     <!-- Rate -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">রেট</label>
-                        <input type="number" wire:model.live="rate" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none">
+                        <input type="number" wire:model.live="rate" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                     </div>
                     <!-- Total Bill -->
                     <div>
@@ -387,12 +387,12 @@
                     <!-- Deduction -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">কর্তন</label>
-                        <input type="number" wire:model="deduction" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none">
+                        <input type="number" wire:model="deduction" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                     </div>
                     <!-- Payment -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট</label>
-                        <input type="number" wire:model="paymentAmount" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none">
+                        <input type="number" wire:model="paymentAmount" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                         @error('paymentAmount')
                             <p class="text-red-500 text-xs mt-1.5 font-semibold font-sans">{{ $message }}</p>
                         @enderror
@@ -400,7 +400,7 @@
                     <!-- Purchase/Receive -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট ক্রয়/রেশি</label>
-                        <input type="number" wire:model="purchaseReceive" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none">
+                        <input type="number" wire:model="purchaseReceive" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none" placeholder="0">
                     </div>
                 </div>
 

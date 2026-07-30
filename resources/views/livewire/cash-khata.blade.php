@@ -1,9 +1,14 @@
 @php
 if (!function_exists('toBanglaNum')) {
     function toBanglaNum($num) {
+        if (is_numeric($num)) {
+            $num = (float)$num == (int)$num ? number_format((float)$num, 0) : (string)$num;
+        } else if (is_string($num)) {
+            $num = preg_replace('/\.00$/', '', $num);
+        }
         $eng = ['0','1','2','3','4','5','6','7','8','9', ','];
         $bg = ['০','১','২','৩','৪','৫','৬','৭','৮','৯', ','];
-        return str_replace($eng, $bg, $num);
+        return str_replace($eng, $bg, (string)$num);
     }
 }
 @endphp

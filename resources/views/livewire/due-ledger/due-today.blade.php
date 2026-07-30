@@ -97,7 +97,7 @@
                                     {{ number_format($delRemaining) }} টি
                                 </td>
                                 <td class="px-3 py-3.5 text-right font-bold text-red-500 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    ৳{{ number_format($challan->due, 2) }}
+                                    ৳{{ number_format((float)($challan->due), (float)($challan->due) == (int)($challan->due) ? 0 : 2) }}
                                 </td>
                                 <td class="px-3 py-3.5 text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-sans">
                                     {{ $challan->customer_phone ?: '—' }}

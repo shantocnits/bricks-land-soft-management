@@ -76,7 +76,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-4 text-right font-bold text-gray-900 dark:text-white">
-                                ৳ {{ number_format($limit->amount, 2) }}
+                                ৳ {{ number_format((float)($limit->amount), (float)($limit->amount) == (int)($limit->amount) ? 0 : 2) }}
                             </td>
                             <td class="px-4 py-4 text-right">
                                 <div class="flex items-center justify-end">
