@@ -47,9 +47,15 @@ class Khotian extends Component
     {
         $isSqlite = DB::connection()->getDriverName() === 'sqlite';
 
+        $activeSeason = \App\Models\Setting::get('season', '২৫-২৬');
+
         if ($this->selectedLedger) {
             // View 2: Ledger Detail List
-            $query = Payment::where('ledger', $this->selectedLedger);
+            $query = Payment::where('ledger', $this->selectedLedger)
+                ->where(function ($q) use ($activeSeason) {
+                    $q->where('season', $activeSeason)
+                      ->orWhereNull('season');
+                });
 
             if (!empty($this->startDate)) {
                 if ($isSqlite) {

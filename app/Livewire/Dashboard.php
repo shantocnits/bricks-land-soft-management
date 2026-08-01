@@ -51,23 +51,29 @@ class Dashboard extends Component
             // 'season' & 'profit_loss' show full season data
         }
 
+        $activeSeason = \App\Models\Setting::get('season', '২৫-২৬');
+
         // 1. Challan Summary Cards
-        $challanQuery = Challan::query();
+        $challanQuery = Challan::query()->where(function ($q) use ($activeSeason) {
+            $q->where('season', $activeSeason)->orWhereNull('season');
+        });
         if ($queryDate) {
             $challanQuery->whereDate('date', $queryDate);
         } elseif ($startDate) {
             $challanQuery->whereDate('date', '>=', $startDate);
         }
 
-        $totalSalesVat      = $challanQuery->sum('grand_total');
-        $cashSales          = $challanQuery->sum('cash');
-        $dueSales           = $challanQuery->sum('due');
-        $totalChallanValue  = $challanQuery->sum('total_value');
-        $totalDiscount      = $challanQuery->sum('discount');
+        $totalSalesVat = $challanQuery->sum('grand_total');
+        $cashSales = $challanQuery->sum('cash');
+        $dueSales = $challanQuery->sum('due');
+        $totalChallanValue = $challanQuery->sum('total_value');
+        $totalDiscount = $challanQuery->sum('discount');
         $totalTransportRent = $challanQuery->sum('transport_rent');
 
         // 2. Payment Summary Card & Table
-        $paymentQuery = Payment::query();
+        $paymentQuery = Payment::query()->where(function ($q) use ($activeSeason) {
+            $q->where('season', $activeSeason)->orWhereNull('season');
+        });
         if ($queryDate) {
             $paymentQuery->whereDate('date', $queryDate);
         } elseif ($startDate) {
@@ -84,6 +90,9 @@ class Dashboard extends Component
         // 5. Challan Category Table Data
         $challanItemsQuery = ChallanItem::query()
             ->join('challans', 'challan_items.challan_id', '=', 'challans.id')
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('challans.season', $activeSeason)->orWhereNull('challans.season');
+            })
             ->select(
                 'challan_items.category_name',
                 DB::raw('COUNT(DISTINCT challans.id) as total_challan'),
@@ -112,7 +121,7 @@ class Dashboard extends Component
         if ($this->search) {
             $paymentsQueryList->where(function ($q) {
                 $q->where('ledger', 'like', '%' . $this->search . '%')
-                  ->orWhere('desc', 'like', '%' . $this->search . '%');
+                    ->orWhere('desc', 'like', '%' . $this->search . '%');
             });
         }
         $paymentSummary = $paymentsQueryList->get();
@@ -158,21 +167,21 @@ class Dashboard extends Component
         $unloadSummary = $unloadQuery->get();
 
         return view('livewire.dashboard', [
-            'totalSalesVat'      => $totalSalesVat,
-            'cashSales'          => $cashSales,
-            'dueSales'           => $dueSales,
-            'totalPayment'       => $totalPayment,
-            'dueDeposit'         => $dueDeposit,
-            'netCash'            => $netCash,
-            'totalChallanValue'  => $totalChallanValue,
-            'totalDiscount'      => $totalDiscount,
+            'totalSalesVat' => $totalSalesVat,
+            'cashSales' => $cashSales,
+            'dueSales' => $dueSales,
+            'totalPayment' => $totalPayment,
+            'dueDeposit' => $dueDeposit,
+            'netCash' => $netCash,
+            'totalChallanValue' => $totalChallanValue,
+            'totalDiscount' => $totalDiscount,
             'totalTransportRent' => $totalTransportRent,
-            'challanCategories'  => $challanCategories,
-            'paymentSummary'     => $paymentSummary,
-            'productions'        => $productions,
-            'deliverySummary'    => $deliverySummary,
-            'loadSummary'        => $loadSummary,
-            'unloadSummary'      => $unloadSummary,
+            'challanCategories' => $challanCategories,
+            'paymentSummary' => $paymentSummary,
+            'productions' => $productions,
+            'deliverySummary' => $deliverySummary,
+            'loadSummary' => $loadSummary,
+            'unloadSummary' => $unloadSummary,
         ])->layout('layouts.app');
     }
 }

@@ -137,8 +137,17 @@ class PaymentKhata extends Component
             }
         }
 
-        // Load payments list from database
-        $this->paymentsList = Payment::all()->toArray();
+        // Load payments list from database filtered by active season
+        $this->loadPaymentsList();
+    }
+
+    public function loadPaymentsList()
+    {
+        $activeSeason = Setting::get('season', '২৫-২৬');
+        $this->paymentsList = Payment::where(function ($query) use ($activeSeason) {
+            $query->where('season', $activeSeason)
+                  ->orWhereNull('season');
+        })->get()->toArray();
     }
 
     public function getSubItemsMap()
@@ -542,12 +551,13 @@ class PaymentKhata extends Component
                 'payment' => $payment,
                 'purchase_receive' => $purchaseReceive,
                 'doc_url' => $docUrl,
-                'has_doc' => $hasDoc
+                'has_doc' => $hasDoc,
+                'season' => Setting::get('season', '২৫-২৬')
             ]);
             $this->dispatch('show-toast', message: 'পেমেন্ট সফলভাবে সংরক্ষণ করা হয়েছে।', type: 'success');
         }
 
-        $this->paymentsList = Payment::all()->toArray();
+        $this->loadPaymentsList();
         $this->resetForm();
         $this->showPaymentModal = false;
     }
@@ -595,7 +605,7 @@ class PaymentKhata extends Component
 
         if ($this->confirmingDeleteId) {
             Payment::destroy($this->confirmingDeleteId);
-            $this->paymentsList = Payment::all()->toArray();
+            $this->loadPaymentsList();
             $this->dispatch('show-toast', message: 'পেমেন্ট সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
             $this->confirmingDeleteId = null;
         }

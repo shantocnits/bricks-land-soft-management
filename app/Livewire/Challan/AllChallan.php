@@ -18,7 +18,7 @@ class AllChallan extends Component
     public $dateFrom = '';
     public $dateTo = '';
     public $filterType = 'all'; // all, today, pending
-    
+
     public int $perPage = 10;
     public string $sortField = 'id';
     public string $sortDirection = 'desc';
@@ -42,7 +42,7 @@ class AllChallan extends Component
     {
         $this->resetPage();
     }
-    
+
     public $showModal = false;
     public $showReport = false;
     public $editingId = null;
@@ -57,7 +57,7 @@ class AllChallan extends Component
     public $notes = '';
     public $date = '';
     public $challan_type = 'আজকের'; // আজকের, অগ্রিম
-    
+
     public $rent = '';
     public $transport_rent = 0;
     public $discount = '';
@@ -113,8 +113,8 @@ class AllChallan extends Component
     public function mount()
     {
         $this->dateFrom = now()->startOfMonth()->toDateString();
-        $this->dateTo   = now()->toDateString();
-        $this->date     = now()->toDateString();
+        $this->dateTo = now()->toDateString();
+        $this->date = now()->toDateString();
         $this->ensureCategoriesExist();
     }
 
@@ -129,17 +129,17 @@ class AllChallan extends Component
                 ['value' => json_encode(['ইট', 'আধলা', 'অন্যান্য'])]
             );
             $defaults = [
-                ['name' => '১ নং',       'type' => 'ইট',       'rate' => 8.10],
-                ['name' => 'পিকেট',       'type' => 'ইট',       'rate' => 9.00],
-                ['name' => '২ নং (ক)',    'type' => 'ইট',       'rate' => 8.50],
-                ['name' => '২ নং (খ)',    'type' => 'ইট',       'rate' => 7.50],
-                ['name' => '৩ নং ছালট',  'type' => 'ইট',       'rate' => 4.50],
-                ['name' => '৩ নং গরিয়া', 'type' => 'ইট',       'rate' => 6.00],
-                ['name' => 'এলোট',        'type' => 'ইট',       'rate' => 3.00],
-                ['name' => '১ নং আদলা',  'type' => 'আধলা',     'rate' => 4.50],
-                ['name' => '৩ নং আদলা',  'type' => 'আধলা',     'rate' => 1.50],
-                ['name' => 'রাবিশ',       'type' => 'অন্যান্য', 'rate' => 500.00],
-                ['name' => 'খোয়া',        'type' => 'অন্যান্য', 'rate' => 120.00],
+                ['name' => '১ নং', 'type' => 'ইট', 'rate' => 8.10],
+                ['name' => 'পিকেট', 'type' => 'ইট', 'rate' => 9.00],
+                ['name' => '২ নং (ক)', 'type' => 'ইট', 'rate' => 8.50],
+                ['name' => '২ নং (খ)', 'type' => 'ইট', 'rate' => 7.50],
+                ['name' => '৩ নং ছালট', 'type' => 'ইট', 'rate' => 4.50],
+                ['name' => '৩ নং গরিয়া', 'type' => 'ইট', 'rate' => 6.00],
+                ['name' => 'এলোট', 'type' => 'ইট', 'rate' => 3.00],
+                ['name' => '১ নং আদলা', 'type' => 'আধলা', 'rate' => 4.50],
+                ['name' => '৩ নং আদলা', 'type' => 'আধলা', 'rate' => 1.50],
+                ['name' => 'রাবিশ', 'type' => 'অন্যান্য', 'rate' => 500.00],
+                ['name' => 'খোয়া', 'type' => 'অন্যান্য', 'rate' => 120.00],
             ];
             foreach ($defaults as $cat) {
                 Category::create($cat);
@@ -159,7 +159,7 @@ class AllChallan extends Component
     public function generateChallanNo()
     {
         $lastId = Challan::max('id') ?: 0;
-        return (string)($lastId + 1);
+        return (string) ($lastId + 1);
     }
 
     public function closeModal()
@@ -181,10 +181,14 @@ class AllChallan extends Component
     public function getReportDataProperty()
     {
         $query = Challan::with('items');
-        if ($this->dateFrom) $query->whereDate('date', '>=', $this->dateFrom);
-        if ($this->dateTo) $query->whereDate('date', '<=', $this->dateTo);
-        if ($this->filterType === 'today') $query->where('challan_type', 'আজকের');
-        elseif ($this->filterType === 'pending') $query->where('challan_type', 'অগ্রিম');
+        if ($this->dateFrom)
+            $query->whereDate('date', '>=', $this->dateFrom);
+        if ($this->dateTo)
+            $query->whereDate('date', '<=', $this->dateTo);
+        if ($this->filterType === 'today')
+            $query->where('challan_type', 'আজকের');
+        elseif ($this->filterType === 'pending')
+            $query->where('challan_type', 'অগ্রিম');
         $challans = $query->get();
 
         $byCategory = [];
@@ -200,15 +204,15 @@ class AllChallan extends Component
         }
 
         return [
-            'rows'            => array_values($byCategory),
-            'total_value'     => $challans->sum('value'),
-            'total_discount'  => $challans->sum('discount'),
+            'rows' => array_values($byCategory),
+            'total_value' => $challans->sum('value'),
+            'total_discount' => $challans->sum('discount'),
             'total_transport' => $challans->sum('transport_rent'),
-            'total_grand'     => $challans->sum('grand_total'),
-            'total_cash'      => $challans->sum('cash'),
-            'total_due'       => $challans->sum('due'),
-            'total_qty'       => $challans->sum(fn($c) => $c->items->sum('quantity')),
-            'total_challans'  => $challans->count(),
+            'total_grand' => $challans->sum('grand_total'),
+            'total_cash' => $challans->sum('cash'),
+            'total_due' => $challans->sum('due'),
+            'total_qty' => $challans->sum(fn($c) => $c->items->sum('quantity')),
+            'total_challans' => $challans->count(),
         ];
     }
 
@@ -352,7 +356,7 @@ class AllChallan extends Component
             $subtotal += floatval($item['amount'] ?? 0);
         }
         $this->value = $subtotal;
-        
+
         $transRentVal = floatval($this->transport_rent ?: 0);
         $discountVal = floatval($this->discount ?: 0);
         $cashVal = floatval($this->cash ?: 0);
@@ -592,14 +596,14 @@ class AllChallan extends Component
             $this->customer_phone = $challan->customer_phone;
             $this->customer_address = $challan->customer_address;
             $this->challan_no = $challan->challan_no;
-            
+
             // Auto increment delivery no
             $this->deliveryNo = strval(\App\Models\Delivery::count() + 1);
             $this->deliveryDate = now()->toDateString();
             $this->nextDeliveryDate = '';
             $this->deliveryNotes = $challan->notes;
             $this->deliveryChallanDue = $challan->due;
-            
+
             $this->challanItems = $challan->items;
             $firstItem = $challan->items->first();
             if ($firstItem) {
@@ -615,13 +619,13 @@ class AllChallan extends Component
                 $this->deliveredQtySoFar = 0;
                 $this->todayDeliveryQty = 0;
             }
-            
+
             $this->driverName = '';
             $this->driverPhone = '';
             $this->vehicleNo = '';
             $this->vehicleRent = 0;
             $this->smsToCustomer = true;
-            
+
             $this->showDeliveryModal = true;
         }
     }
@@ -637,7 +641,7 @@ class AllChallan extends Component
         $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
         if ($item) {
             $challan = $item->challan;
-            
+
             // Create delivery entry
             \App\Models\Delivery::create([
                 'delivery_no' => $this->deliveryNo,
@@ -660,8 +664,8 @@ class AllChallan extends Component
 
             // Log activity
             $qtyStrBn = str_replace(
-                ['0','1','2','3','4','5','6','7','8','9'],
-                ['০','১','২','৩','৪','৫','৬','৭','৮','৯'],
+                ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+                ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'],
                 number_format($this->todayDeliveryQty)
             );
             \App\Models\ActivityLog::log(
@@ -708,8 +712,8 @@ class AllChallan extends Component
             $item->increment('delivered_quantity', intval($this->todayDeliveryQty));
 
             $qtyStrBn = str_replace(
-                ['0','1','2','3','4','5','6','7','8','9'],
-                ['০','১','২','৩','৪','৫','৬','৭','৮','৯'],
+                ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+                ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'],
                 number_format($this->todayDeliveryQty)
             );
             \App\Models\ActivityLog::log(
@@ -759,7 +763,11 @@ class AllChallan extends Component
 
     public function render()
     {
-        $query = Challan::with('items');
+        $activeSeason = Setting::get('season', '২৫-২৬');
+        $query = Challan::with('items')
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            });
 
         if ($this->dateFrom) {
             $query->whereDate('date', '>=', $this->dateFrom);
@@ -775,10 +783,10 @@ class AllChallan extends Component
         }
 
         if ($this->search) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('customer_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('customer_phone', 'like', '%' . $this->search . '%')
-                  ->orWhere('challan_no', 'like', '%' . $this->search . '%');
+                    ->orWhere('customer_phone', 'like', '%' . $this->search . '%')
+                    ->orWhere('challan_no', 'like', '%' . $this->search . '%');
             });
         }
 
@@ -791,18 +799,18 @@ class AllChallan extends Component
 
         $settings = [
             'company_name_bn' => Setting::get('company_name_bn', 'ব্রিকস'),
-            'address'         => Setting::get('address', ''),
-            'invoice_phones'  => Setting::get('invoice_phones', ''),
-            'owner_name'      => Setting::get('owner_name', ''),
+            'address' => Setting::get('address', ''),
+            'invoice_phones' => Setting::get('invoice_phones', ''),
+            'owner_name' => Setting::get('owner_name', ''),
         ];
 
         return view('livewire.challan.all-challan', [
-            'challans'       => $query->paginate($this->perPage),
-            'printChallans'  => $printChallans,
-            'totalDue'       => $totalDue,
-            'settings'       => $settings,
-            'categories'     => Category::all(),
-            'ledgers'        => Ledger::all(),
+            'challans' => $query->paginate($this->perPage),
+            'printChallans' => $printChallans,
+            'totalDue' => $totalDue,
+            'settings' => $settings,
+            'categories' => Category::all(),
+            'ledgers' => Ledger::all(),
         ])->layout('layouts.app');
     }
 }

@@ -80,6 +80,12 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/upload-photo', [ProfileController::class, 'uploadPhoto'])->name('profile.upload-photo');
+
+    Route::post('/update-season', function (\Illuminate\Http\Request $request) {
+        $season = $request->input('season', '২৫-২৬');
+        \App\Models\Setting::set('season', $season);
+        return response()->json(['success' => true, 'season' => $season]);
+    })->name('update-season');
 });
 
 require __DIR__.'/auth.php';

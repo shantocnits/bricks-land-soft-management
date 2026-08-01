@@ -26,6 +26,14 @@ Supported Layout Modes ($type):
     $companyPhone = \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901,01901349906');
     $proprietor = \App\Models\Setting::get('owner_name', 'মো: মালিক মিয়া');
     $printTime = now()->format('d-m-Y h:i A');
+
+    $cLogoSetting = \App\Models\Setting::get('logo_url') ?: \App\Models\Setting::get('company_logo');
+    $cLogoSrc = null;
+    if ($cLogoSetting && file_exists(public_path('storage/' . $cLogoSetting))) {
+        $cLogoSrc = asset('storage/' . $cLogoSetting);
+    } elseif (file_exists(public_path('assets/logo.png'))) {
+        $cLogoSrc = asset('assets/logo.png');
+    }
 @endphp
 
 <div class="print-layout-wrapper text-gray-900 font-sans">
@@ -85,12 +93,12 @@ Supported Layout Modes ($type):
             <!-- Header -->
             <div class="flex justify-between items-start border-b border-gray-300 pb-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center p-2 shrink-0 border border-red-100">
-                        <svg class="w-10 h-10 text-red-500" viewBox="0 0 64 64" fill="currentColor">
-                            <path d="M26 12 L38 12 L44 50 L20 50 Z" fill="#EF4444"/>
-                            <path d="M22 24 L42 24 L44 32 L20 32 Z" fill="#FFFFFF"/>
-                            <path d="M12 50 L52 50 L56 58 L8 58 Z" fill="#EF4444"/>
-                        </svg>
+                    <div class="w-14 h-14 rounded-xl border border-gray-300 p-1 flex items-center justify-center bg-gray-50 shrink-0 overflow-hidden">
+                        @if($cLogoSrc)
+                            <img src="{{ $cLogoSrc }}" class="w-full h-full object-contain" alt="Logo">
+                        @else
+                            <span class="text-2xl select-none">🧱</span>
+                        @endif
                     </div>
                     <div>
                         <h2 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
@@ -207,12 +215,12 @@ Supported Layout Modes ($type):
             <!-- Header -->
             <div class="flex justify-between items-start border-b border-gray-300 pb-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center p-2 shrink-0 border border-red-100">
-                        <svg class="w-10 h-10 text-red-500" viewBox="0 0 64 64" fill="currentColor">
-                            <path d="M26 12 L38 12 L44 50 L20 50 Z" fill="#EF4444"/>
-                            <path d="M22 24 L42 24 L44 32 L20 32 Z" fill="#FFFFFF"/>
-                            <path d="M12 50 L52 50 L56 58 L8 58 Z" fill="#EF4444"/>
-                        </svg>
+                    <div class="w-14 h-14 rounded-xl border border-gray-300 p-1 flex items-center justify-center bg-gray-50 shrink-0 overflow-hidden">
+                        @if($cLogoSrc)
+                            <img src="{{ $cLogoSrc }}" class="w-full h-full object-contain" alt="Logo">
+                        @else
+                            <span class="text-2xl select-none">🧱</span>
+                        @endif
                     </div>
                     <div>
                         <h2 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
@@ -325,12 +333,12 @@ Supported Layout Modes ($type):
             <!-- Header -->
             <div class="flex justify-between items-start border-b border-gray-300 pb-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center p-2 shrink-0 border border-red-100">
-                        <svg class="w-10 h-10 text-red-500" viewBox="0 0 64 64" fill="currentColor">
-                            <path d="M26 12 L38 12 L44 50 L20 50 Z" fill="#EF4444"/>
-                            <path d="M22 24 L42 24 L44 32 L20 32 Z" fill="#FFFFFF"/>
-                            <path d="M12 50 L52 50 L56 58 L8 58 Z" fill="#EF4444"/>
-                        </svg>
+                    <div class="w-14 h-14 rounded-xl border border-gray-300 p-1 flex items-center justify-center bg-gray-50 shrink-0 overflow-hidden">
+                        @if($cLogoSrc)
+                            <img src="{{ $cLogoSrc }}" class="w-full h-full object-contain" alt="Logo">
+                        @else
+                            <span class="text-2xl select-none">🧱</span>
+                        @endif
                     </div>
                     <div>
                         <h2 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>

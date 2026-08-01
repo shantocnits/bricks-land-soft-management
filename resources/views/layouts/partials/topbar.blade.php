@@ -100,7 +100,46 @@
     <div class="flex items-center space-x-2 md:space-x-4">
         
         <!-- Financial Year Dropdown -->
-        <div x-data="{ open: false, selected: 'হিসাবঃ ২৩-২৪' }" class="relative">
+        @php
+            if (!function_exists('toBnNumTop')) {
+                function toBnNumTop($num) {
+                    $eng = ['0','1','2','3','4','5','6','7','8','9'];
+                    $bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+                    return str_replace($eng, $bn, (string)$num);
+                }
+            }
+
+            $activeSeason = \App\Models\Setting::get('season', '২৫-২৬');
+            $currentYearTwoDigit = (int)date('y');
+            $allSeasons = [];
+            
+            for ($i = -3; $i <= -1; $i++) {
+                $y1 = sprintf('%02d', $currentYearTwoDigit + $i);
+                $y2 = sprintf('%02d', $currentYearTwoDigit + $i + 1);
+                $allSeasons[] = toBnNumTop($y1) . '-' . toBnNumTop($y2);
+            }
+            if (!in_array($activeSeason, $allSeasons)) {
+                array_unshift($allSeasons, $activeSeason);
+            }
+        @endphp
+        <div x-data="{ 
+            open: false, 
+            selected: 'হিসাবঃ {{ $activeSeason }}',
+            changeSeason(s) {
+                this.selected = 'হিসাবঃ ' + s;
+                this.open = false;
+                fetch('{{ route('update-season') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ season: s })
+                }).then(() => {
+                    window.location.reload();
+                });
+            }
+        }" class="relative">
             <button @click="open = !open" 
                     class="flex items-center justify-between space-x-2 px-4 py-1.5 bg-primary-50 dark:bg-primary-950/20 text-primary-900 dark:text-primary-300 font-semibold rounded-full text-xs border border-primary-200 dark:border-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-505/20 transition-all duration-150 cursor-pointer">
                 <span x-text="selected" class="font-sans"></span>
@@ -116,8 +155,12 @@
                  x-transition:enter-end="transform opacity-100 scale-100"
                  class="absolute left-0 mt-1.5 w-36 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 py-1 z-40 text-xs overflow-hidden"
                  x-cloak>
-                <button @click="selected = 'হিসাবঃ ২৩-২৪'; open = false" class="w-full text-left px-3.5 py-2 text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-950/10 hover:text-primary-dark dark:hover:text-primary-400 font-semibold transition-all font-sans">হিসাবঃ ২৩-২৪</button>
-                <button @click="selected = 'হিসাবঃ ২৪-২৫'; open = false" class="w-full text-left px-3.5 py-2 text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-950/10 hover:text-primary-dark dark:hover:text-primary-400 font-semibold transition-all font-sans">হিসাবঃ ২৪-২৫</button>
+                @foreach($allSeasons as $seasonItem)
+                    <button @click="changeSeason('{{ $seasonItem }}')" 
+                            class="w-full text-left px-3.5 py-2 text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-950/10 hover:text-primary-dark dark:hover:text-primary-400 font-semibold transition-all font-sans {{ $activeSeason === $seasonItem ? 'bg-primary-50 dark:bg-primary-950/20 text-emerald-700 dark:text-emerald-400 font-black' : '' }}">
+                        হিসাবঃ {{ $seasonItem }}
+                    </button>
+                @endforeach
             </div>
         </div>
 

@@ -23,25 +23,28 @@ if (!function_exists('toKhotianDateTimeParts')) {
                 $day = toBanglaNum($carbonDate->format('d'));
                 $formattedDate = toBanglaNum($carbonDate->format('d-m-y'));
             } catch (\Exception $ex) {
-                $day = toBanglaNum($createdAt ? $createdAt->format('d') : '');
-                $formattedDate = toBanglaNum($createdAt ? $createdAt->format('d-m-y') : '');
+                $day = toBanglaNum($createdAt ? \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Dhaka')->format('d') : '');
+                $formattedDate = toBanglaNum($createdAt ? \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Dhaka')->format('d-m-y') : '');
             }
         }
         
-        // Time slot calculation using created_at
+        // Time slot calculation using created_at with BD Asia/Dhaka timezone
         $timeStr = '';
         $part = 'সকাল';
         if ($createdAt) {
-            $hour = (int)$createdAt->format('H');
-            $timeStr = toBanglaNum($createdAt->format('h:i'));
+            $dtDhaka = \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Dhaka');
+            $hour = (int)$dtDhaka->format('H');
+            $timeStr = toBanglaNum($dtDhaka->format('h:i'));
             
-            if ($hour >= 12 && $hour < 15) {
+            if ($hour >= 5 && $hour < 12) {
+                $part = 'সকাল';
+            } elseif ($hour >= 12 && $hour < 15) {
                 $part = 'দুপুর';
             } elseif ($hour >= 15 && $hour < 18) {
                 $part = 'বিকাল';
             } elseif ($hour >= 18 && $hour < 20) {
                 $part = 'সন্ধ্যা';
-            } elseif ($hour >= 20 || $hour < 5) {
+            } else {
                 $part = 'রাত';
             }
         }

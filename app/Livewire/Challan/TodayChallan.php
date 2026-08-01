@@ -235,8 +235,12 @@
 
      public function getReportDataProperty()
      {
+         $activeSeason = Setting::get('season', '২৫-২৬');
          $challans = Challan::with('items')
              ->where('challan_type', 'আজকের')
+             ->where(function($q) use ($activeSeason) {
+                 $q->where('season', $activeSeason)->orWhereNull('season');
+             })
              ->whereDate('date', $this->date ?: now()->toDateString())
              ->get();
 
@@ -539,6 +543,7 @@
              'due' => $this->due,
              'send_sms' => $this->send_sms,
              'due_payment_date' => $this->due_payment_date ?: null,
+             'season' => Setting::get('season', '২৫-২৬'),
          ];
 
          if ($this->editingId) {
@@ -812,7 +817,11 @@
 
     public function render()
     {
+        $activeSeason = Setting::get('season', '২৫-২৬');
         $query = Challan::with('items')
+            ->where(function($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            })
             ->whereDate('date', $this->date ?: now()->toDateString());
 
         if ($this->search) {

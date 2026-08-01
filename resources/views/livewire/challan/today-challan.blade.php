@@ -832,9 +832,9 @@
                 $rangeLabel = \Carbon\Carbon::parse($date ?: now())->format('d-m-Y');
             @endphp
 
-            <div class="print-page">
+            <div id="today-challan-print-area" class="print-page">
                 <!-- Company Header -->
-                <div class="print-header">
+                <div class="print-header text-center">
                     <h1 class="print-company">{{ \App\Models\Setting::get('company_name_bn', 'ডেমো ব্রিকস') }}</h1>
                     <p class="print-sub">{{ \App\Models\Setting::get('address', 'হিলালীপাড়া, কাটাবাড়ি, গোবিন্দগঞ্জ') }}</p>
                     <p class="print-sub">{{ \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901, 01901349906') }}</p>
@@ -843,7 +843,7 @@
 
                 <!-- Report Meta Row -->
                 <div class="print-meta-row">
-                    <span class="print-meta-date">তারিখ: {{ $rangeLabel }} | ২৫-২৬</span>
+                    <span class="print-meta-date">তারিখ: {{ $rangeLabel }} | {{ \App\Models\Setting::get('season', '২৫-২৬') }}</span>
                     <span class="print-meta-title">দৈনিক চালান তালিকা</span>
                     <span class="print-meta-total">মোট চালান: {{ $printChallans->count() }}</span>
                 </div>

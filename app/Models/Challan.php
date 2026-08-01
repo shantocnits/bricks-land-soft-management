@@ -7,10 +7,24 @@ use Illuminate\Database\Eloquent\Model;
 class Challan extends Model
 {
     protected $fillable = [
-        'customer_type', 'customer_phone', 'customer_name', 'customer_address',
-        'challan_no', 'date', 'challan_type', 'notes',
-        'value', 'total_value', 'rent', 'transport_rent', 'discount',
-        'grand_total', 'cash', 'due', 'send_sms', 'due_payment_date'
+        'customer_type',
+        'customer_phone',
+        'customer_name',
+        'customer_address',
+        'challan_no',
+        'date',
+        'challan_type',
+        'notes',
+        'value',
+        'total_value',
+        'rent',
+        'transport_rent',
+        'discount',
+        'grand_total',
+        'cash',
+        'due',
+        'send_sms',
+        'due_payment_date'
     ];
 
     protected $casts = [

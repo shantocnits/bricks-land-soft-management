@@ -24,6 +24,14 @@ Used In Pages:
     $companyPhone = \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901,01901349906');
     $proprietor = \App\Models\Setting::get('owner_name', 'মোঃ মানিক মিয়া');
 
+    $mLogoSetting = \App\Models\Setting::get('logo_url') ?: \App\Models\Setting::get('company_logo');
+    $mLogoSrc = null;
+    if ($mLogoSetting && file_exists(public_path('storage/' . $mLogoSetting))) {
+        $mLogoSrc = asset('storage/' . $mLogoSetting);
+    } elseif (file_exists(public_path('assets/logo.png'))) {
+        $mLogoSrc = asset('assets/logo.png');
+    }
+
     $latestDelivery = null;
     if ($printChallan) {
         $latestDelivery = \App\Models\Delivery::where('challan_id', $printChallan->id)->latest()->first();
@@ -101,12 +109,12 @@ Used In Pages:
                 <div class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 text-gray-900 space-y-6 shadow-xl max-w-3xl mx-auto font-sans">
                     <div class="flex justify-between items-start border-b border-gray-200 pb-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center p-2 shrink-0 border border-red-100">
-                                <svg class="w-10 h-10 text-red-500" viewBox="0 0 64 64" fill="currentColor">
-                                    <path d="M26 12 L38 12 L44 50 L20 50 Z" fill="#EF4444" />
-                                    <path d="M22 24 L42 24 L44 32 L20 32 Z" fill="#FFFFFF" />
-                                    <path d="M12 50 L52 50 L56 58 L8 58 Z" fill="#EF4444" />
-                                </svg>
+                            <div class="w-14 h-14 rounded-xl border border-gray-300 p-1 flex items-center justify-center bg-gray-50 shrink-0 overflow-hidden">
+                                @if($mLogoSrc)
+                                    <img src="{{ $mLogoSrc }}" class="w-full h-full object-contain" alt="Logo">
+                                @else
+                                    <span class="text-2xl select-none">🧱</span>
+                                @endif
                             </div>
                             <div>
                                 <h2 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
@@ -194,12 +202,12 @@ Used In Pages:
                 <div class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 text-gray-900 space-y-6 shadow-xl max-w-3xl mx-auto font-sans">
                     <div class="flex justify-between items-start border-b border-gray-200 pb-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center p-2 shrink-0 border border-red-100">
-                                <svg class="w-10 h-10 text-red-500" viewBox="0 0 64 64" fill="currentColor">
-                                    <path d="M26 12 L38 12 L44 50 L20 50 Z" fill="#EF4444" />
-                                    <path d="M22 24 L42 24 L44 32 L20 32 Z" fill="#FFFFFF" />
-                                    <path d="M12 50 L52 50 L56 58 L8 58 Z" fill="#EF4444" />
-                                </svg>
+                            <div class="w-14 h-14 rounded-xl border border-gray-300 p-1 flex items-center justify-center bg-gray-50 shrink-0 overflow-hidden">
+                                @if($mLogoSrc)
+                                    <img src="{{ $mLogoSrc }}" class="w-full h-full object-contain" alt="Logo">
+                                @else
+                                    <span class="text-2xl select-none">🧱</span>
+                                @endif
                             </div>
                             <div>
                                 <h2 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
@@ -325,12 +333,12 @@ Used In Pages:
                 <!-- Header -->
                 <div class="flex justify-between items-start border-b border-gray-300 pb-3">
                     <div class="flex items-center gap-3">
-                        <div class="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center p-2 shrink-0 border border-red-100">
-                            <svg class="w-10 h-10 text-red-500" viewBox="0 0 64 64" fill="currentColor">
-                                <path d="M26 12 L38 12 L44 50 L20 50 Z" fill="#EF4444" />
-                                <path d="M22 24 L42 24 L44 32 L20 32 Z" fill="#FFFFFF" />
-                                <path d="M12 50 L52 50 L56 58 L8 58 Z" fill="#EF4444" />
-                            </svg>
+                        <div class="w-14 h-14 rounded-xl border border-gray-300 p-1 flex items-center justify-center bg-gray-50 shrink-0 overflow-hidden">
+                            @if($mLogoSrc)
+                                <img src="{{ $mLogoSrc }}" class="w-full h-full object-contain" alt="Logo">
+                            @else
+                                <span class="text-2xl select-none">🧱</span>
+                            @endif
                         </div>
                         <div>
                             <h2 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
@@ -448,12 +456,12 @@ Used In Pages:
                     <div class="pr-6 space-y-4">
                         <div class="flex justify-between items-start border-b border-gray-300 pb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center p-1 shrink-0 border border-red-100">
-                                    <svg class="w-7 h-7 text-red-500" viewBox="0 0 64 64" fill="currentColor">
-                                        <path d="M26 12 L38 12 L44 50 L20 50 Z" fill="#EF4444" />
-                                        <path d="M22 24 L42 24 L44 32 L20 32 Z" fill="#FFFFFF" />
-                                        <path d="M12 50 L52 50 L56 58 L8 58 Z" fill="#EF4444" />
-                                    </svg>
+                                <div class="w-10 h-10 rounded-lg border border-gray-300 p-1 flex items-center justify-center bg-gray-50 shrink-0 overflow-hidden">
+                                    @if($mLogoSrc)
+                                        <img src="{{ $mLogoSrc }}" class="w-full h-full object-contain" alt="Logo">
+                                    @else
+                                        <span class="text-xl select-none">🧱</span>
+                                    @endif
                                 </div>
                                 <div>
                                     <h2 class="text-lg font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
@@ -516,12 +524,12 @@ Used In Pages:
                     <div class="pl-6 space-y-4">
                         <div class="flex justify-between items-start border-b border-gray-300 pb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center p-1 shrink-0 border border-red-100">
-                                    <svg class="w-7 h-7 text-red-500" viewBox="0 0 64 64" fill="currentColor">
-                                        <path d="M26 12 L38 12 L44 50 L20 50 Z" fill="#EF4444" />
-                                        <path d="M22 24 L42 24 L44 32 L20 32 Z" fill="#FFFFFF" />
-                                        <path d="M12 50 L52 50 L56 58 L8 58 Z" fill="#EF4444" />
-                                    </svg>
+                                <div class="w-10 h-10 rounded-lg border border-gray-300 p-1 flex items-center justify-center bg-gray-50 shrink-0 overflow-hidden">
+                                    @if($mLogoSrc)
+                                        <img src="{{ $mLogoSrc }}" class="w-full h-full object-contain" alt="Logo">
+                                    @else
+                                        <span class="text-xl select-none">🧱</span>
+                                    @endif
                                 </div>
                                 <div>
                                     <h2 class="text-lg font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>

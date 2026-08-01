@@ -51,7 +51,7 @@ if (!function_exists('toBanglaNum')) {
                             <td class="py-3 px-4 border-r border-gray-150 dark:border-slate-800 text-center">
                                 <div class="inline-flex flex-col items-center justify-center p-2.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/40 rounded-2xl w-full">
                                     <span class="text-lg font-black">{{ toBanglaNum($c['id']) }}</span>
-                                    <span class="text-[9px] font-bold mt-1 text-emerald-700/80 dark:text-emerald-400/80 whitespace-nowrap">সিজন-{{ toBanglaNum('২৫-২৬') }}</span>
+                                    <span class="text-[9px] font-bold mt-1 text-emerald-700/80 dark:text-emerald-400/80 whitespace-nowrap">সিজন-{{ \App\Models\Setting::get('season', '২৫-২৬') }}</span>
                                 </div>
                             </td>
 
@@ -207,7 +207,7 @@ if (!function_exists('toBanglaNum')) {
                             <p class="text-[10px] text-gray-500 font-mono mt-0.5">{{ toBanglaNum($c['phone']) ?: '—' }}</p>
                         </div>
                     </div>
-                    <span class="text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-lg border border-emerald-100 dark:border-emerald-900/40">সিজন-{{ toBanglaNum('২৫-২৬') }}</span>
+                    <span class="text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-lg border border-emerald-100 dark:border-emerald-900/40">সিজন-{{ \App\Models\Setting::get('season', '২৫-২৬') }}</span>
                 </div>
 
                 {{-- Address detail --}}

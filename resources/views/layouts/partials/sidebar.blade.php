@@ -30,9 +30,22 @@
     
     <!-- Logo Area -->
     <div class="flex items-center px-4 h-16 bg-primary-sidebar-dark border-b border-primary-800 flex-shrink-0 gap-[10px]">
-        <!-- Brick Logo Icon (Same as navbar) -->
-        <div class="flex-shrink-0 p-2 bg-white rounded-lg shadow-md flex items-center justify-center h-10 w-10">
-            <span class="text-xl select-none leading-none">🧱</span>
+        <!-- Dynamic Company Logo -->
+        <div class="flex-shrink-0 p-1.5 bg-white rounded-lg shadow-md flex items-center justify-center h-10 w-10 overflow-hidden">
+            @php
+                $sLogoSetting = \App\Models\Setting::get('logo_url') ?: \App\Models\Setting::get('company_logo');
+                $sLogoSrc = null;
+                if ($sLogoSetting && file_exists(public_path('storage/' . $sLogoSetting))) {
+                    $sLogoSrc = asset('storage/' . $sLogoSetting);
+                } elseif (file_exists(public_path('assets/logo.png'))) {
+                    $sLogoSrc = asset('assets/logo.png');
+                }
+            @endphp
+            @if($sLogoSrc)
+                <img src="{{ $sLogoSrc }}" class="h-full w-full object-contain" alt="Logo">
+            @else
+                <span class="text-xl select-none leading-none">🧱</span>
+            @endif
         </div>
         <div class="transition-all duration-300 overflow-hidden whitespace-nowrap flex-grow flex items-center" :class="{ 'opacity-100 max-w-full block': sidebarOpen, 'opacity-0 max-w-0 hidden': !sidebarOpen }">
             <div>

@@ -18,7 +18,8 @@ class Payment extends Model
         'payment',
         'purchase_receive',
         'doc_url',
-        'has_doc'
+        'has_doc',
+        'season'
     ];
 
     protected $casts = [

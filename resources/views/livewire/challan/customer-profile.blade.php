@@ -126,7 +126,7 @@
             <!-- Stat 9 -->
             <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
                 <span class="block text-xs font-bold text-gray-400">সিজন</span>
-                <span class="block text-sm font-black text-gray-800 dark:text-white mt-1">২৫-২৬</span>
+                <span class="block text-sm font-black text-gray-800 dark:text-white mt-1">{{ \App\Models\Setting::get('season', '২৫-২৬') }}</span>
             </div>
         </div>
 
@@ -410,7 +410,7 @@
                     <p class="text-gray-600 font-semibold">আইডি: {{ $printChallans->first() ? $printChallans->first()->id : '১২' }}</p>
                 </div>
                 <div class="text-right space-y-0.5 font-bold text-gray-800 text-[11px]">
-                    <p class="font-black text-gray-900 text-sm">সিজন: ২৫-২৬</p>
+                    <p class="font-black text-gray-900 text-sm">সিজন: {{ \App\Models\Setting::get('season', '২৫-২৬') }}</p>
                     <p class="font-normal text-gray-600">প্রিন্ট তারিখ: {{ now()->format('d-m-Y') }}</p>
                     <p class="font-normal text-gray-600">সময়: {{ now()->format('h:i:s a') }}</p>
                 </div>
