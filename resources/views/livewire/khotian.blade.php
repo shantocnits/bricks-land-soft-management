@@ -163,7 +163,7 @@ if (!function_exists('toKhotianDateTimeParts')) {
                     </div>
                 </div>
 
-                <button type="button" onclick="window.print()"
+                <button type="button" onclick="printChallanArea('khotian-print-area')"
                         class="px-4 py-2 bg-[#034C3C] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
@@ -311,6 +311,31 @@ if (!function_exists('toKhotianDateTimeParts')) {
                     </div>
                 </div>
             </div>
+        </div>
+    @endif
+
+    <!-- ========================================== -->
+    <!-- KHOTIAN STATEMENT PRINT LAYOUT COMPONENT   -->
+    <!-- ========================================== -->
+    @if(isset($isDetail) && $isDetail)
+        @php
+            $printKhotianPayments = isset($allPayments) ? $allPayments : $payments;
+            $ledgerModel = \App\Models\Ledger::where('name', $selectedLedger)->first();
+            $ledgerGroup = $ledgerModel ? $ledgerModel->group : 'অন্যান্য';
+        @endphp
+
+        <div id="khotian-print-area" class="hidden print:block bg-white text-gray-900 font-sans p-4 sm:p-8">
+            <x-print-layout 
+                type="khotian-statement"
+                :payments="$printKhotianPayments"
+                :selectedLedger="$selectedLedger"
+                :ledgerGroup="$ledgerGroup"
+                :totalQty="$totalQty ?? 0"
+                :totalBill="$totalBill ?? 0"
+                :totalAdvance="$totalAdvance ?? 0"
+                :totalDeduction="$totalDeduction ?? 0"
+                :totalPayment="$totalPayment ?? 0"
+            />
         </div>
     @endif
 </div>

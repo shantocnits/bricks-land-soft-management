@@ -18,6 +18,14 @@ Supported Layout Modes ($type):
     'challan' => null,
     'title' => 'চালান কপি',
     'isDelivery' => false,
+    'payments' => null,
+    'selectedLedger' => '',
+    'ledgerGroup' => '',
+    'totalQty' => 0,
+    'totalBill' => 0,
+    'totalAdvance' => 0,
+    'totalDeduction' => 0,
+    'totalPayment' => 0,
 ])
 
 @php
@@ -597,6 +605,153 @@ Supported Layout Modes ($type):
                 <p class="font-bold text-gray-800">চালান/রশিদ ছাড়া লেনদেন করবেন না</p>
                 <p class="text-gray-400 font-mono text-[9px]">Software By - CODENEXTIT.COM</p>
             </div>
+            </div>
+        </div>
+
+    {{-- ======================================================================= --}}
+    {{-- 📄 MODE 6: KHOTIAN STATEMENT REPORT PRINT LAYOUT                        --}}
+    {{--    (খতিয়ান পেজের পেমেন্ট স্টেটমেন্ট কাস্টম এ৪ পোট্রেট প্রিন্ট লেআউট)      --}}
+    {{-- ======================================================================= --}}
+    @elseif($type === 'khotian-statement')
+        @php
+            $printKhotianPayments = $payments ?: [];
+            $seasonVal = \App\Models\Setting::get('season', '২৫-২৬');
+            $companyNameVal = \App\Models\Setting::get('company_name_bn', 'ডেমো ব্রিকস');
+            $companyAddressVal = \App\Models\Setting::get('address', 'হিলালীপাড়া,কাটাবাড়ি,গোবیندগঞ্জ');
+            $ownerPhonesVal = \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901, 01901349906');
+            $ownerPhonesBn = function_exists('toBanglaNum') ? toBanglaNum($ownerPhonesVal) : $ownerPhonesVal;
+            $ownerNameVal = \App\Models\Setting::get('owner_name', 'মোঃ মানিক মিয়া');
+            $formattedPrintDate = function_exists('toBanglaNum') ? toBanglaNum(now()->format('d-m-Y')) : now()->format('d-m-Y');
+            $formattedPrintTime = function_exists('toBanglaNum') ? toBanglaNum(now()->format('d-m-Y h:i a')) : now()->format('d-m-Y h:i a');
+
+            $printTotalQty = $totalQty ?? 0;
+            $printTotalBill = $totalBill ?? 0;
+            $printTotalAdvance = $totalAdvance ?? 0;
+            $printTotalDeduction = $totalDeduction ?? 0;
+            $printTotalPayment = $totalPayment ?? 0;
+            $printDueBalance = $printTotalBill - $printTotalDeduction - $printTotalPayment;
+        @endphp
+
+        <div id="khotian-statement-print-wrapper" class="bg-white text-gray-900 font-sans p-2 sm:p-4">
+            <!-- Document Wrapper -->
+            <div class="max-w-4xl mx-auto space-y-4">
+
+                <!-- Header Section: Logo + Company Info & Report Title -->
+                <div class="flex items-start justify-between border-b-2 border-gray-900 pb-3">
+                    <!-- Left: Logo & Company Info -->
+                    <div class="flex items-start gap-3">
+                        <div class="w-14 h-14 rounded-xl border border-gray-400 p-1 flex items-center justify-center bg-gray-50 flex-shrink-0 overflow-hidden">
+                            @if(isset($cLogoSrc) && $cLogoSrc)
+                                <img src="{{ $cLogoSrc }}" class="w-full h-full object-contain" alt="Logo">
+                            @else
+                                <div class="flex items-center justify-center text-center leading-none">
+                                    <span class="text-2xl select-none">🧱</span>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="space-y-0.5">
+                            <h1 class="text-xl font-black text-emerald-700 tracking-tight leading-none">{{ $companyNameVal }}</h1>
+                            <p class="text-xs text-gray-700 font-bold leading-tight">{{ $companyAddressVal }}</p>
+                            <p class="text-xs text-gray-700 font-bold leading-tight">{{ $ownerPhonesBn }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Title Badge, Ledger, Season & Print Date -->
+                    <div class="text-right space-y-1">
+                        <span class="inline-block bg-emerald-100 text-emerald-800 text-sm font-black px-3 py-0.5 rounded-full border border-emerald-300">
+                            স্টেটমেন্ট
+                        </span>
+                        <p class="text-xs font-bold text-gray-700">প্রিন্ট তারিখঃ {{ $formattedPrintDate }}</p>
+                        <p class="text-xs font-black text-gray-900">{{ $selectedLedger }} ({{ $ledgerGroup ?: 'অন্যান্য' }})</p>
+                        <p class="text-xs font-bold text-gray-700">সিজনঃ {{ $seasonVal }} ({{ $ledgerGroup ?: 'অন্যান্য' }})</p>
+                        <p class="text-[11px] font-bold text-gray-700">
+                            পরিমাণঃ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalQty)) : number_format($printTotalQty) }}, মোট পেমেন্টঃ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalPayment)) : number_format($printTotalPayment) }} টাকা
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Sub-header Full Width Summary Bar -->
+                <div class="bg-gray-100/90 border border-gray-300 rounded-lg py-1.5 px-4 text-center text-xs font-black text-gray-900 tracking-wide">
+                    মোট পেমেন্ট {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalPayment)) : number_format($printTotalPayment) }} টাকা, মোট বিল {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalBill)) : number_format($printTotalBill) }} টাকা, বাকিঃ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($printDueBalance)) : number_format($printDueBalance) }} টাকা
+                </div>
+
+                <!-- Khotian Data Table -->
+                <table class="w-full text-xs border-collapse border border-gray-400 font-sans">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-900 font-bold border-b border-gray-400">
+                            <th class="py-2 px-2 border-r border-gray-400 text-center w-8">নং</th>
+                            <th class="py-2 px-3 border-r border-gray-400 text-left w-24">তারিখ</th>
+                            <th class="py-2 px-3 border-r border-gray-400 text-left">বিবরণ</th>
+                            <th class="py-2 px-3 border-r border-gray-400 text-right w-16">পরিমাণ</th>
+                            <th class="py-2 px-3 border-r border-gray-400 text-right w-14">রেট</th>
+                            <th class="py-2 px-3 border-r border-gray-400 text-right w-20">বিল</th>
+                            <th class="py-2 px-3 border-r border-gray-400 text-right w-16">অগ্রিম</th>
+                            <th class="py-2 px-3 border-r border-gray-400 text-right w-16">কর্তন</th>
+                            <th class="py-2 px-3 border-r border-gray-400 text-right w-20">পেমেন্ট</th>
+                            <th class="py-2 px-3 text-right w-16">কম/বেশি</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-300">
+                        @forelse($printKhotianPayments as $index => $pay)
+                            @php
+                                $qty = floatval(is_object($pay) ? $pay->qty : ($pay['qty'] ?? 0));
+                                $rate = floatval(is_object($pay) ? $pay->rate : ($pay['rate'] ?? 0));
+                                $total = floatval(is_object($pay) ? $pay->total : ($pay['total'] ?? 0));
+                                $advance = floatval(is_object($pay) ? $pay->advance : ($pay['advance'] ?? 0));
+                                $deduction = floatval(is_object($pay) ? $pay->deduction : ($pay['deduction'] ?? 0));
+                                $payment = floatval(is_object($pay) ? $pay->payment : ($pay['payment'] ?? 0));
+                                $purchaseRec = floatval(is_object($pay) ? $pay->purchase_receive : ($pay['purchase_receive'] ?? 0));
+
+                                $dateVal = is_object($pay) ? $pay->date : ($pay['date'] ?? '');
+                                $createdVal = is_object($pay) ? $pay->created_at : ($pay['created_at'] ?? null);
+                                $dt = function_exists('toKhotianDateTimeParts') ? toKhotianDateTimeParts($dateVal, $createdVal) : ['formattedDate' => $dateVal];
+                            @endphp
+                            <tr class="hover:bg-gray-50 border-b border-gray-300">
+                                <td class="py-1.5 px-2 border-r border-gray-400 text-center font-semibold">{{ function_exists('toBanglaNum') ? toBanglaNum($index + 1) : ($index + 1) }}</td>
+                                <td class="py-1.5 px-3 border-r border-gray-400 font-semibold text-gray-800">{{ $dt['formattedDate'] }}</td>
+                                <td class="py-1.5 px-3 border-r border-gray-400 font-semibold text-gray-800 whitespace-pre-wrap">{{ is_object($pay) ? $pay->desc : ($pay['desc'] ?? '-') }}</td>
+                                <td class="py-1.5 px-3 border-r border-gray-400 text-right font-mono font-semibold">{{ $qty > 0 ? (function_exists('toBanglaNum') ? toBanglaNum(number_format($qty)) : number_format($qty)) : '-' }}</td>
+                                <td class="py-1.5 px-3 border-r border-gray-400 text-right font-mono font-semibold">{{ $rate > 0 ? (function_exists('toBanglaNum') ? toBanglaNum(number_format($rate)) : number_format($rate)) : '-' }}</td>
+                                <td class="py-1.5 px-3 border-r border-gray-400 text-right font-mono font-semibold">{{ $total > 0 ? '৳' . (function_exists('toBanglaNum') ? toBanglaNum(number_format($total)) : number_format($total)) : '-' }}</td>
+                                <td class="py-1.5 px-3 border-r border-gray-400 text-right font-mono font-semibold">{{ $advance > 0 ? '৳' . (function_exists('toBanglaNum') ? toBanglaNum(number_format($advance)) : number_format($advance)) : '-' }}</td>
+                                <td class="py-1.5 px-3 border-r border-gray-400 text-right font-mono font-semibold">{{ $deduction > 0 ? '৳' . (function_exists('toBanglaNum') ? toBanglaNum(number_format($deduction)) : number_format($deduction)) : '-' }}</td>
+                                <td class="py-1.5 px-3 border-r border-gray-400 text-right font-mono font-bold text-gray-900">{{ $payment > 0 ? '৳' . (function_exists('toBanglaNum') ? toBanglaNum(number_format($payment)) : number_format($payment)) : '৳০' }}</td>
+                                <td class="py-1.5 px-3 text-right font-mono font-semibold text-gray-800">{{ $purchaseRec > 0 ? '৳' . (function_exists('toBanglaNum') ? toBanglaNum(number_format($purchaseRec)) : number_format($purchaseRec)) : '-' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" class="py-8 text-center text-gray-500 font-semibold">এই খতিয়ানে কোনো বিবরণ পাওয়া যায়নি।</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-gray-50 border-t border-gray-400 font-bold text-xs">
+                            <td colspan="3" class="py-2 px-3 text-right border-r border-gray-400 font-black">সর্বমোট:</td>
+                            <td class="py-2 px-3 border-r border-gray-400 text-right font-mono font-black">{{ $printTotalQty > 0 ? (function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalQty)) : number_format($printTotalQty)) : '-' }}</td>
+                            <td class="py-2 px-3 border-r border-gray-400 text-right font-mono font-black">-</td>
+                            <td class="py-2 px-3 border-r border-gray-400 text-right font-mono font-black">{{ $printTotalBill > 0 ? '৳' . (function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalBill)) : number_format($printTotalBill)) : '-' }}</td>
+                            <td class="py-2 px-3 border-r border-gray-400 text-right font-mono font-black">{{ $printTotalAdvance > 0 ? '৳' . (function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalAdvance)) : number_format($printTotalAdvance)) : '-' }}</td>
+                            <td class="py-2 px-3 border-r border-gray-400 text-right font-mono font-black">{{ $printTotalDeduction > 0 ? '৳' . (function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalDeduction)) : number_format($printTotalDeduction)) : '-' }}</td>
+                            <td class="py-2 px-3 border-r border-gray-400 text-right font-mono font-black">{{ $printTotalPayment > 0 ? '৳' . (function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalPayment)) : number_format($printTotalPayment)) : '-' }}</td>
+                            <td class="py-2 px-3 text-right font-mono font-black">-</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <!-- Signatures Row (Avoid page break split) -->
+                <div class="pt-16 pb-6 flex items-center justify-between font-bold text-xs text-gray-900" style="page-break-inside: avoid; break-inside: avoid;">
+                    <div class="text-center w-40">
+                        <div class="border-t border-gray-900 pt-1.5 font-bold">ক্যাশিয়ার</div>
+                    </div>
+                    <div class="text-center w-40">
+                        <div class="border-t border-gray-900 pt-1.5 font-bold">মালিক</div>
+                    </div>
+                </div>
+
+                <!-- Footer Info -->
+                <div class="pt-3 border-t border-gray-200 text-center text-[10px] text-gray-500 font-semibold" style="page-break-inside: avoid; break-inside: avoid;">
+                    রিপোর্ট প্রিন্ট: {{ $formattedPrintTime }} | Software by: CODENEXTIT.COM
+                </div>
             </div>
         </div>
 

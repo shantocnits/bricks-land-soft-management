@@ -79,6 +79,8 @@ class Khotian extends Component
             $totalQty = $allFilteredPayments->sum('qty');
             $totalBill = $allFilteredPayments->sum('total');
 
+            $totalDeduction = $allFilteredPayments->sum('deduction');
+
             // Paginated list
             if ($isSqlite) {
                 $query->orderByRaw("substr(date, 7, 4) || '-' || substr(date, 4, 2) || '-' || substr(date, 1, 2) DESC");
@@ -91,15 +93,21 @@ class Khotian extends Component
             return view('livewire.khotian', [
                 'isDetail' => true,
                 'payments' => $payments,
+                'allPayments' => $allFilteredPayments,
                 'totalAdvance' => $totalAdvance,
                 'totalPayment' => $totalPayment,
                 'totalQty' => $totalQty,
                 'totalBill' => $totalBill,
+                'totalDeduction' => $totalDeduction,
                 'count' => $allFilteredPayments->count()
             ])->layout('layouts.app');
         } else {
             // View 1: Group Box Dashboard
             $query = Payment::select('ledger', DB::raw('SUM(payment) as total_payment'))
+                ->where(function ($q) use ($activeSeason) {
+                    $q->where('season', $activeSeason)
+                      ->orWhereNull('season');
+                })
                 ->groupBy('ledger');
 
             if (!empty($this->search)) {
