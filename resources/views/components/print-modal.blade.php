@@ -14,11 +14,16 @@ Used In Pages:
 @props([
     'showPrintModal' => false,
     'printChallan' => null,
+    'printDelivery' => null,
     'isDeliveryPrint' => false,
 ])
 
-@if($showPrintModal && $printChallan)
+@if($showPrintModal && ($printChallan || $printDelivery))
 @php
+    if (!$printChallan && isset($printDelivery) && $printDelivery && $printDelivery->challan) {
+        $printChallan = $printDelivery->challan;
+    }
+    
     $companyName = \App\Models\Setting::get('company_name_bn', 'ডেমো ব্রিকস');
     $companyAddress = \App\Models\Setting::get('address', 'হিলালীপাড়া,কাটাবাড়ি,গোবیندগঞ্জ');
     $companyPhone = \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901,01901349906');
@@ -33,14 +38,37 @@ Used In Pages:
     }
 
     $latestDelivery = null;
-    if ($printChallan) {
+    if (isset($printDelivery) && $printDelivery) {
+        $latestDelivery = $printDelivery;
+    } elseif ($printChallan) {
         $latestDelivery = \App\Models\Delivery::where('challan_id', $printChallan->id)->latest()->first();
     }
+
     $driverName = ($latestDelivery && $latestDelivery->driver_name) ? $latestDelivery->driver_name : '—';
     $driverPhone = ($latestDelivery && $latestDelivery->driver_phone) ? $latestDelivery->driver_phone : '—';
     $vehicleNo = ($latestDelivery && $latestDelivery->vehicle_no) ? $latestDelivery->vehicle_no : '—';
     $vehicleRent = $latestDelivery ? $latestDelivery->vehicle_rent : ($printChallan->transport_rent ?: 0);
     $deliveryNo = $latestDelivery ? $latestDelivery->delivery_no : '১';
+
+    $delTimeObj = ($latestDelivery && $latestDelivery->created_at) 
+        ? \Carbon\Carbon::parse($latestDelivery->created_at)->setTimezone('Asia/Dhaka') 
+        : now('Asia/Dhaka');
+    
+    $hour = (int)$delTimeObj->format('G');
+    if ($hour >= 4 && $hour < 12) {
+        $timePrefix = 'সকাল';
+    } elseif ($hour >= 12 && $hour < 15) {
+        $timePrefix = 'দুপুর';
+    } elseif ($hour >= 15 && $hour < 18) {
+        $timePrefix = 'বিকেল';
+    } elseif ($hour >= 18 && $hour < 20) {
+        $timePrefix = 'সন্ধ্যা';
+    } else {
+        $timePrefix = 'রাত';
+    }
+    
+    $delFormattedTime = $timePrefix . ' ' . $delTimeObj->format('h:i');
+    $printNowFormatted = now('Asia/Dhaka')->format('d-m-Y h:i A');
 @endphp
 
 <!-- Modal Overlay Box -->
@@ -126,14 +154,14 @@ Used In Pages:
                         <div class="text-right space-y-1">
                             <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wider font-mono">DELIVERY</h1>
                             <p class="text-xs font-semibold text-gray-500">গ্রাহক ডেলিভারি কপি</p>
-                            <p class="text-[11px] text-gray-400 font-mono">প্রিন্ট: {{ now()->format('d-m-Y h:i A') }}</p>
+                            <p class="text-[11px] text-gray-400 font-mono">প্রিন্ট: {{ $printNowFormatted }}</p>
                         </div>
                     </div>
 
                     <div class="flex justify-between items-start text-xs bg-gray-50 p-4 rounded-xl border border-gray-200">
                         <div class="space-y-1.5">
                             <p class="text-gray-700"><span class="font-bold text-gray-900">কাস্টমার আইডি:</span> {{ $printChallan->ledger_id ?: $printChallan->id }}</p>
-                            <p class="text-gray-700"><span class="font-bold text-gray-900">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল: h:i') : now()->format('h:i') }}</p>
+                            <p class="text-gray-700"><span class="font-bold text-gray-900">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $delFormattedTime }}</p>
                             <p class="text-gray-700"><span class="font-bold text-gray-900">ইস্যু করেছে:</span> Demo</p>
                         </div>
                         <div class="text-right space-y-1 pl-4 border-r-4 border-black pr-2">
@@ -163,7 +191,7 @@ Used In Pages:
                                         <td class="p-3 text-left font-semibold text-gray-800">{{ $item->category_name }}</td>
                                         <td class="p-3 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td>
                                         <td class="p-3 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td>
-                                        <td class="p-3 text-center font-mono">{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</td>
+                                        <td class="p-3 text-center font-mono">{{ $delFormattedTime }}</td>
                                     </tr>
                                 @empty
                                     <tr><td colspan="6" class="p-4 text-center text-gray-400">কোনো ডেলিভারি তথ্য পাওয়া যায়নি</td></tr>
@@ -350,7 +378,7 @@ Used In Pages:
                     <div class="text-right space-y-1">
                         <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wider font-mono">DELIVERY</h1>
                         <p class="text-xs font-semibold text-gray-500">গ্রাহক ডেলিভারি কপি</p>
-                        <p class="text-[11px] text-gray-500 font-mono">প্রিন্ট: {{ now()->format('d-m-Y h:i') }}</p>
+                        <p class="text-[11px] text-gray-500 font-mono">প্রিন্ট: {{ $printNowFormatted }}</p>
                     </div>
                 </div>
 
@@ -358,7 +386,7 @@ Used In Pages:
                 <div class="flex justify-between items-start text-xs bg-gray-50/80 p-3.5 rounded-xl border border-gray-200">
                     <div class="space-y-1.5">
                         <p class="text-gray-800"><span class="font-bold">কাস্টমার আইডি:</span> {{ $printChallan->ledger_id ?: $printChallan->id }}</p>
-                        <p class="text-gray-800"><span class="font-bold">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল: h:i') : now()->format('h:i') }}</p>
+                        <p class="text-gray-800"><span class="font-bold">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $delFormattedTime }}</p>
                         <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> Demo</p>
                     </div>
                     <div class="text-right space-y-1 pl-4 border-r-4 border-black pr-2">
@@ -389,7 +417,7 @@ Used In Pages:
                                     <td class="p-2.5 text-left font-semibold text-gray-900">{{ $item->category_name }}</td>
                                     <td class="p-2.5 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td>
                                     <td class="p-2.5 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td>
-                                    <td class="p-2.5 text-center font-mono">{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</td>
+                                    <td class="p-2.5 text-center font-mono">{{ $delFormattedTime }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="6" class="p-3 text-center text-gray-400">কোনো ডেলিভারি তথ্য পাওয়া যায়নি</td></tr>
@@ -473,14 +501,14 @@ Used In Pages:
                             <div class="text-right space-y-0.5">
                                 <h1 class="text-xl font-black text-gray-900 uppercase font-mono">DELIVERY</h1>
                                 <p class="text-[10px] font-semibold text-gray-500">গ্রাহক ডেলিভারি কপি</p>
-                                <p class="text-[9px] text-gray-500 font-mono">প্রিন্ট: {{ now()->format('d-m-Y h:i') }}</p>
+                                <p class="text-[9px] text-gray-500 font-mono">প্রিন্ট: {{ $printNowFormatted }}</p>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-start text-[11px] bg-gray-50 p-2 rounded-lg border border-gray-200">
                             <div class="space-y-1">
                                 <p class="text-gray-800"><span class="font-bold">কাস্টমার আইডি:</span> {{ $printChallan->ledger_id ?: $printChallan->id }}</p>
-                                <p class="text-gray-800"><span class="font-bold">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল: h:i') : now()->format('h:i') }}</p>
+                                <p class="text-gray-800"><span class="font-bold">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $delFormattedTime }}</p>
                                 <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> Demo</p>
                             </div>
                             <div class="text-right space-y-0.5 pl-3 border-r-4 border-black pr-1.5">
@@ -496,7 +524,7 @@ Used In Pages:
                             </thead>
                             <tbody class="divide-y divide-gray-200 font-sans">
                                 @foreach($printChallan->items as $idx => $item)
-                                    <tr><td class="p-1.5 text-center font-mono font-bold">{{ $idx + 1 }}</td><td class="p-1.5 text-center font-mono font-bold">{{ $printChallan->challan_no }}</td><td class="p-1.5 text-left font-semibold">{{ $item->category_name }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td><td class="p-1.5 text-center font-mono text-[10px]">{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</td></tr>
+                                    <tr><td class="p-1.5 text-center font-mono font-bold">{{ $idx + 1 }}</td><td class="p-1.5 text-center font-mono font-bold">{{ $printChallan->challan_no }}</td><td class="p-1.5 text-left font-semibold">{{ $item->category_name }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td><td class="p-1.5 text-center font-mono text-[10px]">{{ $delFormattedTime }}</td></tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -541,14 +569,14 @@ Used In Pages:
                             <div class="text-right space-y-0.5">
                                 <h1 class="text-xl font-black text-gray-900 uppercase font-mono">DELIVERY</h1>
                                 <p class="text-[10px] font-semibold text-gray-500">অফিস ডেলিভারি কপি</p>
-                                <p class="text-[9px] text-gray-500 font-mono">প্রিন্ট: {{ now()->format('d-m-Y h:i') }}</p>
+                                <p class="text-[9px] text-gray-500 font-mono">প্রিন্ট: {{ $printNowFormatted }}</p>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-start text-[11px] bg-gray-50 p-2 rounded-lg border border-gray-200">
                             <div class="space-y-1">
                                 <p class="text-gray-800"><span class="font-bold">কাস্টমার আইডি:</span> {{ $printChallan->ledger_id ?: $printChallan->id }}</p>
-                                <p class="text-gray-800"><span class="font-bold">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল: h:i') : now()->format('h:i') }}</p>
+                                <p class="text-gray-800"><span class="font-bold">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $delFormattedTime }}</p>
                                 <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> Demo</p>
                             </div>
                             <div class="text-right space-y-0.5 pl-3 border-r-4 border-black pr-1.5">
@@ -564,7 +592,7 @@ Used In Pages:
                             </thead>
                             <tbody class="divide-y divide-gray-200 font-sans">
                                 @foreach($printChallan->items as $idx => $item)
-                                    <tr><td class="p-1.5 text-center font-mono font-bold">{{ $idx + 1 }}</td><td class="p-1.5 text-center font-mono font-bold">{{ $printChallan->challan_no }}</td><td class="p-1.5 text-left font-semibold">{{ $item->category_name }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td><td class="p-1.5 text-center font-mono text-[10px]">{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</td></tr>
+                                    <tr><td class="p-1.5 text-center font-mono font-bold">{{ $idx + 1 }}</td><td class="p-1.5 text-center font-mono font-bold">{{ $printChallan->challan_no }}</td><td class="p-1.5 text-left font-semibold">{{ $item->category_name }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format($item->delivered_quantity ?: $item->quantity) }}</td><td class="p-1.5 text-center font-mono font-bold">{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</td><td class="p-1.5 text-center font-mono text-[10px]">{{ $delFormattedTime }}</td></tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -631,7 +659,7 @@ Used In Pages:
                 <div class="border-b border-dashed border-gray-400 pb-2 text-[11px]">
                     <div class="flex justify-between font-bold border-b border-gray-300 pb-1 mb-1 text-gray-900"><span>শ্রেণি</span><span>ডেলিভারি</span><span>ডে.বাকি</span><span>সময়</span></div>
                     @foreach($printChallan->items as $item)
-                        <div class="flex justify-between font-mono"><span>{{ $item->category_name }}</span><span>{{ number_format($item->delivered_quantity ?: $item->quantity) }}</span><span>{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</span><span>{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</span></div>
+                        <div class="flex justify-between font-mono"><span>{{ $item->category_name }}</span><span>{{ number_format($item->delivered_quantity ?: $item->quantity) }}</span><span>{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</span><span>{{ $delFormattedTime }}</span></div>
                     @endforeach
                 </div>
 
@@ -696,7 +724,7 @@ Used In Pages:
                     <div class="border-b border-dashed border-gray-400 pb-2 text-[11px]">
                         <div class="flex justify-between font-bold border-b border-gray-300 pb-1 mb-1 text-gray-900"><span>শ্রেণি</span><span>ডেলিভারি</span><span>ডে.বাকি</span><span>সময়</span></div>
                         @foreach($printChallan->items as $item)
-                            <div class="flex justify-between font-mono"><span>{{ $item->category_name }}</span><span>{{ number_format($item->delivered_quantity ?: $item->quantity) }}</span><span>{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</span><span>{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</span></div>
+                            <div class="flex justify-between font-mono"><span>{{ $item->category_name }}</span><span>{{ number_format($item->delivered_quantity ?: $item->quantity) }}</span><span>{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</span><span>{{ $delFormattedTime }}</span></div>
                         @endforeach
                     </div>
 
@@ -739,7 +767,7 @@ Used In Pages:
                     <div class="border-b border-dashed border-gray-400 pb-2 text-[11px]">
                         <div class="flex justify-between font-bold border-b border-gray-300 pb-1 mb-1 text-gray-900"><span>শ্রেণি</span><span>ডেলিভারি</span><span>ডে.বাকি</span><span>সময়</span></div>
                         @foreach($printChallan->items as $item)
-                            <div class="flex justify-between font-mono"><span>{{ $item->category_name }}</span><span>{{ number_format($item->delivered_quantity ?: $item->quantity) }}</span><span>{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</span><span>{{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('বিকেল h:i') : '' }}</span></div>
+                            <div class="flex justify-between font-mono"><span>{{ $item->category_name }}</span><span>{{ number_format($item->delivered_quantity ?: $item->quantity) }}</span><span>{{ number_format(max(0, $item->quantity - ($item->delivered_quantity ?: $item->quantity))) }}</span><span>{{ $delFormattedTime }}</span></div>
                         @endforeach
                     </div>
 

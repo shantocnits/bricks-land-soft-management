@@ -8,6 +8,7 @@ use App\Models\Delivery;
 use App\Models\Challan;
 use App\Models\ChallanItem;
 use App\Models\Category;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
 class TodayDelivery extends Component
@@ -31,6 +32,12 @@ class TodayDelivery extends Component
     public $showDeliveryModal = false;
     public $showDeliveryDetailsModal = false;
     public $showReportModal = false;
+    public $showPrintModal = false;
+    public $printChallan = null;
+    public $printDelivery = null;
+    public $isDeliveryPrint = false;
+    public $showDeleteConfirmModal = false;
+    public $deletingDeliveryId = null;
     
     // New Delivery Form properties
     public $deliveryNo = '';
@@ -56,6 +63,7 @@ class TodayDelivery extends Component
     public $vehicleNo = '';
     public $vehicleRent = 0;
     public $smsToCustomer = true;
+    public $customerDue = 0;
     
     // Detail view state
     public $selectedDelivery = null;
@@ -76,6 +84,9 @@ class TodayDelivery extends Component
             $this->customer_name = $challan->customer_name;
             $this->customer_phone = $challan->customer_phone;
             $this->customer_address = $challan->customer_address;
+            $this->customerDue = $challan->customer_phone 
+                ? Challan::where('customer_phone', $challan->customer_phone)->sum('due')
+                : ($challan->due ?: 0);
             
             $this->challanItems = $challan->items;
             $firstItem = $challan->items->first();
@@ -110,6 +121,7 @@ class TodayDelivery extends Component
         $this->customer_name = '';
         $this->customer_phone = '';
         $this->customer_address = '';
+        $this->customerDue = 0;
         $this->challanItems = [];
         $this->resetItemFields();
     }
@@ -131,7 +143,7 @@ class TodayDelivery extends Component
         $this->showDeliveryModal = true;
     }
 
-    public function saveDelivery()
+    public function saveDelivery($andPrint = false)
     {
         $this->validate([
             'todayDeliveryQty' => 'required|integer|min:1',
@@ -145,7 +157,7 @@ class TodayDelivery extends Component
             $challan = $item->challan;
             
             // Create delivery entry
-            Delivery::create([
+            $delivery = Delivery::create([
                 'delivery_no' => $this->deliveryNo,
                 'challan_id' => $challan->id,
                 'challan_item_id' => $item->id,
@@ -176,8 +188,33 @@ class TodayDelivery extends Component
             );
             
             $this->showDeliveryModal = false;
-            session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+            $this->dispatch('show-toast', message: 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+
+            if ($andPrint) {
+                $this->openPrintModal($challan->id, $delivery->id);
+            }
         }
+    }
+
+    public function confirmDeleteDelivery($id)
+    {
+        $this->deletingDeliveryId = $id;
+        $this->showDeleteConfirmModal = true;
+    }
+
+    public function cancelDeleteDelivery()
+    {
+        $this->deletingDeliveryId = null;
+        $this->showDeleteConfirmModal = false;
+    }
+
+    public function deleteDeliveryConfirmed()
+    {
+        if ($this->deletingDeliveryId) {
+            $this->deleteDelivery($this->deletingDeliveryId);
+            $this->deletingDeliveryId = null;
+        }
+        $this->showDeleteConfirmModal = false;
     }
 
     public function deleteDelivery($id)
@@ -189,7 +226,7 @@ class TodayDelivery extends Component
                 $item->decrement('delivered_quantity', $delivery->quantity);
             }
             $delivery->delete();
-            session()->flash('message', 'ডেলিভারি তথ্য মুছে ফেলা হয়েছে।');
+            $this->dispatch('show-toast', message: 'ডেলিভারি তথ্য মুছে ফেলা হয়েছে।');
         }
     }
 
@@ -225,6 +262,14 @@ class TodayDelivery extends Component
     {
         $query = Delivery::with(['challan', 'challanItem']);
 
+        // Filter by active season
+        $activeSeason = Setting::get('season', '২৫-২৬');
+        $query->whereHas('challan', function($sub) use ($activeSeason) {
+            $sub->where(function($s) use ($activeSeason) {
+                $s->where('season', $activeSeason)->orWhereNull('season');
+            });
+        });
+
         // Filter by search (customer details or challan number or delivery number)
         if ($this->search) {
             $query->where(function($q) {
@@ -240,9 +285,7 @@ class TodayDelivery extends Component
         }
 
         // Date filters logic
-        if ($this->dateFrom && $this->dateTo) {
-            $query->whereBetween('delivery_date', [$this->dateFrom, $this->dateTo]);
-        } elseif ($this->dateFilter) {
+        if ($this->dateFilter) {
             $query->whereDate('delivery_date', $this->dateFilter);
         } else {
             $query->whereDate('delivery_date', now()->toDateString());
@@ -265,9 +308,25 @@ class TodayDelivery extends Component
 
         // Fetch report summary
         $reportQuery = Delivery::query();
-        if ($this->dateFrom && $this->dateTo) {
-            $reportQuery->whereBetween('delivery_date', [$this->dateFrom, $this->dateTo]);
-        } elseif ($this->dateFilter) {
+        $reportQuery->whereHas('challan', function($sub) use ($activeSeason) {
+            $sub->where(function($s) use ($activeSeason) {
+                $s->where('season', $activeSeason)->orWhereNull('season');
+            });
+        });
+
+        if ($this->search) {
+            $reportQuery->where(function($q) {
+                $q->where('delivery_no', 'like', '%' . $this->search . '%')
+                  ->orWhere('category_name', 'like', '%' . $this->search . '%')
+                  ->orWhereHas('challan', function($sub) {
+                      $sub->where('customer_name', 'like', '%' . $this->search . '%')
+                          ->orWhere('customer_phone', 'like', '%' . $this->search . '%')
+                          ->orWhere('customer_address', 'like', '%' . $this->search . '%')
+                          ->orWhere('challan_no', 'like', '%' . $this->search . '%');
+                  });
+            });
+        }
+        if ($this->dateFilter) {
             $reportQuery->whereDate('delivery_date', $this->dateFilter);
         } else {
             $reportQuery->whereDate('delivery_date', now()->toDateString());
@@ -281,6 +340,27 @@ class TodayDelivery extends Component
             'deliveries' => $deliveries,
             'reportData' => $reportData,
             'totalQty' => $reportData->sum('total_qty'),
+            'allDeliveriesForReport' => $deliveries->items(),
         ])->layout('layouts.app');
+    }
+
+    public function openPrintModal($challanId, $deliveryId = null)
+    {
+        $this->printChallan = Challan::with(['items', 'deliveries'])->find($challanId);
+        if ($deliveryId) {
+            $this->printDelivery = Delivery::find($deliveryId);
+        } else {
+            $this->printDelivery = null;
+        }
+        $this->isDeliveryPrint = true;
+        $this->showPrintModal = true;
+    }
+
+    public function closePrintModal()
+    {
+        $this->showPrintModal = false;
+        $this->isDeliveryPrint = false;
+        $this->printChallan = null;
+        $this->printDelivery = null;
     }
 }

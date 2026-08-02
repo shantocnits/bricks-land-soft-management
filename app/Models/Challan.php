@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Delivery;
 
 class Challan extends Model
 {
@@ -35,5 +36,10 @@ class Challan extends Model
     public function items()
     {
         return $this->hasMany(ChallanItem::class);
+    }
+
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class);
     }
 }

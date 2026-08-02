@@ -2,7 +2,7 @@
     <!-- Page Header Bar -->
     <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 px-4 sm:px-6 py-3 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-colors duration-300">
         <div>
-            <h2 class="font-bold text-gray-800 dark:text-white text-sm leading-tight">সব ডেলিভারি লিস্ট</h2>
+            <h2 class="font-bold text-gray-800 dark:text-white text-sm leading-tight">বাকি ডেলিভারি লিস্ট</h2>
             <p class="text-[10px] text-gray-400 dark:text-gray-500 font-sans mt-0.5 font-semibold">প্রতিষ্ঠানের সকল ডেলিভারি চালানের তথ্য তালিকা</p>
         </div>
 
@@ -12,6 +12,45 @@
             <div class="relative w-full sm:w-auto">
                 <input type="text" wire:model.live="search" placeholder="সার্চ করুন..."
                        class="pl-4 pr-4 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all w-full sm:w-48 font-sans font-semibold">
+            </div>
+
+            <!-- Date Fields Grid: 2-column in mobile view -->
+            <div class="grid grid-cols-2 gap-2 w-full sm:flex sm:items-center sm:gap-3 sm:w-auto">
+                <!-- Date Range: From -->
+                <div class="flex items-center gap-2 col-span-1">
+                    <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 font-sans whitespace-nowrap hidden sm:inline">শুরু:</span>
+                    <div class="relative flex items-center w-full">
+                        <input type="text"
+                               data-flatpickr
+                               data-wire-prop="dateFrom"
+                               data-default="{{ $dateFrom }}"
+                               wire:model="dateFrom"
+                               placeholder="শুরু তারিখ"
+                               readonly
+                               class="pl-3 pr-8 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all w-full sm:w-32 font-sans font-semibold cursor-pointer">
+                        <span class="absolute right-2.5 top-2 text-primary-500 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Date Range: To -->
+                <div class="flex items-center gap-2 col-span-1">
+                    <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 font-sans whitespace-nowrap hidden sm:inline">শেষ:</span>
+                    <div class="relative flex items-center w-full">
+                        <input type="text"
+                               data-flatpickr
+                               data-wire-prop="dateTo"
+                               data-default="{{ $dateTo }}"
+                               wire:model="dateTo"
+                               placeholder="শেষ তারিখ"
+                               readonly
+                               class="pl-3 pr-8 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all w-full sm:w-32 font-sans font-semibold cursor-pointer">
+                        <span class="absolute right-2.5 top-2 text-primary-500 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <!-- Buttons Layout: Report & Print in 2 columns on mobile -->
@@ -24,7 +63,7 @@
                 </button>
 
                 <!-- Print Button -->
-                <button type="button" onclick="window.print()"
+                <button type="button" onclick="printChallanArea('delivery-table-print-all')"
                         class="px-3 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans border border-gray-200 dark:border-slate-700 flex items-center justify-center gap-1.5 shadow-sm w-full sm:w-auto">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     প্রিন্ট
@@ -32,15 +71,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Flash Message -->
-    @if (session()->has('message'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
-             x-transition:leave="transition ease-in duration-300" x-transition:leave-end="opacity-0"
-             class="mx-4 sm:mx-6 mt-4 p-3.5 bg-primary-50 dark:bg-primary-950/20 border border-primary-200 dark:border-primary-900 text-primary-800 dark:text-primary-400 rounded-2xl text-xs font-medium font-sans" x-cloak>
-            {{ session('message') }}
-        </div>
-    @endif
 
     <!-- Table Card -->
     <div class="py-4 sm:py-6">
@@ -86,24 +116,24 @@
                         </tr>
                     </thead>
                     <tbody class="text-xs font-semibold text-gray-700 dark:text-slate-350 divide-y divide-gray-100 dark:divide-slate-800">
-                        @forelse ($deliveries as $dl)
+                        @forelse ($deliveries as $item)
                             <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-all font-sans">
-                                <td class="px-3 py-3.5 font-mono text-[11px] text-gray-550 border-r border-gray-100 dark:border-slate-800">{{ $dl->challan->challan_no ?? '' }}</td>
-                                <td class="px-3 py-3.5 border-r border-gray-100 dark:border-slate-800 text-gray-900 dark:text-white font-bold">{{ $dl->challan->customer_name ?? '' }}</td>
-                                <td class="px-3 py-3.5 text-gray-500 border-r border-gray-100 dark:border-slate-800">{{ $dl->challan->customer_address ?? '' }}</td>
+                                <td class="px-3 py-3.5 font-mono text-[11px] text-gray-550 border-r border-gray-100 dark:border-slate-800">{{ $item->challan->challan_no ?? '' }}</td>
+                                <td class="px-3 py-3.5 border-r border-gray-100 dark:border-slate-800 text-gray-900 dark:text-white font-bold">{{ $item->challan->customer_name ?? '' }}</td>
+                                <td class="px-3 py-3.5 text-gray-500 border-r border-gray-100 dark:border-slate-800">{{ $item->challan->customer_address ?? '' }}</td>
                                 <td class="px-3 py-3.5 border-r border-gray-100 dark:border-slate-800">
-                                    <span class="px-2 py-0.5 rounded bg-primary-50 dark:bg-primary-950/30 text-primary-dark dark:text-primary-400 text-[10px]">{{ $dl->category_name }}</span>
+                                    <span class="px-2 py-0.5 rounded bg-primary-50 dark:bg-primary-950/30 text-primary-dark dark:text-primary-400 text-[10px]">{{ $item->category_name }}</span>
                                 </td>
-                                <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800">{{ number_format($dl->challanItem->quantity ?? 0) }}</td>
-                                <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800 text-blue-600 dark:text-blue-450">{{ number_format($dl->quantity) }}</td>
+                                <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800">{{ number_format($item->quantity) }}</td>
+                                <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800 text-blue-600 dark:text-blue-450">{{ number_format($item->delivered_quantity) }}</td>
                                 <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800 text-amber-600 dark:text-amber-450 font-bold">
-                                    {{ number_format(max(0, ($dl->challanItem->quantity ?? 0) - ($dl->challanItem->delivered_quantity ?? 0))) }}
+                                    {{ number_format(max(0, $item->quantity - $item->delivered_quantity)) }}
                                 </td>
                                 <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800 text-primary dark:text-primary-light">
                                     @php
                                         $totalChPending = 0;
-                                        if ($dl->challan) {
-                                            foreach($dl->challan->items as $it) {
+                                        if ($item->challan) {
+                                            foreach($item->challan->items as $it) {
                                                 $totalChPending += max(0, $it->quantity - $it->delivered_quantity);
                                             }
                                         }
@@ -111,12 +141,12 @@
                                     {{ number_format($totalChPending) }}
                                 </td>
                                 <td class="px-3 py-3.5 text-right font-mono border-r border-gray-100 dark:border-slate-800 text-red-600 dark:text-red-450 font-bold">
-                                    ৳ {{ number_format($dl->challan->due ?? 0) }}
+                                    ৳ {{ number_format($item->challan->due ?? 0) }}
                                 </td>
                                 <td class="px-3 py-3.5 text-[11px] text-gray-500 border-r border-gray-100 dark:border-slate-800 font-mono">
-                                    {{ $dl->delivery_date ? $dl->delivery_date->format('d-m-Y') : '' }}
+                                    {{ $item->challan->date ? $item->challan->date->format('d-m-Y') : '' }}
                                 </td>
-                                <td class="px-3 py-3.5 text-gray-500 border-r border-gray-100 dark:border-slate-800 max-w-[150px] truncate">{{ $dl->notes }}</td>
+                                <td class="px-3 py-3.5 text-gray-500 border-r border-gray-100 dark:border-slate-800 max-w-[150px] truncate">{{ $item->challan->notes ?? '' }}</td>
                                 <td class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">
                                     <button @click="openDropdown = !openDropdown; buttonRect = $el.getBoundingClientRect()" type="button" class="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-all cursor-pointer">
                                         <svg class="w-5 h-5 mx-auto text-gray-500 hover:text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/></svg>
@@ -126,16 +156,16 @@
                                              class="fixed w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-2xl p-1.5 z-[9999] text-left text-xs flex flex-col gap-0.5"
                                              :style="buttonRect ? ('left: ' + (buttonRect.left - 140) + 'px; position: fixed; ' + (window.innerHeight - buttonRect.bottom < 240 ? 'bottom: ' + (window.innerHeight - buttonRect.top + 4) + 'px;' : 'top: ' + (buttonRect.bottom + 4) + 'px;')) : ''"
                                              x-cloak>
-                                            <button type="button" wire:click="openChangeDateModal({{ $dl->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                            <button type="button" wire:click="openChangeDateModal({{ $item->challan_id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                                                 তারিখ পরিবর্তন
                                             </button>
-                                            @if($dl->challan)
-                                            <button type="button" wire:click="openDeliveryModal({{ $dl->challan->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                            @if($item->challan)
+                                            <button type="button" wire:click="openDeliveryModal({{ $item->challan->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                                                 ডেলিভারি দিন
                                             </button>
-                                            <a href="{{ route('challan.customer-profile', $dl->challan->customer_phone) }}" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2 block">
+                                            <a href="{{ route('challan.customer-profile', ['phone' => $item->challan->customer_phone ?: $item->challan->customer_name, 'from' => 'delivery.all']) }}" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2 block">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                                 প্রোফাইলে যান
                                             </a>
@@ -146,7 +176,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="12" class="px-5 py-8 text-center text-gray-400 dark:text-gray-500 font-medium">কোনো ডেলিভারি রেকর্ড পাওয়া যায়নি।</td>
+                                <td colspan="12" class="px-5 py-8 text-center text-gray-400 dark:text-gray-500 font-medium">কোনো চালানের ডেলিভারি বাকি নেই।</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -246,6 +276,13 @@
             </div>
 
             <form wire:submit.prevent="saveDelivery" class="space-y-4 text-xs font-semibold text-gray-600 dark:text-slate-400">
+                @if($customerDue > 0 && $customer_name)
+                    <div class="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl p-3 text-center mb-4">
+                        <p class="text-xs font-bold text-red-600 dark:text-red-400">
+                            {{ $customer_name }} এর বাকি রয়েছে: {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($customerDue)) : number_format($customerDue) }} টাকা
+                        </p>
+                    </div>
+                @endif
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block mb-1.5">ডেলিভারি নং</label>
@@ -304,7 +341,7 @@
                             </select>
                         </div>
                         <div>
-                            <input type="text" value="{{ number_format((int)$deliveryTotalQty) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-205 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
+                            <input type="text" value="{{ number_format(max(0, (int)$deliveryTotalQty - (int)$deliveredQtySoFar)) }}" disabled class="w-full py-2 px-3 bg-gray-100 border border-gray-205 dark:border-slate-800 rounded-xl text-center text-gray-500 dark:bg-slate-900/50 font-sans">
                         </div>
                         <div>
                             <input type="number" wire:model.live="todayDeliveryQty" class="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl text-center text-gray-800 dark:text-white font-bold font-sans focus:ring-2 focus:ring-primary-500/20" placeholder="0">
@@ -349,8 +386,7 @@
                 <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-150 dark:border-slate-800 mt-4">
                     <button type="button" wire:click="$set('showDeliveryModal', false)" class="px-5 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer transition-all">ক্লিয়ার</button>
                     <button type="submit" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>সেভ করুন</button>
-                    <button type="button" wire:click="saveDelivery" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md">সেভ + নতুন ডেলিভারি</button>
-                    <button type="button" onclick="window.print()" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট ডেলিভারি</button>
+                    <button type="button" wire:click="saveDelivery(true)" class="px-6 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl cursor-pointer transition-all shadow-md flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>সেভ + প্রিন্ট ডেলিভারি</button>
                 </div>
             </form>
         </div>
@@ -417,7 +453,7 @@
                 <div class="space-y-1 pt-2">
                     <div class="text-orange-600 dark:text-orange-500 font-bold text-sm">সতর্কতা:</div>
                     <div class="text-[11px] text-gray-500 dark:text-gray-450 leading-relaxed font-semibold">
-                        এই চালানের যদি আরও শ্রেণির ইট ডেলিভারি বাকি থাকে তাহলে তাদের ডেলিভারি তারিখও একসাথে পরিবর্তন হবে।
+                        এই চালানের যদি আরও শ্রেণির ইট ডেলিভারি বাকি থাকে তাহলে সেই ইটের ডেলিভারি তারিখ ও এটার সাথে পরিবর্তন হয়ে যাবে । তাই নিশ্চিত হয়ে তারিখ পরিবর্তন করুন ।
                     </div>
                 </div>
                 @endif
@@ -450,10 +486,10 @@
                             <th class="px-4 py-2 text-right">মোট পরিমাণ</th>
                         </tr>
                     </thead>
-                    <tbody class="text-xs font-semibold text-gray-700 dark:text-slate-350 divide-y divide-gray-150 dark:divide-slate-800">
+                    <tbody class="text-xs font-semibold text-gray-700 dark:text-slate-200 divide-y divide-gray-150 dark:divide-slate-800">
                         @forelse($reportData as $row)
-                            <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-850/30">
-                                <td class="px-4 py-2.5 border-r border-gray-100 dark:border-slate-800">{{ $row->category_name }}</td>
+                            <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/30">
+                                <td class="px-4 py-2.5 border-r border-gray-100 dark:border-slate-800 text-gray-800 dark:text-slate-200 font-semibold">{{ $row->category_name }}</td>
                                 <td class="px-4 py-2.5 text-right font-mono text-primary dark:text-primary-light font-bold">{{ number_format($row->total_qty) }} টি</td>
                             </tr>
                         @empty
@@ -463,7 +499,7 @@
                         @endforelse
                     </tbody>
                     <tfoot>
-                        <tr class="bg-blue-50/40 dark:bg-blue-950/10 border-t border-gray-200 dark:border-slate-800 font-bold text-xs text-gray-800 dark:text-white">
+                        <tr class="bg-blue-50/40 dark:bg-blue-950/20 border-t border-gray-200 dark:border-slate-800 font-bold text-xs text-gray-800 dark:text-white">
                             <td class="px-4 py-2.5 border-r border-gray-100 dark:border-slate-800">সর্বমোট</td>
                             <td class="px-4 py-2.5 text-right font-mono text-primary-dark dark:text-primary-400">{{ number_format($totalQty) }} টি</td>
                         </tr>
@@ -473,4 +509,44 @@
         </div>
     </div>
     @endif
+
+    <!-- Universal Print Preview Modal (4 Formats) -->
+    <x-print-modal :showPrintModal="$showPrintModal" :printChallan="$printChallan" :printDelivery="$printDelivery" :isDeliveryPrint="$isDeliveryPrint" />
+
+    <!-- Delete Confirmation Modal (হ্যাঁ / না) -->
+    @if($showDeleteConfirmModal)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[99999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs font-sans">
+                <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xs w-full p-6 border border-gray-100 dark:border-slate-800 shadow-2xl text-center space-y-4">
+                    <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-gray-800 dark:text-white">আপনি কি ডেলিভারিটি মুছে ফেলতে চান?</h3>
+                        <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">এই কার্যক্রমটি পরবর্তীতে পুনরুদ্ধার করা যাবে না।</p>
+                    </div>
+                    <div class="flex items-center justify-center gap-3 pt-1">
+                        <button type="button" wire:click="cancelDeleteDelivery" class="flex-1 py-2 px-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer">
+                            না
+                        </button>
+                        <button type="button" wire:click="deleteDeliveryConfirmed" class="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer">
+                            হ্যাঁ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    @endif
+
+    <!-- Full Delivery Table Report Printable Container -->
+    <div id="delivery-table-print-all" style="display:none;">
+        <x-print-layout type="delivery-report"
+                        :deliveries="$deliveries->items()"
+                        :totalDeliverySum="$deliveries->sum('quantity')"
+                        reportTitle="সব ডেলিভারি তালিকা"
+                        :reportDate="null"
+                        :activeSeason="\App\Models\Setting::get('season', '২৫-২৬')" />
+    </div>
 </div>

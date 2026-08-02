@@ -87,7 +87,12 @@
         <!-- 2. চালান (Dropdown) -->
         @if($hasAccess('challan'))
         @php
-            $challanActive = request()->routeIs('challan.*') && !(request()->routeIs('challan.customer-profile') && request('from') === 'customer');
+            $fromRoute = request('from');
+            $isChallanFrom = str_starts_with((string)$fromRoute, 'challan.');
+            $isDeliveryFrom = str_starts_with((string)$fromRoute, 'delivery.');
+            $isDueLedgerFrom = str_starts_with((string)$fromRoute, 'due-ledger.');
+
+            $challanActive = (request()->routeIs('challan.*') && !request()->routeIs('challan.customer-profile')) || $isChallanFrom;
         @endphp
         <div class="mx-2" x-data="{ open: {{ $challanActive ? 'true' : 'false' }} }">
             <button @click="open = !open" 
@@ -96,7 +101,7 @@
                     class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ $challanActive ? 'bg-primary-800/50 text-white' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01-2 2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
                           :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">চালান</span>
@@ -107,21 +112,21 @@
             </button>
             <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 -translate-y-2" x-transition:enter-end="transform opacity-100 translate-y-0" class="mt-1 ml-6 space-y-0.5" :class="{ 'hidden': !sidebarOpen }">
                 <a href="{{ route('challan.today') }}" wire:navigate
-                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('challan.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">
+                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ (request()->routeIs('challan.today') || request('from') === 'challan.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">
                     <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                     আজকের চালান
                 </a>
                 <a href="{{ route('challan.pending') }}" wire:navigate
-                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('challan.pending') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">
+                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ (request()->routeIs('challan.pending') || request('from') === 'challan.pending') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">
                     <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     অগ্রিম চালান
                 </a>
                 <a href="{{ route('challan.all') }}" wire:navigate
-                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('challan.all') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">
+                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ (request()->routeIs('challan.all') || request('from') === 'challan.all') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">
                     <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                     </svg>
@@ -149,11 +154,14 @@
 
         <!-- 4. ডেলিভারি (Dropdown) -->
         @if($hasAccess('delivery'))
-        <div class="mx-2" x-data="{ open: {{ request()->routeIs('delivery.*') ? 'true' : 'false' }} }">
+        @php
+            $deliveryActive = request()->routeIs('delivery.*') || $isDeliveryFrom;
+        @endphp
+        <div class="mx-2" x-data="{ open: {{ $deliveryActive ? 'true' : 'false' }} }">
             <button @click="open = !open" 
                     @mouseenter="showTooltip('ডেলিভারি', $el)"
                     @mouseleave="hideTooltip()"
-                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ request()->routeIs('delivery.*') ? 'bg-primary-800/50 text-white' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
+                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ $deliveryActive ? 'bg-primary-800/50 text-white' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -168,22 +176,25 @@
             </button>
             <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" class="mt-1 ml-6 space-y-1" :class="{ 'hidden': !sidebarOpen }">
                 <a href="{{ route('delivery.today') }}" wire:navigate
-                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('delivery.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজকের ডেলিভারি</a>
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ (request()->routeIs('delivery.today') || request('from') === 'delivery.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজকের ডেলিভারি</a>
                 <a href="{{ route('delivery.pending') }}" wire:navigate
-                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('delivery.pending') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজ ডেলিভারি যাবে</a>
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ (request()->routeIs('delivery.pending') || request('from') === 'delivery.pending') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজ ডেলিভারি যাবে</a>
                 <a href="{{ route('delivery.all') }}" wire:navigate
-                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('delivery.all') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">সব ডেলিভারি লিস্ট</a>
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ (request()->routeIs('delivery.all') || request('from') === 'delivery.all') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">বাকি ডেলিভারি লিস্ট</a>
             </div>
         </div>
         @endif
 
         <!-- 5. বাকি খাতা (Dropdown) -->
         @if($hasAccess('due_ledger'))
-        <div class="mx-2" x-data="{ open: {{ request()->routeIs('due-ledger.*') ? 'true' : 'false' }} }">
+        @php
+            $dueLedgerActive = request()->routeIs('due-ledger.*') || $isDueLedgerFrom;
+        @endphp
+        <div class="mx-2" x-data="{ open: {{ $dueLedgerActive ? 'true' : 'false' }} }">
             <button @click="open = !open" 
                     @mouseenter="showTooltip('বাকি খাতা', $el)"
                     @mouseleave="hideTooltip()"
-                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ request()->routeIs('due-ledger.*') ? 'bg-primary-800/50 text-white' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
+                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ $dueLedgerActive ? 'bg-primary-800/50 text-white' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -197,11 +208,11 @@
             </button>
             <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" class="mt-1 ml-6 space-y-1" :class="{ 'hidden': !sidebarOpen }">
                 <a href="{{ route('due-ledger.today') }}" wire:navigate
-                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('due-ledger.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজকের জমা</a>
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ (request()->routeIs('due-ledger.today') || request('from') === 'due-ledger.today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজকের জমা</a>
                 <a href="{{ route('due-ledger.due-today') }}" wire:navigate
-                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('due-ledger.due-today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজ জমা দেবে</a>
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ (request()->routeIs('due-ledger.due-today') || request('from') === 'due-ledger.due-today') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">আজ জমা দেবে</a>
                 <a href="{{ route('due-ledger.all-due') }}" wire:navigate
-                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ request()->routeIs('due-ledger.all-due') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">সব বাকি লিস্ট</a>
+                   class="block px-4 py-2 text-xs rounded transition-all font-sans {{ (request()->routeIs('due-ledger.all-due') || request('from') === 'due-ledger.all-due') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">সব বাকি লিস্ট</a>
             </div>
         </div>
         @endif

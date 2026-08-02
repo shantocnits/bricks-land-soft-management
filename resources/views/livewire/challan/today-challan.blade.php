@@ -198,7 +198,7 @@
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                                 চালান বিস্তারিত
                                             </button>
-                                            <a href="{{ route('challan.customer-profile', ['phone' => $challan->customer_phone ?: $challan->customer_name]) }}" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                            <a href="{{ route('challan.customer-profile', ['phone' => $challan->customer_phone ?: $challan->customer_name, 'from' => 'challan.today']) }}" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                                 প্রোফাইল এ যান
                                             </a>
@@ -691,27 +691,17 @@
                                                  class="absolute w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 z-[9999] overflow-hidden text-left"
                                                  :style="'top: ' + (triggerRect ? (triggerRect.bottom + window.scrollY + 2) : 0) + 'px; left: ' + (triggerRect ? (triggerRect.left + window.scrollX) : 0) + 'px;'"
                                                  x-cloak>
-                                                <div class="p-2 border-b border-gray-100 dark:border-slate-800 flex gap-1.5 bg-gray-50 dark:bg-slate-950">
-                                                    <input type="text" wire:model="newCategoryInput" placeholder="ফিল্টার বা নতুন শ্রেণি..."
-                                                           class="flex-1 py-1 px-2 text-[10px] rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-808 dark:text-white focus:outline-none focus:border-primary-500 font-sans"
-                                                           @keydown.enter.prevent="$wire.addCategoryOption()">
-                                                    <button type="button" wire:click="addCategoryOption"
-                                                            class="px-2 py-1 bg-primary hover:bg-primary-dark text-white rounded-lg text-xs font-bold transition-all cursor-pointer">
-                                                        +
-                                                    </button>
+                                                <div class="p-2 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950">
+                                                    <input type="text" wire:model="newCategoryInput" placeholder="ফিল্টার করুন..."
+                                                           class="w-full py-1.5 px-2.5 text-[11px] rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-808 dark:text-white focus:outline-none focus:border-primary-500 font-sans">
                                                 </div>
                                                 <div class="max-h-40 overflow-y-auto py-1">
                                                     @foreach($categories as $cat)
                                                         <div class="flex items-center justify-between px-3 py-1.5 hover:bg-primary-50 dark:hover:bg-primary-950/20 transition-all text-xs"
                                                              x-show="$wire.newCategoryInput === '' || '{{ $cat->name }}'.toLowerCase().includes($wire.newCategoryInput.toLowerCase())">
                                                             <button type="button" @click="$wire.selectCategory({{ $index }}, '{{ $cat->name }}'); openCat = false; $wire.set('newCategoryInput', '')"
-                                                                    class="flex-1 text-left font-semibold text-gray-800 dark:text-white hover:text-primary-dark dark:hover:text-primary-400 transition-all font-sans">
+                                                                    class="w-full text-left font-semibold text-gray-800 dark:text-white hover:text-primary-dark dark:hover:text-primary-400 transition-all font-sans">
                                                                 {{ $cat->name }} <span class="text-primary dark:text-primary-400 font-normal">(৳{{ floatval($cat->rate) }})</span>
-                                                            </button>
-                                                            <button type="button" wire:click="deleteCategoryOption({{ $cat->id }})"
-                                                                    onclick="confirm('এই শ্রেণিটি মুছবেন?') || event.stopImmediatePropagation()"
-                                                                    class="ml-2 text-gray-405 hover:text-red-505 transition-all rounded cursor-pointer">
-                                                                ×
                                                             </button>
                                                         </div>
                                                     @endforeach

@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Models\Challan;
 use App\Models\ChallanItem;
 use App\Models\Delivery;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
 class PendingDelivery extends Component
@@ -27,6 +28,20 @@ class PendingDelivery extends Component
     // Modal states
     public $showDeliveryModal = false;
     public $showReportModal = false;
+    public $showChangeDateModal = false;
+    public $showPrintModal = false;
+    public $printChallan = null;
+    public $printDelivery = null;
+    public $isDeliveryPrint = false;
+
+    // Change Date Form
+    public $selectedDeliveryId = null;
+    public $selectedChallanId = null;
+    public $newDeliveryDate = '';
+    public $changeOption = 'all';
+    public $selectedChallanNo = '';
+    public $currentDeliveryDate = '';
+    public $changeDeliveries = [];
     
     // New Delivery Form properties
     public $deliveryNo = '';
@@ -52,6 +67,7 @@ class PendingDelivery extends Component
     public $vehicleNo = '';
     public $vehicleRent = 0;
     public $smsToCustomer = true;
+    public $customerDue = 0;
 
     protected $paginationTheme = 'tailwind';
 
@@ -82,6 +98,9 @@ class PendingDelivery extends Component
             $this->customer_name = $challan->customer_name;
             $this->customer_phone = $challan->customer_phone;
             $this->customer_address = $challan->customer_address;
+            $this->customerDue = $challan->customer_phone 
+                ? Challan::where('customer_phone', $challan->customer_phone)->sum('due')
+                : ($challan->due ?: 0);
             
             $this->deliveryNo = strval(Delivery::count() + 1);
             $this->deliveryDate = now()->toDateString();
@@ -105,7 +124,7 @@ class PendingDelivery extends Component
         }
     }
 
-    public function saveDelivery()
+    public function saveDelivery($andPrint = false)
     {
         $this->validate([
             'todayDeliveryQty' => 'required|integer|min:1',
@@ -119,7 +138,7 @@ class PendingDelivery extends Component
             $challan = $item->challan;
             
             // Create delivery entry
-            Delivery::create([
+            $delivery = Delivery::create([
                 'delivery_no' => $this->deliveryNo,
                 'challan_id' => $challan->id,
                 'challan_item_id' => $item->id,
@@ -150,30 +169,92 @@ class PendingDelivery extends Component
             );
             
             $this->showDeliveryModal = false;
-            session()->flash('message', 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+            $this->dispatch('show-toast', message: 'ডেলিভারি তথ্য সফলভাবে সংরক্ষিত হয়েছে।');
+
+            if ($andPrint) {
+                $this->openPrintModal($challan->id, $delivery->id);
+            }
         }
     }
 
-    public function sortBy($field)
+    public function openChangeDateModal($challanId)
     {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
+        $challan = Challan::with('deliveries')->find($challanId);
+        if ($challan) {
+            $this->selectedChallanId = $challan->id;
+            $this->selectedChallanNo = $challan->challan_no;
+            $this->changeOption = 'all';
+            
+            // Get all unique categories for this challan that have deliveries
+            $deliveries = Delivery::where('challan_id', $challan->id)->get();
+            $this->changeDeliveries = $deliveries->map(function($d) {
+                return [
+                    'id' => $d->id,
+                    'category_name' => $d->category_name,
+                    'delivery_date' => $d->delivery_date ? $d->delivery_date->format('d-m-Y') : '',
+                ];
+            })->toArray();
+
+            if (count($this->changeDeliveries) > 0) {
+                $this->selectedDeliveryId = $this->changeDeliveries[0]['id'];
+                $firstDel = $deliveries->first();
+                $this->currentDeliveryDate = $firstDel && $firstDel->delivery_date ? $firstDel->delivery_date->format('d-m-Y') : now()->format('d-m-Y');
+                $this->newDeliveryDate = $firstDel && $firstDel->delivery_date ? $firstDel->delivery_date->toDateString() : now()->toDateString();
+            } else {
+                $this->selectedDeliveryId = null;
+                $date = $challan->date ?: now();
+                $this->newDeliveryDate = $date->toDateString();
+                $this->currentDeliveryDate = $date->format('d-m-Y');
+            }
+            
+            $this->showChangeDateModal = true;
         }
     }
 
-    public function updatingSearch()
+    public function updateDeliveryDate()
     {
-        $this->resetPage();
+        $this->validate([
+            'newDeliveryDate' => 'required|date'
+        ]);
+
+        if ($this->selectedChallanId) {
+            $challan = Challan::find($this->selectedChallanId);
+            if ($challan) {
+                $oldDate = $challan->date ? $challan->date->toDateString() : '';
+                
+                $challan->update(['date' => $this->newDeliveryDate]);
+
+                if ($this->changeOption === 'all') {
+                    Delivery::where('challan_id', $challan->id)
+                        ->update(['delivery_date' => $this->newDeliveryDate]);
+                } elseif ($this->selectedDeliveryId) {
+                    Delivery::where('id', $this->selectedDeliveryId)
+                        ->update(['delivery_date' => $this->newDeliveryDate]);
+                }
+
+                \App\Models\ActivityLog::log(
+                    'ডেলিভারি তারিখ আপডেট',
+                    "চালান নং {$this->selectedChallanNo} এর তারিখ পরিবর্তনঃ {$oldDate} -> {$this->newDeliveryDate}"
+                );
+
+                $this->dispatch('show-toast', message: 'ডেলিভারি তারিখ সফলভাবে পরিবর্তন করা হয়েছে।');
+            }
+        }
+        $this->showChangeDateModal = false;
     }
 
     public function render()
     {
+        $activeSeason = Setting::get('season', '২৫-২৬');
+
         // Select ChallanItems that are not fully delivered
         $query = ChallanItem::with(['challan'])
-            ->whereRaw('quantity > delivered_quantity');
+            ->whereRaw('quantity > delivered_quantity')
+            ->whereHas('challan', function($sub) use ($activeSeason) {
+                $sub->where(function($s) use ($activeSeason) {
+                    $s->where('season', $activeSeason)->orWhereNull('season');
+                });
+            });
 
         if ($this->search) {
             $query->where(function($q) {
@@ -209,7 +290,24 @@ class PendingDelivery extends Component
         $items = $query->paginate($this->perPage);
 
         // Fetch report summary for pending deliveries
-        $reportQuery = ChallanItem::with('challan')->whereRaw('quantity > delivered_quantity');
+        $reportQuery = ChallanItem::with('challan')
+            ->whereRaw('quantity > delivered_quantity')
+            ->whereHas('challan', function($sub) use ($activeSeason) {
+                $sub->where(function($s) use ($activeSeason) {
+                    $s->where('season', $activeSeason)->orWhereNull('season');
+                });
+            });
+        if ($this->search) {
+            $reportQuery->where(function($q) {
+                $q->where('category_name', 'like', '%' . $this->search . '%')
+                  ->orWhereHas('challan', function($sub) {
+                      $sub->where('customer_name', 'like', '%' . $this->search . '%')
+                          ->orWhere('customer_phone', 'like', '%' . $this->search . '%')
+                          ->orWhere('customer_address', 'like', '%' . $this->search . '%')
+                          ->orWhere('challan_no', 'like', '%' . $this->search . '%');
+                  });
+            });
+        }
         if ($this->dateFilter) {
             $reportQuery->whereHas('challan', function($sub) {
                 $sub->whereDate('date', $this->dateFilter);
@@ -224,5 +322,25 @@ class PendingDelivery extends Component
             'reportData' => $reportData,
             'totalPendingQty' => $reportData->sum('pending_qty'),
         ])->layout('layouts.app');
+    }
+
+    public function openPrintModal($challanId, $deliveryId = null)
+    {
+        $this->printChallan = Challan::with(['items', 'deliveries'])->find($challanId);
+        if ($deliveryId) {
+            $this->printDelivery = Delivery::find($deliveryId);
+        } else {
+            $this->printDelivery = null;
+        }
+        $this->isDeliveryPrint = true;
+        $this->showPrintModal = true;
+    }
+
+    public function closePrintModal()
+    {
+        $this->showPrintModal = false;
+        $this->isDeliveryPrint = false;
+        $this->printChallan = null;
+        $this->printDelivery = null;
     }
 }

@@ -21,11 +21,15 @@ Supported Layout Modes ($type):
     'payments' => null,
     'selectedLedger' => '',
     'ledgerGroup' => '',
-    'totalQty' => 0,
     'totalBill' => 0,
     'totalAdvance' => 0,
     'totalDeduction' => 0,
     'totalPayment' => 0,
+    'deliveries' => null,
+    'reportTitle' => 'দৈনিক ডেলিভারি তালিকা',
+    'reportDate' => null,
+    'activeSeason' => null,
+    'totalDeliverySum' => 0,
 ])
 
 @php
@@ -357,7 +361,7 @@ Supported Layout Modes ($type):
                 </div>
                 <div class="text-right space-y-1">
                     <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wider font-mono">INVOICE</h1>
-                    <p class="text-xs font-semibold text-gray-500">গ্রাহক চালান কপি</p>
+                    <p class="text-xs font-semibold text-gray-500">অফিস চালান কপি</p>
                     <p class="text-[11px] text-gray-500 font-mono">প্রিন্ট: {{ $printTime }}</p>
                 </div>
             </div>
@@ -511,7 +515,7 @@ Supported Layout Modes ($type):
             <!-- Customer Slip Top -->
             <div class="bg-white p-2 text-gray-900 space-y-2">
                 <div class="text-center space-y-1 border-b border-dashed border-gray-400 pb-2">
-                <p class="text-[11px] underline font-bold text-gray-800">চালান রশিদ</p>
+                <p class="text-[11px] underline font-bold text-gray-800">চালান রশিদ (গ্রাহক কপি)</p>
                 <h2 class="text-xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
                 <p class="text-[11px] text-gray-600 font-medium">{{ $companyAddress }}</p>
                 <p class="text-[11px] text-gray-600 font-mono">{{ $companyPhone }}</p>
@@ -563,7 +567,7 @@ Supported Layout Modes ($type):
             <!-- Office Slip Bottom -->
             <div class="bg-white p-2 text-gray-900 space-y-2">
                 <div class="text-center space-y-1 border-b border-dashed border-gray-400 pb-2">
-                <p class="text-[11px] underline font-bold text-gray-800">চালান রশিদ</p>
+                <p class="text-[11px] underline font-bold text-gray-800">চালান রশিদ (অফিস কপি)</p>
                 <h2 class="text-xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
                 <p class="text-[11px] text-gray-600 font-medium">{{ $companyAddress }}</p>
                 <p class="text-[11px] text-gray-600 font-mono">{{ $companyPhone }}</p>
@@ -752,6 +756,143 @@ Supported Layout Modes ($type):
                 <div class="pt-3 border-t border-gray-200 text-center text-[10px] text-gray-500 font-semibold" style="page-break-inside: avoid; break-inside: avoid;">
                     রিপোর্ট প্রিন্ট: {{ $formattedPrintTime }} | Software by: CODENEXTIT.COM
                 </div>
+            </div>
+        </div>
+
+    {{-- ======================================================================= --}}
+    {{-- 🚚 MODE 6: DELIVERY LIST REPORT PRINT LAYOUT                            --}}
+    {{--    (আজকের ডেলিভারি ও বাকি ডেলিভারি তালিকা টেবিল প্রিন্ট লেআউট)        --}}
+    {{-- ======================================================================= --}}
+    @elseif($type === 'delivery-report')
+        <style media="print">
+            @page {
+                size: A4 portrait !important;
+                margin: 8mm 8mm !important;
+            }
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            table { page-break-inside: auto; }
+            tr    { page-break-inside: avoid; break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            .print-page-break-avoid { page-break-inside: avoid; break-inside: avoid; }
+        </style>
+        <div class="bg-white p-4 text-gray-900 font-sans max-w-4xl mx-auto">
+            <!-- Header Section -->
+            <div class="text-center space-y-1 pb-3 border-b-2 border-gray-800">
+                <h1 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h1>
+                <p class="text-xs font-semibold text-gray-700">{{ $companyAddress }}</p>
+                <p class="text-xs font-mono font-semibold text-gray-700">{{ $companyPhone }}</p>
+                <p class="text-xs font-bold text-gray-800">প্রোপাইটরঃ {{ $proprietor }}</p>
+            </div>
+
+            <!-- Sub Header Metadata Row -->
+            <div class="flex items-center justify-between py-3 my-2 text-xs font-semibold">
+                <div>
+                    <span>তারিখ: {{ $reportDate ?? now()->format('d-m-Y') }}</span>
+                    @if($activeSeason)
+                        <span class="font-mono ml-1">| {{ $activeSeason }}</span>
+                    @endif
+                </div>
+
+                <div class="px-4 py-1.5 bg-gray-100 text-gray-900 rounded-full font-bold text-sm tracking-wide shadow-sm border border-gray-300">
+                    {{ $reportTitle ?? 'দৈনিক ডেলিভারি তালিকা' }}
+                </div>
+
+                <div class="text-right font-bold text-sm">
+                    মোট ডেলিভারি: <span class="font-mono text-gray-900 font-black">{{ number_format((int)$totalDeliverySum) }}</span>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <table class="w-full text-xs border-collapse border border-gray-400 mt-2">
+                <thead>
+                    <tr class="bg-gray-100 font-bold text-gray-900 border-b border-gray-400 text-center">
+                        <th class="p-2 border-r border-gray-400 w-10">রোল</th>
+                        <th class="p-2 border-r border-gray-400 w-14">চালান</th>
+                        <th class="p-2 border-r border-gray-400 text-left">কাস্টমার</th>
+                        <th class="p-2 border-r border-gray-400 text-left">ডেলিভারি ঠিকানা</th>
+                        <th class="p-2 border-r border-gray-400 text-center">শ্রেণি</th>
+                        <th class="p-2 border-r border-gray-400 text-right">পরিমাণ</th>
+                        <th class="p-2 border-r border-gray-400 text-right">ডেলিভারি</th>
+                        <th class="p-2 text-right">বাকি</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-300 font-sans">
+                    @if($deliveries)
+                        @foreach($deliveries as $idx => $item)
+                            @php
+                                $cNo = isset($item->challan_no) ? $item->challan_no : ($item->challan->challan_no ?? '-');
+                                $cName = isset($item->customer_name) ? $item->customer_name : ($item->challan->customer_name ?? '-');
+                                $cPhone = isset($item->customer_phone) ? $item->customer_phone : ($item->challan->customer_phone ?? '');
+                                $cAddr = isset($item->customer_address) ? $item->customer_address : ($item->challan->customer_address ?? '-');
+                                $catName = $item->category_name ?? '-';
+                                
+                                $totalQ = isset($item->quantity) ? (int)$item->quantity : 0;
+                                $delQ = isset($item->today_delivery_qty) ? (int)$item->today_delivery_qty : (isset($item->delivered_quantity) ? (int)$item->delivered_quantity : 0);
+                                $remQ = isset($item->delivery_remaining_qty) ? (int)$item->delivery_remaining_qty : max(0, $totalQ - $delQ);
+                            @endphp
+                            <tr class="hover:bg-gray-50 border-b border-gray-300 text-xs">
+                                <td class="p-2 text-center font-mono font-bold border-r border-gray-300">{{ $idx + 1 }}</td>
+                                <td class="p-2 text-center font-mono font-bold border-r border-gray-300">{{ $cNo }}</td>
+                                <td class="p-2 text-left border-r border-gray-300">
+                                    <div class="font-bold text-gray-900">{{ $cName }}</div>
+                                    @if($cPhone)<div class="text-[10px] text-gray-500 font-mono">{{ $cPhone }}</div>@endif
+                                </td>
+                                <td class="p-2 text-left border-r border-gray-300 font-medium">{{ $cAddr }}</td>
+                                <td class="p-2 text-center font-semibold border-r border-gray-300">{{ $catName }}</td>
+                                <td class="p-2 text-right font-mono font-semibold border-r border-gray-300">{{ number_format($totalQ) }}</td>
+                                <td class="p-2 text-right font-mono font-bold text-emerald-600 border-r border-gray-300">{{ number_format($delQ) }}</td>
+                                <td class="p-2 text-right font-mono font-bold text-rose-600">{{ number_format($remQ) }}</td>
+                            </tr>
+                        @endforeach
+                    @else
+                        <tr>
+                            <td colspan="8" class="p-4 text-center text-gray-500 font-semibold">কোনো তথ্য পাওয়া যায়নি</td>
+                        </tr>
+                    @endif
+                </tbody>
+                <tfoot>
+                    <tr class="bg-gray-100 font-bold border-t-2 border-gray-400 text-xs">
+                        <td colspan="6" class="p-2 text-right font-black border-r border-gray-400">সর্বমোট ডেলিভারি:</td>
+                        <td class="p-2 text-right font-mono font-black text-emerald-700 border-r border-gray-400">{{ number_format((int)$totalDeliverySum) }}</td>
+                        <td class="p-2 text-right font-mono font-black text-rose-600">
+                            @php
+                                $totalRemSum = 0;
+                                if ($deliveries) {
+                                    foreach($deliveries as $d) {
+                                        $tQ = isset($d->quantity) ? (int)$d->quantity : 0;
+                                        $dQ = isset($d->today_delivery_qty) ? (int)$d->today_delivery_qty : (isset($d->delivered_quantity) ? (int)$d->delivered_quantity : 0);
+                                        $totalRemSum += isset($d->delivery_remaining_qty) ? (int)$d->delivery_remaining_qty : max(0, $tQ - $dQ);
+                                    }
+                                }
+                            @endphp
+                            {{ number_format($totalRemSum) }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Signatures Row (Page break protected) -->
+            <div class="pt-16 pb-6 flex items-center justify-between font-bold text-xs text-gray-900 print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
+                <div class="text-center w-40">
+                    <div class="border-t border-gray-900 pt-1.5 font-bold">ম্যানেজার</div>
+                </div>
+                <div class="text-center w-40">
+                    <div class="border-t border-gray-900 pt-1.5 font-bold">মালিক</div>
+                </div>
+            </div>
+
+            <!-- Bottom Print Footer -->
+            <div class="pt-3 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-500 font-semibold print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
+                <div>রিপোর্ট প্রিন্ট: {{ $printTime }}</div>
+                <div>Software by: Payratech.com</div>
             </div>
         </div>
 

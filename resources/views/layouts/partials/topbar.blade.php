@@ -49,7 +49,7 @@
     } elseif (request()->routeIs('delivery.pending')) {
         $title = 'বাকি ডেলিভারি';
     } elseif (request()->routeIs('delivery.all')) {
-        $title = 'সকল ডেলিভারি';
+        $title = 'বাকি ডেলিভারি লিস্ট';
     } elseif (request()->routeIs('about-us')) {
         $title = 'আমাদের সম্পর্কে';
     } elseif (request()->routeIs('faq')) {
