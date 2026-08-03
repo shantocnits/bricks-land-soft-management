@@ -288,30 +288,40 @@ class CustomerProfile extends Component
             'due'          => $allChallans->sum('due'),
         ];
 
-        // Filtered query for the list
-        $query = Challan::with('items')
+        // Base query for the customer's challans (name OR phone identity)
+        $baseQuery = Challan::with('items')
             ->where(function($q) {
                 $q->where('customer_phone', $this->phone)
                   ->orWhere('customer_name', $this->phone);
             });
 
         if ($this->dateFrom) {
-            $query->whereDate('date', '>=', $this->dateFrom);
+            $baseQuery->whereDate('date', '>=', $this->dateFrom);
         }
         if ($this->dateTo) {
-            $query->whereDate('date', '<=', $this->dateTo);
+            $baseQuery->whereDate('date', '<=', $this->dateTo);
         }
 
         if ($this->search) {
-            $query->where(function($q) {
+            $baseQuery->where(function($q) {
                 $q->where('challan_no', 'like', '%' . $this->search . '%')
                   ->orWhere('notes', 'like', '%' . $this->search . '%');
             });
         }
 
+        // List query (সব চালান tab) — collection receipts (grand_total = 0) excluded
+        $query = (clone $baseQuery)->where('grand_total', '>', 0);
+
         $query->orderBy('id', 'desc');
 
-        $printChallans = (clone $query)->get();
+        // Print/statement collection — due_history tab keeps receipts, others exclude them
+        $printQuery = $this->activeTab === 'due_history'
+            ? clone $baseQuery
+            : (clone $baseQuery)->where('grand_total', '>', 0);
+
+        $printQuery->orderBy('id', 'desc');
+
+        $printChallans = $printQuery->get();
 
         // Calculate Print Totals for the view ($printTotal)
         $printTotal = [

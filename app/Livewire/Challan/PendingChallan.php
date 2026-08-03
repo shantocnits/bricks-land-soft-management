@@ -177,6 +177,7 @@ class PendingChallan extends Component
     {
         $challans = Challan::with('items')
             ->where('challan_type', 'অগ্রিম')
+            ->where('grand_total', '>', 0)
             ->get();
 
         $byCategory = [];
@@ -742,6 +743,7 @@ class PendingChallan extends Component
         $activeSeason = Setting::get('season', '২৫-২৬');
         $query = Challan::with('items')
             ->where('challan_type', 'অগ্রিম')
+            ->where('grand_total', '>', 0)
             ->where(function ($q) use ($activeSeason) {
                 $q->where('season', $activeSeason)->orWhereNull('season');
             });

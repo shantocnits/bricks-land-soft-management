@@ -14,6 +14,7 @@ class TodayCollection extends Component
 
     public $search = '';
     public $date = '';
+    public $seasonFilter = 'all';
     public $showModal = false;
     public $editingId = null;
     public int $perPage = 10;
@@ -36,6 +37,7 @@ class TodayCollection extends Component
     public function mount()
     {
         $this->date = now()->toDateString();
+        $this->seasonFilter = \App\Models\Setting::get('season', '২৫-২৬');
     }
 
     public function updatedSearch()
@@ -48,6 +50,42 @@ class TodayCollection extends Component
         $this->resetPage();
     }
 
+    public function updatedSeasonFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function setSeasonFilter($season)
+    {
+        $this->seasonFilter = $season;
+        $this->resetPage();
+    }
+
+    // Dynamic season list (same as the topbar dropdown)
+    private function seasonOptions()
+    {
+        $bnNum = function ($num) {
+            $eng = ['0','1','2','3','4','5','6','7','8','9'];
+            $bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+            return str_replace($eng, $bn, (string)$num);
+        };
+
+        $activeSeason = \App\Models\Setting::get('season', '২৫-২৬');
+        $currentYearTwoDigit = (int)date('y');
+        $seasons = [];
+
+        for ($i = -3; $i <= -1; $i++) {
+            $y1 = sprintf('%02d', $currentYearTwoDigit + $i);
+            $y2 = sprintf('%02d', $currentYearTwoDigit + $i + 1);
+            $seasons[] = $bnNum($y1) . '-' . $bnNum($y2);
+        }
+        if (!in_array($activeSeason, $seasons)) {
+            array_unshift($seasons, $activeSeason);
+        }
+
+        return $seasons;
+    }
+
     public function updatingPerPage()
     {
         $this->resetPage();
@@ -57,27 +95,18 @@ class TodayCollection extends Component
     {
         $value = trim($value);
         if ($value && is_numeric($value)) {
-            $ledger = Ledger::find($value);
-            if ($ledger) {
-                $this->customer_name = $ledger->name;
-                
-                // Fetch details from latest challan
-                $latestChallan = Challan::where('customer_name', $ledger->name)
-                    ->latest()
-                    ->first();
-                if ($latestChallan) {
-                    $this->customer_phone = $latestChallan->customer_phone;
-                    $this->customer_address = $latestChallan->customer_address;
-                } else {
-                    $this->customer_phone = '';
-                    $this->customer_address = '';
-                }
+            $challan = Challan::find($value);
+            if ($challan) {
+                $this->customer_name = $challan->customer_name;
+                $this->customer_phone = $challan->customer_phone;
+                $this->customer_address = $challan->customer_address;
+                $this->season = \App\Models\Setting::get('season', '২৫-২৬');
 
                 // Calculate total due (excluding current editing challan if any)
-                $dueQuery = Challan::where(function($q) use ($ledger) {
-                    $q->where('customer_name', $ledger->name);
-                    if ($this->customer_phone) {
-                        $q->orWhere('customer_phone', $this->customer_phone);
+                $dueQuery = Challan::where(function($q) use ($challan) {
+                    $q->where('customer_name', $challan->customer_name);
+                    if ($challan->customer_phone) {
+                        $q->orWhere('customer_phone', $challan->customer_phone);
                     }
                 });
 
@@ -94,6 +123,7 @@ class TodayCollection extends Component
         $this->customer_name = '';
         $this->customer_phone = '';
         $this->customer_address = '';
+        $this->season = \App\Models\Setting::get('season', '২৫-২৬');
         $this->total_due = 0;
         $this->new_due = 0;
     }
@@ -142,6 +172,17 @@ class TodayCollection extends Component
         return (string)($lastId + 1);
     }
 
+    // Stable customer ID = earliest challan id of this customer (name OR phone identity)
+    private function customerId($name, $phone)
+    {
+        return (string) Challan::where(function ($q) use ($name, $phone) {
+            $q->where('customer_name', $name);
+            if ($phone) {
+                $q->orWhere('customer_phone', $phone);
+            }
+        })->min('id');
+    }
+
     public function save()
     {
         $this->validate([
@@ -176,15 +217,16 @@ class TodayCollection extends Component
             'due' => $due,
             'send_sms' => $this->send_sms,
             'due_payment_date' => $this->due_payment_date ?: null,
+            'season' => $this->season ?: \App\Models\Setting::get('season', '২৫-২৬'),
         ];
 
         if ($this->editingId) {
             $challan = Challan::findOrFail($this->editingId);
             $challan->update($challanData);
-            session()->flash('message', 'জমা তথ্য সফলভাবে আপডেট করা হয়েছে।');
+            $this->dispatch('show-toast', message: 'জমা তথ্য সফলভাবে আপডেট করা হয়েছে।', type: 'success');
         } else {
             $challan = Challan::create($challanData);
-            session()->flash('message', 'নতুন জমা তথ্য সফলভাবে সংরক্ষণ করা হয়েছে।');
+            $this->dispatch('show-toast', message: 'নতুন জমা তথ্য সফলভাবে সংরক্ষণ করা হয়েছে।', type: 'success');
         }
 
         // Auto-save Ledger just in case
@@ -216,11 +258,8 @@ class TodayCollection extends Component
         $this->send_sms = $challan->send_sms;
         $this->due_payment_date = $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->toDateString() : '';
 
-        // Find customer Ledger ID
-        $ledger = Ledger::where('name', $challan->customer_name)->first();
-        if ($ledger) {
-            $this->customer_id = $ledger->id;
-        }
+        // Show the same stable customer ID (earliest challan of this customer)
+        $this->customer_id = $this->customerId($challan->customer_name, $challan->customer_phone);
 
         // Previous due is sum of due of all other challans
         $this->total_due = Challan::where(fn($q) => $q->where('customer_name', $challan->customer_name)->orWhere('customer_phone', $challan->customer_phone))
@@ -243,25 +282,29 @@ class TodayCollection extends Component
             "গ্রাহকঃ {$name}। পরিমাণঃ {$cash} টাকা।"
         );
 
-        session()->flash('message', 'জমা তথ্য মুছে ফেলা হয়েছে।');
+        $this->dispatch('show-toast', message: 'জমা তথ্য মুছে ফেলা হয়েছে।', type: 'success');
     }
 
     public function getPreviousDue($challan)
     {
-        return Challan::where(function($q) use ($challan) {
-                $q->where('customer_name', $challan->customer_name);
-                if ($challan->customer_phone) {
-                    $q->orWhere('customer_phone', $challan->customer_phone);
-                }
-            })
-            ->where('id', '<', $challan->id)
-            ->sum('due');
-    }
+        $customerScope = function ($q) use ($challan) {
+            $q->where('customer_name', $challan->customer_name);
+            if ($challan->customer_phone) {
+                $q->orWhere('customer_phone', $challan->customer_phone);
+            }
+        };
 
-    public function getLedgerId($customerName)
-    {
-        $ledger = Ledger::where('name', $customerName)->first();
-        return $ledger ? $ledger->id : '—';
+        // Current net balance (after all collections)
+        $netDue = (float) Challan::where($customerScope)->sum('due');
+
+        // Deposits recorded from this receipt onward
+        $depositsFrom = (float) Challan::where($customerScope)
+            ->where('grand_total', 0)
+            ->where('id', '>=', $challan->id)
+            ->sum('cash');
+
+        // Due before this deposit = current balance + deposits made with this (and later) receipts
+        return $netDue + $depositsFrom;
     }
 
     public function render()
@@ -280,14 +323,31 @@ class TodayCollection extends Component
             $query->whereDate('date', $this->date);
         }
 
+        if ($this->seasonFilter !== 'all') {
+            $query->where(function ($q) {
+                $q->where('season', $this->seasonFilter)->orWhereNull('season');
+            });
+        }
+
         $query->orderBy('id', 'desc');
 
         $collections = $query->paginate($this->editingId ? 100 : $this->perPage);
         $totalCollectionSum = (clone $query)->sum('cash');
 
+        // Stable customer ID per customer for the ID column
+        $customerIdMap = [];
+        foreach ($collections as $col) {
+            $key = $col->customer_name . '|' . ($col->customer_phone ?: '');
+            if (!isset($customerIdMap[$key])) {
+                $customerIdMap[$key] = $this->customerId($col->customer_name, $col->customer_phone);
+            }
+        }
+
         return view('livewire.due-ledger.today-collection', [
             'collections' => $collections,
-            'totalCollectionSum' => $totalCollectionSum
+            'totalCollectionSum' => $totalCollectionSum,
+            'customerIdMap' => $customerIdMap,
+            'seasons' => collect($this->seasonOptions())
         ])->layout('layouts.app');
     }
 }

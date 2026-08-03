@@ -135,24 +135,24 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-slate-800 font-sans">
                         @forelse($challans as $challan)
-                            <tr class="hover:bg-primary-50/40 dark:hover:bg-primary-950/10 transition-colors text-xs">
-                                <td class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $loop->iteration }}</td>
-                                <td class="px-3 py-3.5 text-gray-500 dark:text-slate-400 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->date ? $challan->date->format('d/m/Y') : '' }}</td>
-                                <td class="px-3 py-3.5 font-semibold text-gray-800 dark:text-slate-200 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->customer_name }}</td>
-                                <td class="px-3 py-3.5 text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->customer_address }}</td>
-                                <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    @foreach($challan->items as $item)
+                            @foreach($challan->items as $item)
+                                <tr class="hover:bg-primary-50/40 dark:hover:bg-primary-950/10 transition-colors text-xs">
+                                    @if($loop->first)
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $loop->parent->iteration }}</td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-gray-500 dark:text-slate-400 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->date ? $challan->date->format('d/m/Y') : '' }}</td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 font-semibold text-gray-800 dark:text-slate-200 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->customer_name }}</td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->customer_address }}</td>
+                                    @endif
+                                    <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                         <span class="block font-semibold text-primary-dark dark:text-primary-400">{{ $item->category_name }}</span>
-                                    @endforeach
-                                </td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    @foreach($challan->items as $item)
+                                    </td>
+                                    <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                         <div x-data="{ openTooltip: false, rect: null }" 
                                              @mouseenter="openTooltip = true; rect = $el.getBoundingClientRect()" 
                                              @mouseleave="openTooltip = false"
                                              class="relative flex items-center justify-end gap-1.5 cursor-pointer">
-                                            <span class="{{ $challan->due <= 0 ? 'text-primary dark:text-primary-400 font-bold' : '' }}">{{ number_format($item->quantity) }}</span>
-                                            @if($challan->due <= 0)
+                                            <span class="{{ ($item->delivered_quantity ?? 0) >= $item->quantity ? 'text-primary dark:text-primary-400 font-bold' : '' }}">{{ number_format($item->quantity) }}</span>
+                                            @if(($item->delivered_quantity ?? 0) >= $item->quantity)
                                                 <span class="w-3.5 h-3.5 rounded-full bg-primary-500 text-white flex items-center justify-center shrink-0">
                                                     <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                                                 </span>
@@ -177,60 +177,60 @@
                                                 </div>
                                             </template>
                                         </div>
-                                    @endforeach
-                                </td>
-                                <td class="px-3 py-3.5 text-right text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    @foreach($challan->items as $item)
+                                    </td>
+                                    <td class="px-3 py-3.5 text-right text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                         <span class="block">৳{{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</span>
-                                    @endforeach
-                                </td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right text-amber-600 dark:text-amber-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->discount), (float)($challan->discount) == (int)($challan->discount) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->transport_rent), (float)($challan->transport_rent) == (int)($challan->transport_rent) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right font-bold text-gray-800 dark:text-slate-200 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->grand_total), (float)($challan->grand_total) == (int)($challan->grand_total) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right text-primary dark:text-primary-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->cash), (float)($challan->cash) == (int)($challan->cash) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    <span class="font-bold {{ $challan->due > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400' }}">৳{{ number_format((float)($challan->due), (float)($challan->due) == (int)($challan->due) ? 0 : 2) }}</span>
-                                </td>
-                                <td class="px-3 py-3.5 text-center border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $challan->challan_type === 'আজকের' ? 'bg-primary-50 dark:bg-primary-950/30 text-primary-dark dark:text-primary-400 border border-primary-100' : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-100' }}">
-                                        {{ $challan->challan_type }}
-                                    </span>
-                                </td>
-                                <!-- Dropdown Button Teleported to Body -->
-                                <td class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">
-                                    <button type="button" @click="openDropdown = !openDropdown; buttonRect = $el.getBoundingClientRect()" class="p-1.5 text-gray-500 hover:text-primary dark:hover:text-primary-400 focus:outline-none transition-all cursor-pointer">
-                                        <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/>
-                                        </svg>
-                                    </button>
-                                    
-                                    <template x-teleport="body">
-                                        <div x-show="openDropdown" @click.away="openDropdown = false" x-transition
-                                             class="fixed w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-2xl p-1.5 z-[9999] text-left text-xs flex flex-col gap-0.5"
-                                             :style="buttonRect ? ('left: ' + (buttonRect.left - 140) + 'px; position: fixed; ' + (window.innerHeight - buttonRect.bottom < 170 ? 'bottom: ' + (window.innerHeight - buttonRect.top + 4) + 'px;' : 'top: ' + (buttonRect.bottom + 4) + 'px;')) : ''"
-                                             x-cloak>
-                                        <button type="button" @click="openDropdown = false" wire:click="openPrintModal({{ $challan->id }})" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
-                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                                            প্রিন্ট চালান
-                                        </button>
-                                        <button type="button" @click="openDropdown = false" wire:click="openDeliveryModal({{ $challan->id }})" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
-                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                                            ডেলিভারি দিন
-                                        </button>
-                                        <button type="button" @click="openDropdown = false" wire:click="openChallanDetailsModal({{ $challan->id }})" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
-                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                            চালান বিস্তারিত
-                                        </button>
-                                        <a href="{{ route('challan.customer-profile', ['phone' => $challan->customer_phone ?: $challan->customer_name, 'from' => 'challan.all']) }}" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
-                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                            প্রোফাইল এ যান
-                                        </a>
-                                    </div>
-                                </template>
-                                </td>
-                            </tr>
+                                    </td>
+                                    @if($loop->first)
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right text-amber-600 dark:text-amber-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->discount), (float)($challan->discount) == (int)($challan->discount) ? 0 : 2) }}</td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->transport_rent), (float)($challan->transport_rent) == (int)($challan->transport_rent) ? 0 : 2) }}</td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right font-bold text-gray-800 dark:text-slate-200 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->grand_total), (float)($challan->grand_total) == (int)($challan->grand_total) ? 0 : 2) }}</td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right text-primary dark:text-primary-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->cash), (float)($challan->cash) == (int)($challan->cash) ? 0 : 2) }}</td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 last:border-r-0">
+                                            <span class="font-bold {{ $challan->due > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400' }}">৳{{ number_format((float)($challan->due), (float)($challan->due) == (int)($challan->due) ? 0 : 2) }}</span>
+                                        </td>
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-center border-r border-gray-150 dark:border-slate-800 last:border-r-0">
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $challan->challan_type === 'আজকের' ? 'bg-primary-50 dark:bg-primary-950/30 text-primary-dark dark:text-primary-400 border border-primary-100' : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-100' }}">
+                                                {{ $challan->challan_type }}
+                                            </span>
+                                        </td>
+                                        <!-- Dropdown Button Teleported to Body -->
+                                        <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">
+                                            <button type="button" @click="openDropdown = !openDropdown; buttonRect = $el.getBoundingClientRect()" class="p-1.5 text-gray-500 hover:text-primary dark:hover:text-primary-400 focus:outline-none transition-all cursor-pointer">
+                                                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/>
+                                                </svg>
+                                            </button>
+                                            
+                                            <template x-teleport="body">
+                                                <div x-show="openDropdown" @click.away="openDropdown = false" x-transition
+                                                     class="fixed w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-2xl p-1.5 z-[9999] text-left text-xs flex flex-col gap-0.5"
+                                                     :style="buttonRect ? ('left: ' + (buttonRect.left - 140) + 'px; position: fixed; ' + (window.innerHeight - buttonRect.bottom < 170 ? 'bottom: ' + (window.innerHeight - buttonRect.top + 4) + 'px;' : 'top: ' + (buttonRect.bottom + 4) + 'px;')) : ''"
+                                                     x-cloak>
+                                                <button type="button" @click="openDropdown = false" wire:click="openPrintModal({{ $challan->id }})" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                                    প্রিন্ট চালান
+                                                </button>
+                                                <button type="button" @click="openDropdown = false" wire:click="openDeliveryModal({{ $challan->id }})" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                                    ডেলিভারি দিন
+                                                </button>
+                                                <button type="button" @click="openDropdown = false" wire:click="openChallanDetailsModal({{ $challan->id }})" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    চালান বিস্তারিত
+                                                </button>
+                                                <a href="{{ route('challan.customer-profile', ['phone' => $challan->customer_phone ?: $challan->customer_name, 'from' => 'challan.all']) }}" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                    প্রোফাইল এ যান
+                                                </a>
+                                            </div>
+                                        </template>
+                                        </td>
+                                    @endif
+                                </tr>
+                            @endforeach
                         @empty
                             <tr>
                                 <td colspan="16" class="px-4 py-16 text-center">

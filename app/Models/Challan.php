@@ -25,7 +25,8 @@ class Challan extends Model
         'cash',
         'due',
         'send_sms',
-        'due_payment_date'
+        'due_payment_date',
+        'season'
     ];
 
     protected $casts = [

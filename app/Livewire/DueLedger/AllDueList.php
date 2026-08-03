@@ -13,7 +13,7 @@ class AllDueList extends Component
     use WithPagination;
 
     public $search = '';
-    public $seasonFilter = 'all'; // all, 25-26, 23-24
+    public $seasonFilter = 'all';
     public $dateFrom = '';
     public $dateTo = '';
     public int $perPage = 10;
@@ -50,6 +50,11 @@ class AllDueList extends Component
 
     protected $paginationTheme = 'tailwind';
 
+    public function mount()
+    {
+        $this->seasonFilter = \App\Models\Setting::get('season', '২৫-২৬');
+    }
+
     public function updatedSearch()
     {
         $this->resetPage();
@@ -65,6 +70,11 @@ class AllDueList extends Component
         $this->resetPage();
     }
 
+    public function updatedSeasonFilter()
+    {
+        $this->resetPage();
+    }
+
     public function updatingPerPage()
     {
         $this->resetPage();
@@ -74,6 +84,31 @@ class AllDueList extends Component
     {
         $this->seasonFilter = $season;
         $this->resetPage();
+    }
+
+    // Dynamic season list (same as the topbar dropdown)
+    private function seasonOptions()
+    {
+        $bnNum = function ($num) {
+            $eng = ['0','1','2','3','4','5','6','7','8','9'];
+            $bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+            return str_replace($eng, $bn, (string)$num);
+        };
+
+        $activeSeason = \App\Models\Setting::get('season', '২৫-২৬');
+        $currentYearTwoDigit = (int)date('y');
+        $seasons = [];
+
+        for ($i = -3; $i <= -1; $i++) {
+            $y1 = sprintf('%02d', $currentYearTwoDigit + $i);
+            $y2 = sprintf('%02d', $currentYearTwoDigit + $i + 1);
+            $seasons[] = $bnNum($y1) . '-' . $bnNum($y2);
+        }
+        if (!in_array($activeSeason, $seasons)) {
+            array_unshift($seasons, $activeSeason);
+        }
+
+        return $seasons;
     }
 
     // Modal Close logic
@@ -116,7 +151,7 @@ class AllDueList extends Component
             "গ্রাহকঃ {$challan->customer_name} (চালান নং {$challan->challan_no}) • পরিশোধের তারিখ পরিবর্তনঃ {$oldDate} -> {$newDateFormatted} • নোটঃ {$this->notes}"
         );
 
-        session()->flash('message', 'পরিশোধের তারিখ সফলভাবে আপডেট করা হয়েছে।');
+        $this->dispatch('show-toast', message: 'পরিশোধের তারিখ সফলভাবে আপডেট করা হয়েছে।', type: 'success');
         $this->closeModal();
     }
 
@@ -133,20 +168,36 @@ class AllDueList extends Component
         $this->send_sms = false;
         $this->due_payment_date = '';
 
-        // Find customer Ledger ID
-        $ledger = Ledger::where('name', $challan->customer_name)->first();
-        if ($ledger) {
-            $this->customer_id = $ledger->id;
-        } else {
-            $this->customer_id = '';
-        }
+        // Show the same stable customer ID (earliest challan of this customer)
+        $this->customer_id = $this->customerId($challan->customer_name, $challan->customer_phone);
 
-        // Calculate total due (sum of all challan dues)
-        $this->total_due = Challan::where(fn($q) => $q->where('customer_name', $challan->customer_name)->orWhere('customer_phone', $challan->customer_phone))
-            ->sum('due');
+        // Calculate total due (net sum of all challan dues for this customer)
+        $this->total_due = $this->customerNetDue($challan->customer_name, $challan->customer_phone);
 
         $this->new_due = $this->total_due;
         $this->showCollectionModal = true;
+    }
+
+    // Net total due for a customer (name OR phone identity, same as the collection modal)
+    private function customerNetDue($name, $phone): float
+    {
+        return (float) Challan::where(function ($q) use ($name, $phone) {
+            $q->where('customer_name', $name);
+            if ($phone) {
+                $q->orWhere('customer_phone', $phone);
+            }
+        })->sum('due');
+    }
+
+    // Stable customer ID = earliest challan id of this customer (name OR phone identity)
+    private function customerId($name, $phone)
+    {
+        return (string) Challan::where(function ($q) use ($name, $phone) {
+            $q->where('customer_name', $name);
+            if ($phone) {
+                $q->orWhere('customer_phone', $phone);
+            }
+        })->min('id');
     }
 
     public function updatedCash($value)
@@ -162,7 +213,7 @@ class AllDueList extends Component
             'notes' => 'nullable|string'
         ]);
 
-        $due = 0 - floatval($this->cash);
+        $excess = $this->settleDuesFromCollection();
 
         $challanData = [
             'customer_type' => 'old',
@@ -180,9 +231,10 @@ class AllDueList extends Component
             'discount' => 0,
             'grand_total' => 0,
             'cash' => $this->cash,
-            'due' => $due,
+            'due' => 0 - $excess,
             'send_sms' => $this->send_sms,
             'due_payment_date' => $this->due_payment_date ?: null,
+            'season' => $this->season ?: \App\Models\Setting::get('season', '২৫-২৬'),
         ];
 
         Challan::create($challanData);
@@ -200,7 +252,7 @@ class AllDueList extends Component
             "গ্রাহকঃ {$this->customer_name}। পরিমাণঃ {$this->cash} টাকা।"
         );
 
-        session()->flash('message', 'নতুন জমা তথ্য সফলভাবে সংরক্ষণ করা হয়েছে।');
+        $this->dispatch('show-toast', message: 'নতুন জমা তথ্য সফলভাবে সংরক্ষণ করা হয়েছে।', type: 'success');
         $this->closeModal();
     }
 
@@ -210,6 +262,60 @@ class AllDueList extends Component
         return (string)($lastId + 1);
     }
 
+    // Settle the customer's outstanding dues with this collection.
+    // Returns the excess amount that goes as advance credit (if any).
+    private function settleDuesFromCollection()
+    {
+        $cash = floatval($this->cash);
+        if ($cash <= 0) {
+            return 0.0;
+        }
+
+        $customerScope = function ($q) {
+            $q->where('customer_name', $this->customer_name);
+            if ($this->customer_phone) {
+                $q->orWhere('customer_phone', $this->customer_phone);
+            }
+        };
+
+        $netDue = (float) Challan::where($customerScope)->sum('due');
+        $settleAmount = min($cash, max(0, $netDue));
+        $remaining = $settleAmount;
+        $touched = [];
+
+        if ($remaining > 0) {
+            $source = $this->selectedChallanId ? Challan::find($this->selectedChallanId) : null;
+
+            $dueChallans = Challan::where($customerScope)
+                ->where('due', '>', 0)
+                ->orderBy('due_payment_date', 'asc')
+                ->orderBy('id', 'asc')
+                ->get()
+                ->sortBy(fn($c) => $source && $c->id === $source->id ? 0 : 1);
+
+            foreach ($dueChallans as $challan) {
+                if ($remaining <= 0) {
+                    break;
+                }
+                $due = (float) $challan->due;
+                $apply = min($remaining, $due);
+                $challan->due = round($due - $apply, 2);
+                $challan->save();
+                $touched[] = $challan->id;
+                $remaining = round($remaining - $apply, 2);
+            }
+        }
+
+        // Re-queue remaining baki on the new payment date
+        if ($this->due_payment_date && $touched) {
+            Challan::whereIn('id', $touched)
+                ->where('due', '>', 0)
+                ->update(['due_payment_date' => $this->due_payment_date]);
+        }
+
+        return round($cash - $settleAmount, 2);
+    }
+
     // Action 3: SMS Modal
     public function openSmsModal($id)
     {
@@ -217,7 +323,10 @@ class AllDueList extends Component
         $this->selectedChallanId = $id;
         $this->sms_name = $challan->customer_name;
         $this->sms_phone = $challan->customer_phone ?: '—';
-        $this->sms_text = "প্রিয় {$challan->customer_name}, ডেমো ব্রিকস-এ আপনার চালান নং {$challan->challan_no} এর বকেয়া বাকি ৳" . number_format($challan->due) . " টাকা। অনুগ্রহ করে দ্রুত পরিশোধ করুন। ধন্যবাদ।";
+        $payDate = $challan->due_payment_date
+            ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y')
+            : ($challan->date ? $challan->date->format('d-m-Y') : '');
+        $this->sms_text = "প্রিয় {$challan->customer_name}, ডেমো ব্রিকস-এ আপনার চালান নং {$challan->challan_no} এর বকেয়া বাকি ৳" . number_format($challan->due) . " টাকা। অনুগ্রহ করে {$payDate} tarikher moddhe দ্রুত পরিশোধ করুন, ধন্যবাদ।";
         $this->sms_count = 1;
         $this->showSmsModal = true;
     }
@@ -245,19 +354,22 @@ class AllDueList extends Component
             "গ্রাহকঃ {$challan->customer_name} ({$challan->customer_phone}) কে এসএমএস পাঠানো হয়েছে। বার্তাঃ \"{$this->sms_text}\""
         );
 
-        session()->flash('message', 'গ্রাহককে সফলভাবে বকেয়ার এসএমএস পাঠানো হয়েছে।');
+        $this->dispatch('show-toast', message: 'গ্রাহককে সফলভাবে বকেয়ার এসএমএস পাঠানো হয়েছে।', type: 'success');
         $this->closeModal();
-    }
-
-    public function getLedgerId($customerName)
-    {
-        $ledger = Ledger::where('name', $customerName)->first();
-        return $ledger ? $ledger->id : '—';
     }
 
     public function render()
     {
-        $query = Challan::with('items')->where('due', '>', 0);
+        $query = Challan::with('items')
+            ->where('due', '>', 0)
+            ->whereIn('customer_name', function ($q) {
+                $q->select('customer_name')
+                    ->from('challans')
+                    ->whereNotNull('customer_name')
+                    ->where('customer_name', '!=', '')
+                    ->groupBy('customer_name')
+                    ->havingRaw('SUM(due) > 0');
+            });
 
         if ($this->search) {
             $query->where(function($q) {
@@ -276,22 +388,41 @@ class AllDueList extends Component
             $query->whereDate('date', '<=', $this->dateTo);
         }
 
-        // Season filter dummy logic (since we just show season ২৫-২৬ always)
-        // If they select 25-26, it lists them. If they select others, it returns empty/others.
+        // Season filter (active season from topbar, same as other pages)
         if ($this->seasonFilter !== 'all') {
-            if ($this->seasonFilter !== '25-26') {
-                $query->where('id', '<', 0); // empty list for other seasons
-            }
+            $query->where(function ($q) {
+                $q->where('season', $this->seasonFilter)->orWhereNull('season');
+            });
         }
 
         $query->orderBy('id', 'desc');
 
         $challans = $query->paginate($this->perPage);
-        $totalDueSum = (clone $query)->sum('due');
+
+        // Net due per customer (same computation as the collection modal) for row display + badge
+        $netDueMap = [];
+        $customerIdMap = [];
+        $totalDueSum = 0;
+        $allRows = (clone $query)->get(['customer_name', 'customer_phone']);
+        foreach ($allRows as $row) {
+            $key = $row->customer_name . '|' . ($row->customer_phone ?: '');
+            if (isset($netDueMap[$key])) {
+                continue;
+            }
+            $netDueMap[$key] = $this->customerNetDue($row->customer_name, $row->customer_phone);
+            $customerIdMap[$key] = $this->customerId($row->customer_name, $row->customer_phone);
+            $totalDueSum += $netDueMap[$key];
+        }
+
+        // Dynamic season list (same as the topbar dropdown)
+        $seasons = collect($this->seasonOptions());
 
         return view('livewire.due-ledger.all-due-list', [
             'challans' => $challans,
-            'totalDueSum' => $totalDueSum
+            'totalDueSum' => $totalDueSum,
+            'netDueMap' => $netDueMap,
+            'customerIdMap' => $customerIdMap,
+            'seasons' => $seasons
         ])->layout('layouts.app');
     }
 }

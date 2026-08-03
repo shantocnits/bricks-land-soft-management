@@ -236,13 +236,14 @@
      public function getReportDataProperty()
      {
          $activeSeason = Setting::get('season', '২৫-২৬');
-         $challans = Challan::with('items')
-             ->where('challan_type', 'আজকের')
-             ->where(function($q) use ($activeSeason) {
-                 $q->where('season', $activeSeason)->orWhereNull('season');
-             })
-             ->whereDate('date', $this->date ?: now()->toDateString())
-             ->get();
+        $challans = Challan::with('items')
+            ->where('challan_type', 'আজকের')
+            ->where(function($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            })
+            ->where('grand_total', '>', 0)
+            ->whereDate('date', $this->date ?: now()->toDateString())
+            ->get();
 
          // Group items by category
          $byCategory = [];
@@ -822,6 +823,7 @@
             ->where(function($q) use ($activeSeason) {
                 $q->where('season', $activeSeason)->orWhereNull('season');
             })
+            ->where('grand_total', '>', 0)
             ->whereDate('date', $this->date ?: now()->toDateString());
 
         if ($this->search) {

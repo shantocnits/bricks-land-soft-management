@@ -56,7 +56,7 @@
                 <div x-data="{ open: false }" class="relative w-full sm:w-auto">
                     <button @click="open = !open" type="button" 
                             class="flex items-center justify-between gap-1.5 px-3 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-white font-bold rounded-xl text-xs border border-gray-200 dark:border-slate-700 focus:outline-none transition-all cursor-pointer w-full whitespace-nowrap">
-                        <span>{{ $seasonFilter === 'all' ? 'সব সিজন' : ($seasonFilter === '25-26' ? '২৫-২৬' : '২৩-২৪') }}</span>
+                        <span>{{ $seasonFilter === 'all' ? 'সব সিজন' : $seasonFilter }}</span>
                         <svg class="w-3.5 h-3.5 transition-transform duration-200 text-gray-550" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                         </svg>
@@ -70,12 +70,11 @@
                             <button type="button" wire:click="setSeasonFilter('all')" @click="open = false" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-800 dark:text-white hover:bg-primary-50 dark:hover:bg-slate-800 hover:text-primary-dark dark:hover:text-primary-400 transition-colors font-sans">
                                 সব সিজন
                             </button>
-                            <button type="button" wire:click="setSeasonFilter('25-26')" @click="open = false" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-800 dark:text-white hover:bg-primary-50 dark:hover:bg-slate-800 hover:text-primary-dark dark:hover:text-primary-400 transition-colors font-sans">
-                                ২৫-২৬
-                            </button>
-                            <button type="button" wire:click="setSeasonFilter('23-24')" @click="open = false" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-800 dark:text-white hover:bg-primary-50 dark:hover:bg-slate-800 hover:text-primary-dark dark:hover:text-primary-400 transition-colors font-sans">
-                                ২৩-২৪
-                            </button>
+                            @foreach($seasons as $seasonItem)
+                                <button type="button" wire:click="setSeasonFilter('{{ $seasonItem }}')" @click="open = false" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-800 dark:text-white hover:bg-primary-50 dark:hover:bg-slate-800 hover:text-primary-dark dark:hover:text-primary-400 transition-colors font-sans">
+                                    {{ $seasonItem }}
+                                </button>
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -89,15 +88,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Flash Message -->
-    @if (session()->has('message'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
-             x-transition:leave="transition ease-in duration-300" x-transition:leave-end="opacity-0"
-             class="mx-4 sm:mx-6 mt-4 p-3.5 bg-primary-50 dark:bg-primary-950/20 border border-primary-200 dark:border-primary-900 text-primary-800 dark:text-primary-400 rounded-2xl text-xs font-medium font-sans" x-cloak>
-            {{ session('message') }}
-        </div>
-    @endif
 
     <!-- Table Card -->
     <div class="py-4 sm:py-6">
@@ -113,6 +103,7 @@
                 <table class="w-full text-left border-collapse border border-gray-200 dark:border-slate-800" style="min-width: 1100px">
                     <thead>
                         <tr class="bg-primary text-white text-[11px] font-bold uppercase font-sans select-none">
+                            <th class="px-3 py-3 text-center w-10 border-r border-white/20 last:border-r-0">#</th>
                             <th class="px-3 py-3 text-center w-20 border-r border-white/20 last:border-r-0">কা.আইডি</th>
                             <th class="px-3 py-3 border-r border-white/20 last:border-r-0">নাম</th>
                             <th class="px-3 py-3 border-r border-white/20 last:border-r-0">ঠিকানা</th>
@@ -131,10 +122,13 @@
                                 $delQty = $challan->items->sum('quantity');
                                 $delSoFar = $challan->items->sum('delivered_quantity');
                                 $delRemaining = max(0, $delQty - $delSoFar);
+                                $netKey = $challan->customer_name . '|' . ($challan->customer_phone ?: '');
+                                $netDue = $netDueMap[$netKey] ?? 0;
                             @endphp
                             <tr class="hover:bg-primary-50/40 dark:hover:bg-primary-950/10 transition-colors text-xs">
+                                <td class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $loop->iteration }}</td>
                                 <td class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-400 font-bold border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-sans">
-                                    {{ $this->getLedgerId($challan->customer_name) }}
+                                    {{ $customerIdMap[$netKey] ?? $challan->id }}
                                 </td>
                                 <td class="px-3 py-3.5 font-semibold text-gray-808 dark:text-slate-202 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                     {{ $challan->customer_name }}
@@ -149,7 +143,7 @@
                                     {{ number_format($delRemaining) }} টি
                                 </td>
                                 <td class="px-3 py-3.5 text-right font-bold text-red-500 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    ৳{{ number_format((float)($challan->due), (float)($challan->due) == (int)($challan->due) ? 0 : 2) }}
+                                    ৳{{ number_format((float)$netDue, (float)$netDue == (int)$netDue ? 0 : 2) }}
                                 </td>
                                 <td class="px-3 py-3.5 text-gray-650 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                     {{ $challan->notes ?: '—' }}
@@ -157,7 +151,7 @@
                                 <td class="px-3 py-3.5 text-center text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-sans">
                                     {{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : '—' }}
                                 </td>
-                                <td class="px-3 py-3.5 text-center text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-sans">২৫-২৬</td>
+                                <td class="px-3 py-3.5 text-center text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-sans">{{ $challan->season ?: '—' }}</td>
                                 
                                 <!-- Action Dropdown -->
                                 <td class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">
@@ -194,7 +188,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="px-4 py-16 text-center">
+                                <td colspan="11" class="px-4 py-16 text-center">
                                     <p class="text-xs text-gray-400 dark:text-gray-500 italic font-sans">কোনো বকেয়া বাকি রেকর্ড পাওয়া যায়নি।</p>
                                 </td>
                             </tr>
@@ -387,8 +381,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-blue-50/30 dark:bg-slate-950/30 p-4 rounded-2xl border border-gray-100 dark:border-slate-800">
                         <div>
                             <label class="block text-gray-500 dark:text-slate-400 font-bold mb-1.5">মোট বাকি</label>
-                            <div class="text-sm font-black text-red-500 font-sans mt-1">
-                                ৳{{ number_format($total_due) }}
+                            <div class="relative flex items-center">
+                                <span class="absolute left-3 text-gray-400 font-semibold">৳</span>
+                                <div class="w-full pl-7 pr-3.5 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-red-500 font-sans font-semibold">
+                                    {{ number_format((float)$total_due) }}
+                                </div>
                             </div>
                         </div>
                         <div>
@@ -401,8 +398,11 @@
                         </div>
                         <div>
                             <label class="block text-gray-500 dark:text-slate-400 font-bold mb-1.5">নতুন বাকি</label>
-                            <div class="text-lg font-black font-sans mt-0.5 {{ $new_due > 0 ? 'text-red-500' : 'text-primary' }}">
-                                ৳{{ number_format($new_due) }}
+                            <div class="relative flex items-center">
+                                <span class="absolute left-3 text-gray-400 font-semibold">৳</span>
+                                <div class="w-full pl-7 pr-3.5 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-sans font-semibold {{ $new_due > 0 ? 'text-red-500' : 'text-primary' }}">
+                                    {{ number_format((float)$new_due) }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -479,11 +479,6 @@
                     <div>
                         <label class="block text-gray-500 dark:text-slate-400 font-bold mb-1.5">বার্তা</label>
                         <textarea wire:model.live="sms_text" rows="5" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-white font-semibold focus:outline-none focus:border-primary resize-none leading-relaxed"></textarea>
-                    </div>
-
-                    <div class="flex items-center justify-between px-1 text-gray-550 dark:text-slate-400 font-semibold font-sans">
-                        <span>চরিত্র সংখ্যা: {{ mb_strlen($sms_text) }}</span>
-                        <span>মেসেজ সংখ্যা: {{ $sms_count }}</span>
                     </div>
 
                     <div class="flex justify-end gap-2.5 pt-4 border-t border-gray-100 dark:border-slate-850">

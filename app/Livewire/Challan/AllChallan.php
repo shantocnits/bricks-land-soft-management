@@ -180,7 +180,8 @@ class AllChallan extends Component
 
     public function getReportDataProperty()
     {
-        $query = Challan::with('items');
+        $query = Challan::with('items')
+            ->where('grand_total', '>', 0);
         if ($this->dateFrom)
             $query->whereDate('date', '>=', $this->dateFrom);
         if ($this->dateTo)
@@ -765,6 +766,7 @@ class AllChallan extends Component
     {
         $activeSeason = Setting::get('season', '২৫-২৬');
         $query = Challan::with('items')
+            ->where('grand_total', '>', 0)
             ->where(function ($q) use ($activeSeason) {
                 $q->where('season', $activeSeason)->orWhereNull('season');
             });

@@ -112,23 +112,23 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-slate-800 font-sans">
                         @forelse($challans as $challan)
+                            @foreach($challan->items as $item)
                             <tr class="hover:bg-primary-50/40 dark:hover:bg-primary-950/10 transition-colors text-xs">
-                                <td class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $loop->iteration }}</td>
-                                <td class="px-3 py-3.5 font-semibold text-gray-800 dark:text-slate-200 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->customer_name }}</td>
-                                <td class="px-3 py-3.5 text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->customer_address }}</td>
+                                @if($loop->first)
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-center text-gray-500 dark:text-slate-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $loop->parent->iteration }}</td>
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 font-semibold text-gray-800 dark:text-slate-200 whitespace-nowrap border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->customer_name }}</td>
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">{{ $challan->customer_address }}</td>
+                                @endif
                                 <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    @foreach($challan->items as $item)
-                                        <span class="block font-semibold text-primary-dark dark:text-primary-400">{{ $item->category_name }}</span>
-                                    @endforeach
+                                    <span class="block font-semibold text-primary-dark dark:text-primary-400">{{ $item->category_name }}</span>
                                 </td>
                                 <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    @foreach($challan->items as $item)
                                         <div x-data="{ openTooltip: false, rect: null }" 
                                              @mouseenter="openTooltip = true; rect = $el.getBoundingClientRect()" 
                                              @mouseleave="openTooltip = false"
                                              class="relative flex items-center justify-end gap-1.5 cursor-pointer">
-                                            <span class="{{ $challan->due <= 0 ? 'text-primary dark:text-primary-400 font-bold' : '' }}">{{ number_format($item->quantity) }}</span>
-                                            @if($challan->due <= 0)
+                                            <span class="{{ ($item->delivered_quantity ?? 0) >= $item->quantity ? 'text-primary dark:text-primary-400 font-bold' : '' }}">{{ number_format($item->quantity) }}</span>
+                                            @if(($item->delivered_quantity ?? 0) >= $item->quantity)
                                                 <span class="w-3.5 h-3.5 rounded-full bg-primary-500 text-white flex items-center justify-center shrink-0">
                                                     <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                                                 </span>
@@ -153,24 +153,22 @@
                                                 </div>
                                             </template>
                                         </div>
-                                    @endforeach
                                 </td>
                                 <td class="px-3 py-3.5 text-right text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
-                                    @foreach($challan->items as $item)
-                                        <span class="block">৳{{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</span>
-                                    @endforeach
+                                    <span class="block">৳{{ number_format((float)($item->rate), (float)($item->rate) == (int)($item->rate) ? 0 : 2) }}</span>
                                 </td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right text-amber-600 dark:text-amber-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->discount), (float)($challan->discount) == (int)($challan->discount) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->transport_rent), (float)($challan->transport_rent) == (int)($challan->transport_rent) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right font-bold text-gray-800 dark:text-slate-200 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->grand_total), (float)($challan->grand_total) == (int)($challan->grand_total) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right text-primary dark:text-primary-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->cash), (float)($challan->cash) == (int)($challan->cash) ? 0 : 2) }}</td>
-                                <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 last:border-r-0">
+                                @if($loop->first)
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->value), (float)($challan->value) == (int)($challan->value) ? 0 : 2) }}</td>
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right text-amber-600 dark:text-amber-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->discount), (float)($challan->discount) == (int)($challan->discount) ? 0 : 2) }}</td>
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right font-semibold text-gray-700 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->transport_rent), (float)($challan->transport_rent) == (int)($challan->transport_rent) ? 0 : 2) }}</td>
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right font-bold text-gray-800 dark:text-slate-200 border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->grand_total), (float)($challan->grand_total) == (int)($challan->grand_total) ? 0 : 2) }}</td>
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right text-primary dark:text-primary-400 font-semibold border-r border-gray-150 dark:border-slate-800 last:border-r-0">৳{{ number_format((float)($challan->cash), (float)($challan->cash) == (int)($challan->cash) ? 0 : 2) }}</td>
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                     <span class="font-bold {{ $challan->due > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400' }}">৳{{ number_format((float)($challan->due), (float)($challan->due) == (int)($challan->due) ? 0 : 2) }}</span>
                                 </td>
                                 <!-- Dropdown Button -->
-                                <td class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">
+                                <td rowspan="{{ $challan->items->count() }}" class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">
                                     <button type="button" @click="openDropdown = !openDropdown; buttonRect = $el.getBoundingClientRect()" class="p-1.5 text-gray-500 hover:text-primary dark:hover:text-primary-400 focus:outline-none transition-all cursor-pointer">
                                         <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/>
@@ -210,7 +208,9 @@
                                         </div>
                                     </template>
                                 </td>
+                                    @endif
                             </tr>
+                            @endforeach
                         @empty
                             <tr>
                                 <td colspan="14" class="px-4 py-16 text-center">
