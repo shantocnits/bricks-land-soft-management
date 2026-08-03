@@ -63,7 +63,7 @@
                     সব জমা লিস্ট
                 </button>
                 <!-- Print -->
-                <button type="button" onclick="window.print()"
+                <button type="button" onclick="printChallanArea('due-collection-table-print')"
                         class="px-3 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans border border-gray-200 dark:border-slate-700 flex items-center justify-center gap-1.5 w-full sm:w-auto whitespace-nowrap">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     প্রিন্ট
@@ -150,7 +150,7 @@
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 আপডেট করুন
                                             </button>
-                                            <button type="button" @click="openDropdown = false; window.print()" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                            <button type="button" wire:click="openPrintModal({{ $col->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-950/20 text-gray-700 dark:text-slate-200 hover:text-primary-dark dark:hover:text-primary-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                                                 প্রিন্ট করুন
                                             </button>
@@ -398,4 +398,17 @@
             </div>
         </div>
     </div>
+    <!-- Full Table Report Printable Container (আজকের জমা টেবিল প্রিন্ট) -->
+    <div id="due-collection-table-print" style="display:none;">
+        <x-print-layout type="due-report"
+                        :collections="$collections->items()"
+                        :totalCollectionSum="$totalCollectionSum"
+                        :customerIdMap="$customerIdMap"
+                        reportTitle="আজকের জমা রিপোর্ট"
+                        :reportDate="$date"
+                        :activeSeason="$seasonFilter" />
+    </div>
+
+    <!-- Universal Print Preview Modal (4 Formats: A4 Customer, A4 Dual, POS Customer, POS Dual) -->
+    <x-print-modal :showPrintModal="$showPrintModal" :printChallan="$printChallan" :isDuePrint="$isDuePrint" />
 </div>

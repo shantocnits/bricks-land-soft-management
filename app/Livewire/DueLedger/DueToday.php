@@ -36,7 +36,24 @@ class DueToday extends Component
     public $showDateModal = false;
     public $showCollectionModal = false;
     public $showSmsModal = false;
+    public $showPrintModal = false;
+    public $printChallan = null;
+    public $isDuePrint = false;
     public $selectedChallanId = null;
+
+    public function openPrintModal($challanId)
+    {
+        $this->printChallan = Challan::with('items')->find($challanId);
+        $this->isDuePrint = true;
+        $this->showPrintModal = true;
+    }
+
+    public function closePrintModal()
+    {
+        $this->showPrintModal = false;
+        $this->isDuePrint = false;
+        $this->printChallan = null;
+    }
 
     // Date Update variables
     public $new_payment_date = '';

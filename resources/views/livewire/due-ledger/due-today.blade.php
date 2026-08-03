@@ -58,7 +58,7 @@
                     </span>
                 </div>
                 <!-- Print Button -->
-                <button type="button" onclick="window.print()"
+                <button type="button" onclick="printChallanArea('due-today-table-print')"
                         class="px-3 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans border border-gray-200 dark:border-slate-700 flex items-center justify-center gap-1.5 shadow-sm w-full sm:w-auto whitespace-nowrap">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     প্রিন্ট করুন
@@ -580,4 +580,18 @@
             </div>
         </div>
     </div>
+    <!-- Full Table Report Printable Container (আজ জমা দেবে টেবিল প্রিন্ট) -->
+    <div id="due-today-table-print" style="display:none;">
+        <x-print-layout type="due-report"
+                        :collections="$challans->items()"
+                        :totalCollectionSum="$totalDueSum"
+                        :customerIdMap="$customerIdMap"
+                        :netDueMap="$netDueMap"
+                        reportTitle="আজ জমা দেওয়ার তালিকা"
+                        :reportDate="$date"
+                        :activeSeason="$seasonFilter" />
+    </div>
+
+    <!-- Universal Print Preview Modal (4 Formats: A4 Customer, A4 Dual, POS Customer, POS Dual) -->
+    <x-print-modal :showPrintModal="$showPrintModal" :printChallan="$printChallan" :isDuePrint="$isDuePrint" />
 </div>

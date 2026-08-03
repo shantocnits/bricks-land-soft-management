@@ -19,6 +19,25 @@ class TodayCollection extends Component
     public $editingId = null;
     public int $perPage = 10;
 
+    // Print Modal states for Due Khata
+    public $showPrintModal = false;
+    public $printChallan = null;
+    public $isDuePrint = false;
+
+    public function openPrintModal($challanId)
+    {
+        $this->printChallan = Challan::with('items')->find($challanId);
+        $this->isDuePrint = true;
+        $this->showPrintModal = true;
+    }
+
+    public function closePrintModal()
+    {
+        $this->showPrintModal = false;
+        $this->isDuePrint = false;
+        $this->printChallan = null;
+    }
+
     // Form fields
     public $customer_id = '';
     public $customer_name = '';

@@ -16,6 +16,7 @@ Used In Pages:
     'printChallan' => null,
     'printDelivery' => null,
     'isDeliveryPrint' => false,
+    'isDuePrint' => false,
 ])
 
 @if($showPrintModal && ($printChallan || $printDelivery))
@@ -245,16 +246,24 @@ Used In Pages:
                             </div>
                         </div>
                         <div class="text-right space-y-1">
-                            <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wider font-mono">INVOICE</h1>
+                            <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wider font-mono">{{ $isDuePrint ? 'RECEIPT' : 'INVOICE' }}</h1>
                             <p class="text-xs font-semibold text-gray-500">গ্রাহক কপি</p>
-                            <p class="text-[11px] text-gray-400 font-mono">প্রিন্ট: {{ now()->format('d-m-Y h:i A') }}</p>
+                            <p class="text-[11px] text-gray-400 font-mono">প্রিন্ট: {{ now('Asia/Dhaka')->format('d-m-Y h:i A') }}</p>
                         </div>
                     </div>
 
                     <div class="flex justify-between items-start text-xs bg-gray-50 p-4 rounded-xl border border-gray-200">
                         <div class="space-y-1.5">
                             <p class="text-gray-700"><span class="font-bold text-gray-900">কাস্টমার আইডি:</span> {{ $printChallan->ledger_id ?: $printChallan->id }}</p>
-                            <p class="text-gray-700"><span class="font-bold text-gray-900">চালানের তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('দুপুর: h:i:s') : now()->format('h:i:s') }}</p>
+                            @if($isDuePrint)
+                                @php
+                                    $jomaDateStr = $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now('Asia/Dhaka')->format('d-m-Y');
+                                    $jomaTimeStr = $printChallan->created_at ? \Carbon\Carbon::parse($printChallan->created_at)->setTimezone('Asia/Dhaka')->format('h:i A') : ($printChallan->updated_at ? \Carbon\Carbon::parse($printChallan->updated_at)->setTimezone('Asia/Dhaka')->format('h:i A') : now('Asia/Dhaka')->format('h:i A'));
+                                @endphp
+                                <p class="text-gray-700"><span class="font-bold text-gray-900">জমার তারিখ:</span> {{ $jomaDateStr }} {{ $jomaTimeStr }}</p>
+                            @else
+                                <p class="text-gray-700"><span class="font-bold text-gray-900">চালানের তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $printChallan->created_at ? \Carbon\Carbon::parse($printChallan->created_at)->setTimezone('Asia/Dhaka')->format('h:i A') : now('Asia/Dhaka')->format('h:i A') }}</p>
+                            @endif
                             <p class="text-gray-700"><span class="font-bold text-gray-900">ইস্যু করেছে:</span></p>
                         </div>
                         <div class="text-right space-y-1 pl-4 border-r-4 border-black pr-2">
@@ -264,6 +273,7 @@ Used In Pages:
                         </div>
                     </div>
 
+                    @if(!$isDuePrint)
                     <div class="overflow-x-auto rounded-xl border border-gray-200">
                         <table class="w-full text-xs text-left">
                             <thead>
@@ -290,6 +300,7 @@ Used In Pages:
                             </tbody>
                         </table>
                     </div>
+                    @endif
 
                     <div class="grid grid-cols-2 gap-6 items-end pt-2">
                         <div class="space-y-4">
@@ -299,25 +310,51 @@ Used In Pages:
                                 <p>২। ইট ডেলিভারি নেওয়ার পরকোনও অভিযোগ গ্রহণ যোগ্য হবে না।</p>
                                 <p>৩। চালান করার ৩০ দিনের মধ্যে ইট ডেলিভারি নিতে হবে।</p>
                             </div>
-                            @if($printChallan->due > 0)
-                                <div class="border-2 border-red-500 rounded-xl p-3 text-center space-y-1">
-                                    <p class="text-base font-black text-red-600">বাকি: ৳ {{ number_format($printChallan->due) }}</p>
-                                    <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ : {{ $printChallan->due_payment_date ? \Carbon\Carbon::parse($printChallan->due_payment_date)->format('d-m-Y') : '—' }}</p>
+                            @if($isDuePrint)
+                                @php
+                                    $rcptCash = floatval($printChallan->cash ?? 0);
+                                    $rcptCustomerName = $printChallan->customer_name;
+                                    $rcptCustomerPhone = $printChallan->customer_phone;
+                                    $rcptNetDue = (float)\App\Models\Challan::where(function($q) use ($rcptCustomerName, $rcptCustomerPhone) {
+                                        $q->where('customer_name', $rcptCustomerName);
+                                        if ($rcptCustomerPhone) { $q->orWhere('customer_phone', $rcptCustomerPhone); }
+                                    })->sum('due');
+                                    $rcptPrevDue = $rcptNetDue + $rcptCash;
+                                @endphp
+                                <div class="border-2 {{ $rcptNetDue > 0 ? 'border-red-400' : 'border-green-500' }} rounded-xl p-3 text-center">
+                                    @if($rcptNetDue > 0)
+                                        <p class="text-xs font-bold text-red-600">পরিশোধের তারিখ: {{ $printChallan->due_payment_date ? \Carbon\Carbon::parse($printChallan->due_payment_date)->format('d-m-Y') : '—' }}</p>
+                                    @else
+                                        <p class="text-sm font-black text-green-700 uppercase tracking-wide">পরিশোধিত</p>
+                                    @endif
                                 </div>
                             @else
-                                <div class="inline-block border-2 border-green-600 rounded-xl px-8 py-2.5 text-center font-black text-xl tracking-wide uppercase text-green-700">
-                                    পরিশোধিত
-                                </div>
+                                @if($printChallan->due > 0)
+                                    <div class="border-2 border-red-500 rounded-xl p-3 text-center space-y-1">
+                                        <p class="text-base font-black text-red-600">বাকি: ৳ {{ number_format($printChallan->due) }}</p>
+                                        <p class="text-xs font-bold text-red-500">পরিশোধের তারিখ : {{ $printChallan->due_payment_date ? \Carbon\Carbon::parse($printChallan->due_payment_date)->format('d-m-Y') : '—' }}</p>
+                                    </div>
+                                @else
+                                    <div class="inline-block border-2 border-green-600 rounded-xl px-8 py-2.5 text-center font-black text-xl tracking-wide uppercase text-green-700">
+                                        পরিশোধিত
+                                    </div>
+                                @endif
                             @endif
                         </div>
 
                         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2 text-xs font-sans">
-                            <div class="flex justify-between items-center text-gray-700"><span class="font-semibold">মোট মূল্য</span><span class="font-mono font-bold text-gray-900">৳ {{ number_format($printChallan->total_value ?: $printChallan->items->sum('amount'), 0) }}</span></div>
-                            <div class="flex justify-between items-center text-gray-700"><span class="font-semibold">ছাড়</span><span class="font-mono font-bold text-gray-900">৳ {{ number_format($printChallan->discount ?: 0, 0) }}</span></div>
-                            <div class="flex justify-between items-center text-gray-700"><span class="font-semibold">গাড়ি ভাড়া</span><span class="font-mono font-bold text-gray-900">৳ {{ number_format($printChallan->transport_rent ?: 0, 0) }}</span></div>
-                            <div class="flex justify-between items-center font-extrabold text-gray-900 pt-2 border-t border-gray-200 text-sm"><span>সর্বমোট</span><span class="font-mono">৳ {{ number_format($printChallan->grand_total, 0) }}</span></div>
-                            <div class="flex justify-between items-center text-gray-900 font-bold"><span>জমা</span><span class="font-mono">৳ {{ number_format($printChallan->cash, 0) }}</span></div>
-                            <div class="flex justify-between items-center text-gray-900 font-bold"><span>বাকি</span><span class="font-mono">৳ {{ number_format($printChallan->due, 0) }}</span></div>
+                            @if($isDuePrint)
+                                <div class="flex justify-between items-center text-gray-700"><span class="font-semibold">মোট বাকি ছিল</span><span class="font-mono font-bold text-gray-900">৳ {{ number_format($rcptPrevDue) }}</span></div>
+                                <div class="flex justify-between items-center text-gray-700"><span class="font-semibold">জমা দেওয়া</span><span class="font-mono font-bold text-emerald-600">৳ {{ number_format($rcptCash) }}</span></div>
+                                <div class="flex justify-between items-center font-extrabold text-gray-900 pt-2 border-t border-gray-200 text-sm"><span>বর্তমান বাকি</span><span class="font-mono text-rose-600">৳ {{ number_format($rcptNetDue) }}</span></div>
+                            @else
+                                <div class="flex justify-between items-center text-gray-700"><span class="font-semibold">মোট মূল্য</span><span class="font-mono font-bold text-gray-900">৳ {{ number_format($printChallan->total_value ?: $printChallan->items->sum('amount'), 0) }}</span></div>
+                                <div class="flex justify-between items-center text-gray-700"><span class="font-semibold">ছাড়</span><span class="font-mono font-bold text-gray-900">৳ {{ number_format($printChallan->discount ?: 0, 0) }}</span></div>
+                                <div class="flex justify-between items-center text-gray-700"><span class="font-semibold">গাড়ি ভাড়া</span><span class="font-mono font-bold text-gray-900">৳ {{ number_format($printChallan->transport_rent ?: 0, 0) }}</span></div>
+                                <div class="flex justify-between items-center font-extrabold text-gray-900 pt-2 border-t border-gray-200 text-sm"><span>সর্বমোট</span><span class="font-mono">৳ {{ number_format($printChallan->grand_total, 0) }}</span></div>
+                                <div class="flex justify-between items-center text-gray-900 font-bold"><span>জমা</span><span class="font-mono">৳ {{ number_format($printChallan->cash, 0) }}</span></div>
+                                <div class="flex justify-between items-center text-gray-900 font-bold"><span>বাকি</span><span class="font-mono">৳ {{ number_format($printChallan->due, 0) }}</span></div>
+                            @endif
                         </div>
                     </div>
 
@@ -454,7 +491,7 @@ Used In Pages:
                 </div>
             </div>
         @else
-            <x-print-layout type="a4-customer" :challan="$printChallan" />
+            <x-print-layout type="a4-customer" :challan="$printChallan" :isDuePrint="$isDuePrint" />
         @endif
     </div>
 
@@ -618,7 +655,7 @@ Used In Pages:
                 </div>
             </div>
         @else
-            <x-print-layout type="a4-dual" :challan="$printChallan" />
+            <x-print-layout type="a4-dual" :challan="$printChallan" :isDuePrint="$isDuePrint" />
         @endif
     </div>
 
@@ -681,7 +718,7 @@ Used In Pages:
                 </div>
             </div>
         @else
-            <x-print-layout type="pos-customer" :challan="$printChallan" />
+            <x-print-layout type="pos-customer" :challan="$printChallan" :isDuePrint="$isDuePrint" />
         @endif
     </div>
 
@@ -790,7 +827,7 @@ Used In Pages:
                 </div>
             </div>
         @else
-            <x-print-layout type="pos-dual" :challan="$printChallan" />
+            <x-print-layout type="pos-dual" :challan="$printChallan" :isDuePrint="$isDuePrint" />
         @endif
     </div>
 
