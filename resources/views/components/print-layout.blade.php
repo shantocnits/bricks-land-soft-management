@@ -35,6 +35,13 @@ Supported Layout Modes ($type):
     'totalDeliverySum' => 0,
     'totalCollectionSum' => 0,
     'isDuePrint' => false,
+    'systemRows' => null,
+    'entries' => null,
+    'todayCashIn' => 0,
+    'todayCashOut' => 0,
+    'cashJer' => 0,
+    'viewTotalCashIn' => 0,
+    'viewTotalCashOut' => 0,
 ])
 
 @php
@@ -1040,11 +1047,11 @@ Supported Layout Modes ($type):
                 </div>
 
                 <div class="px-4 py-1.5 bg-gray-200 text-gray-900 rounded-full font-bold text-sm tracking-wide shadow-sm border border-gray-300">
-                    {{ $reportTitle ?? 'বাকি আদায় রিপোর্ট' }}
+                    {{ $reportTitle ?? 'বাকি আদায় রিপোর্ট' }}
                 </div>
 
                 <div class="text-right font-bold text-sm">
-                    {{ $reportTitle === 'আজকের জমা রিপোর্ট' ? 'মোট আদায়' : 'মোট বাকি' }}: <span class="font-mono text-gray-900 font-black">{{ number_format((float)$totalCollectionSum) }} টাকা</span>
+                    {{ $reportTitle === 'আজকের জমা রিপোর্ট' ? 'মোট আদায়' : 'মোট বাকি' }}: <span class="font-mono text-gray-900 font-black">{{ number_format((float)$totalCollectionSum) }} টাকা</span>
                 </div>
             </div>
 
@@ -1144,6 +1151,177 @@ Supported Layout Modes ($type):
             <!-- Bottom Print Footer -->
             <div class="pt-3 border-t border-gray-200 text-center text-[10px] text-gray-500 font-semibold print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
                 রিপোর্ট প্রিন্ট: {{ \Carbon\Carbon::now('Asia/Dhaka')->format('d-m-Y h:i A') }} | Software by: Payratech.com
+            </div>
+        </div>
+
+    {{-- ======================================================================= --}}
+    {{-- 💵 MODE 8: CASH KHATA DAILY REPORT PRINT LAYOUT                         --}}
+    {{--    (দৈনিক ক্যাশ রিপোর্ট টেবিল প্রিন্ট লেআউট - ক্যাশ খাতা প্রিন্ট)       --}}
+    {{-- ======================================================================= --}}
+    @elseif($type === 'cash-report')
+        <style media="print">
+            @page {
+                size: A4 portrait !important;
+                margin: 8mm 8mm !important;
+            }
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            table { page-break-inside: auto; }
+            tr    { page-break-inside: avoid; break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            .print-page-break-avoid { page-break-inside: avoid; break-inside: avoid; }
+        </style>
+        <div class="bg-white p-4 text-gray-900 font-sans max-w-4xl mx-auto space-y-4">
+            <!-- Header Section -->
+            <div class="text-center space-y-1 pb-3 border-b-2 border-gray-800">
+                <h1 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h1>
+                <p class="text-xs font-semibold text-gray-700">{{ $companyAddress }}</p>
+                <p class="text-xs font-mono font-semibold text-gray-700">{{ $companyPhone }}</p>
+                <p class="text-xs font-bold text-gray-800">প্রোপাইটরঃ {{ $proprietor }}</p>
+            </div>
+
+            <!-- Sub Header Metadata Row -->
+            @php
+                $formattedDate = $reportDate ? \Carbon\Carbon::parse($reportDate)->format('d-m-Y') : now('Asia/Dhaka')->format('d-m-Y');
+                $bnDate = function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum($formattedDate) : $formattedDate;
+                $seasonStr = $activeSeason ?: \App\Models\Setting::get('season', '২৫-২৬');
+                $netBalance = $todayCashIn - $todayCashOut;
+
+                $sysList = is_object($systemRows) && method_exists($systemRows, 'items') ? $systemRows->items() : ($systemRows ?? []);
+                $manList = is_object($entries) && method_exists($entries, 'items') ? $entries->items() : ($entries ?? []);
+            @endphp
+            <div class="flex items-center justify-between py-2 text-xs font-bold">
+                <div>
+                    <span>তারিখ: {{ $bnDate }} | {{ $seasonStr }}</span>
+                </div>
+
+                <div class="px-6 py-1.5 bg-gray-200 text-gray-900 rounded-full font-bold text-sm tracking-wide border border-gray-300">
+                    দৈনিক ক্যাশ রিপোর্ট
+                </div>
+
+                <div class="text-right font-bold text-sm">
+                    মোট জের: <span class="font-mono text-gray-900 font-black">{{ function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($cashJer)) : number_format($cashJer) }} টাকা</span>
+                </div>
+            </div>
+
+            <!-- 3 Summary Box Grid -->
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="bg-gray-100/90 rounded-lg p-3 border border-gray-300">
+                    <p class="text-xs font-bold text-gray-600 mb-1">মোট ক্যাশ ইন</p>
+                    <p class="text-lg font-black text-emerald-700 font-mono">
+                        {{ function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($todayCashIn)) : number_format($todayCashIn) }}
+                    </p>
+                </div>
+                <div class="bg-gray-100/90 rounded-lg p-3 border border-gray-300">
+                    <p class="text-xs font-bold text-gray-600 mb-1">মোট ক্যাশ আউট</p>
+                    <p class="text-lg font-black text-rose-600 font-mono">
+                        {{ function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($todayCashOut)) : number_format($todayCashOut) }}
+                    </p>
+                </div>
+                <div class="bg-gray-100/90 rounded-lg p-3 border border-gray-300">
+                    <p class="text-xs font-bold text-gray-600 mb-1">নেট ব্যালেন্স</p>
+                    <p class="text-lg font-black {{ $netBalance < 0 ? 'text-rose-600' : 'text-emerald-700' }} font-mono">
+                        {{ function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($netBalance)) : number_format($netBalance) }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <table class="w-full text-xs border-collapse border border-gray-400 mt-2">
+                <thead>
+                    <tr class="bg-gray-100 font-bold text-gray-900 border-b border-gray-400 text-center">
+                        <th class="p-2 border-r border-gray-400 w-10">নং</th>
+                        <th class="p-2 border-r border-gray-400 w-24">উৎস</th>
+                        <th class="p-2 border-r border-gray-400 text-left">বিবরণ</th>
+                        <th class="p-2 border-r border-gray-400 text-center w-28">ক্যাশ ইন</th>
+                        <th class="p-2 border-r border-gray-400 text-center w-28">ক্যাশ আউট</th>
+                        <th class="p-2 text-center w-24">সময়</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-300 font-sans">
+                    @php $rowNum = 1; @endphp
+                    @foreach($sysList as $entry)
+                        <tr class="hover:bg-gray-50 border-b border-gray-300 text-xs">
+                            <td class="p-2 text-center font-mono font-bold border-r border-gray-300">
+                                {{ function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum($rowNum++) : $rowNum++ }}
+                            </td>
+                            <td class="p-2 text-center border-r border-gray-300 font-semibold text-gray-500">-</td>
+                            <td class="p-2 text-left font-bold border-r border-gray-300 text-gray-900">{{ is_object($entry) ? $entry->description : ($entry['description'] ?? '') }}</td>
+                            <td class="p-2 text-center font-mono font-bold text-gray-900 border-r border-gray-300">
+                                @php $cIn = is_object($entry) ? $entry->cash_in : ($entry['cash_in'] ?? null); @endphp
+                                {{ $cIn !== null ? (function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($cIn)) : number_format($cIn)) : '-' }}
+                            </td>
+                            <td class="p-2 text-center font-mono font-bold text-gray-900 border-r border-gray-300">
+                                @php $cOut = is_object($entry) ? $entry->cash_out : ($entry['cash_out'] ?? null); @endphp
+                                {{ $cOut !== null ? (function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($cOut)) : number_format($cOut)) : '-' }}
+                            </td>
+                            <td class="p-2 text-center font-mono border-r border-gray-300 text-gray-500">-</td>
+                        </tr>
+                    @endforeach
+                    @foreach($manList as $entry)
+                        @php
+                            $desc = is_object($entry) ? $entry->description : ($entry['description'] ?? '');
+                            $src  = is_object($entry) ? ($entry->source ?? null) : ($entry['source'] ?? null);
+                            $cIn  = is_object($entry) ? $entry->cash_in : ($entry['cash_in'] ?? null);
+                            $cOut = is_object($entry) ? $entry->cash_out : ($entry['cash_out'] ?? null);
+                            $tVal = is_object($entry) ? ($entry->time ?? null) : ($entry['time'] ?? null);
+                        @endphp
+                        <tr class="hover:bg-gray-50 border-b border-gray-300 text-xs">
+                            <td class="p-2 text-center font-mono font-bold border-r border-gray-300">
+                                {{ function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum($rowNum++) : $rowNum++ }}
+                            </td>
+                            <td class="p-2 text-center border-r border-gray-300 font-semibold text-gray-700">{{ $src ?: '-' }}</td>
+                            <td class="p-2 text-left font-bold border-r border-gray-300 text-gray-900">{{ $desc }}</td>
+                            <td class="p-2 text-center font-mono font-bold text-gray-900 border-r border-gray-300">
+                                {{ $cIn !== null ? (function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($cIn)) : number_format($cIn)) : '-' }}
+                            </td>
+                            <td class="p-2 text-center font-mono font-bold text-gray-900 border-r border-gray-300">
+                                {{ $cOut !== null ? (function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($cOut)) : number_format($cOut)) : '-' }}
+                            </td>
+                            <td class="p-2 text-center font-mono border-r border-gray-300 text-gray-700">
+                                {{ $tVal ? (function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(date('h:i A', strtotime($tVal))) : date('h:i A', strtotime($tVal))) : '-' }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                    <tr class="font-bold border-t-2 border-gray-400 text-xs">
+                        <td class="p-2 text-center font-mono font-bold border-r border-gray-300">
+                            {{ function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum($rowNum++) : $rowNum++ }}
+                        </td>
+                        <td class="p-2 text-center border-r border-gray-300 font-semibold text-gray-500">-</td>
+                        <td class="p-2 text-left font-bold border-r border-gray-300 text-gray-900">মোট</td>
+                        <td class="p-2 text-center font-mono font-bold text-gray-900 border-r border-gray-300">
+                            {{ function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($viewTotalCashIn)) : number_format($viewTotalCashIn) }}
+                        </td>
+                        <td class="p-2 text-center font-mono font-bold text-gray-900 border-r border-gray-300">
+                            {{ function_exists('cashKhataBanglaNum') ? cashKhataBanglaNum(number_format($viewTotalCashOut)) : number_format($viewTotalCashOut) }}
+                        </td>
+                        <td class="p-2 text-center font-mono border-r border-gray-300 text-gray-500">-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Signatures Row (Page break protected) -->
+            <div class="pt-16 pb-6 flex items-center justify-between font-bold text-xs text-gray-900 print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
+                <div class="text-center w-40">
+                    <div class="border-t border-gray-900 pt-1.5 font-bold">ম্যানেজার</div>
+                </div>
+                <div class="text-center w-40">
+                    <div class="border-t border-gray-900 pt-1.5 font-bold">মালিক</div>
+                </div>
+            </div>
+
+            <!-- Bottom Print Footer -->
+            <div class="pt-3 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-500 font-semibold print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
+                <div>রিপোর্ট প্রিন্ট: {{ \Carbon\Carbon::now('Asia/Dhaka')->format('d-m-Y h:i A') }}</div>
+                <div>Software by: Payratech.com</div>
             </div>
         </div>
 
