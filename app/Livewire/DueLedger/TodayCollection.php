@@ -261,6 +261,15 @@ class TodayCollection extends Component
             "গ্রাহকঃ {$this->customer_name}। পরিমাণঃ {$this->cash} টাকা।"
         );
 
+        if ($this->customer_name && $this->due_payment_date) {
+            Challan::where(function($q) {
+                $q->where('customer_name', $this->customer_name);
+                if ($this->customer_phone) {
+                    $q->orWhere('customer_phone', $this->customer_phone);
+                }
+            })->where('grand_total', '>', 0)->update(['due_payment_date' => $this->due_payment_date]);
+        }
+
         $this->closeModal();
     }
 
@@ -322,6 +331,15 @@ class TodayCollection extends Component
             "গ্রাহকঃ {$this->customer_name}। পরিমাণঃ {$this->cash} টাকা।"
         );
 
+        if ($this->customer_name && $this->due_payment_date) {
+            Challan::where(function($q) {
+                $q->where('customer_name', $this->customer_name);
+                if ($this->customer_phone) {
+                    $q->orWhere('customer_phone', $this->customer_phone);
+                }
+            })->where('grand_total', '>', 0)->update(['due_payment_date' => $this->due_payment_date]);
+        }
+
         $this->closeModal();
 
         // Open print modal after save
@@ -379,17 +397,18 @@ class TodayCollection extends Component
             }
         };
 
-        // Current net balance (after all collections)
-        $netDue = (float) Challan::where($customerScope)->sum('due');
+        // Total original sales due for this customer
+        $totalSalesDue = (float) Challan::where($customerScope)
+            ->where('grand_total', '>', 0)
+            ->sum('due');
 
-        // Deposits recorded from this receipt onward
-        $depositsFrom = (float) Challan::where($customerScope)
+        // Total collections cash recorded before this receipt (id < $challan->id)
+        $priorCollections = (float) Challan::where($customerScope)
             ->where('grand_total', 0)
-            ->where('id', '>=', $challan->id)
+            ->where('id', '<', $challan->id)
             ->sum('cash');
 
-        // Due before this deposit = current balance + deposits made with this (and later) receipts
-        return $netDue + $depositsFrom;
+        return max(0, $totalSalesDue - $priorCollections);
     }
 
     public function render()

@@ -196,12 +196,17 @@ class AllDueList extends Component
     // Net total due for a customer (name OR phone identity, same as the collection modal)
     private function customerNetDue($name, $phone): float
     {
-        return (float) Challan::where(function ($q) use ($name, $phone) {
+        $customerScope = function ($q) use ($name, $phone) {
             $q->where('customer_name', $name);
             if ($phone) {
                 $q->orWhere('customer_phone', $phone);
             }
-        })->sum('due');
+        };
+
+        $totalSalesDue = (float) Challan::where($customerScope)->where('grand_total', '>', 0)->sum('due');
+        $totalCollections = (float) Challan::where($customerScope)->where('grand_total', 0)->sum('cash');
+
+        return max(0, $totalSalesDue - $totalCollections);
     }
 
     // Stable customer ID = earliest challan id of this customer (name OR phone identity)
@@ -228,8 +233,6 @@ class AllDueList extends Component
             'notes' => 'nullable|string'
         ]);
 
-        $excess = $this->settleDuesFromCollection();
-
         $challanData = [
             'customer_type' => 'old',
             'customer_phone' => $this->customer_phone,
@@ -246,13 +249,22 @@ class AllDueList extends Component
             'discount' => 0,
             'grand_total' => 0,
             'cash' => $this->cash,
-            'due' => 0 - $excess,
+            'due' => 0,
             'send_sms' => $this->send_sms,
             'due_payment_date' => $this->due_payment_date ?: null,
             'season' => $this->season ?: \App\Models\Setting::get('season', '২৫-২৬'),
         ];
 
         Challan::create($challanData);
+
+        if ($this->due_payment_date) {
+            Challan::where(function($q) {
+                $q->where('customer_name', $this->customer_name);
+                if ($this->customer_phone) {
+                    $q->orWhere('customer_phone', $this->customer_phone);
+                }
+            })->where('grand_total', '>', 0)->update(['due_payment_date' => $this->due_payment_date]);
+        }
 
         // Auto-save Ledger just in case
         if ($this->customer_name) {
@@ -281,54 +293,7 @@ class AllDueList extends Component
     // Returns the excess amount that goes as advance credit (if any).
     private function settleDuesFromCollection()
     {
-        $cash = floatval($this->cash);
-        if ($cash <= 0) {
-            return 0.0;
-        }
-
-        $customerScope = function ($q) {
-            $q->where('customer_name', $this->customer_name);
-            if ($this->customer_phone) {
-                $q->orWhere('customer_phone', $this->customer_phone);
-            }
-        };
-
-        $netDue = (float) Challan::where($customerScope)->sum('due');
-        $settleAmount = min($cash, max(0, $netDue));
-        $remaining = $settleAmount;
-        $touched = [];
-
-        if ($remaining > 0) {
-            $source = $this->selectedChallanId ? Challan::find($this->selectedChallanId) : null;
-
-            $dueChallans = Challan::where($customerScope)
-                ->where('due', '>', 0)
-                ->orderBy('due_payment_date', 'asc')
-                ->orderBy('id', 'asc')
-                ->get()
-                ->sortBy(fn($c) => $source && $c->id === $source->id ? 0 : 1);
-
-            foreach ($dueChallans as $challan) {
-                if ($remaining <= 0) {
-                    break;
-                }
-                $due = (float) $challan->due;
-                $apply = min($remaining, $due);
-                $challan->due = round($due - $apply, 2);
-                $challan->save();
-                $touched[] = $challan->id;
-                $remaining = round($remaining - $apply, 2);
-            }
-        }
-
-        // Re-queue remaining baki on the new payment date
-        if ($this->due_payment_date && $touched) {
-            Challan::whereIn('id', $touched)
-                ->where('due', '>', 0)
-                ->update(['due_payment_date' => $this->due_payment_date]);
-        }
-
-        return round($cash - $settleAmount, 2);
+        return 0.0;
     }
 
     // Action 3: SMS Modal

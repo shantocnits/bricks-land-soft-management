@@ -368,14 +368,21 @@
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-slate-800 text-xs">
                                 @forelse($printChallans as $i => $challan)
+                                    @php
+                                        $hData = $dueHistoryData[$challan->id] ?? [
+                                            'due_before' => 0,
+                                            'paid'       => $challan->cash,
+                                            'remaining'  => 0,
+                                        ];
+                                    @endphp
                                     <tr class="hover:bg-primary-50/20 dark:hover:bg-primary-950/5">
                                         <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 font-sans">{{ $challan->date ? $challan->date->format('d-m-Y') : '' }}</td>
                                         <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 font-bold font-sans text-gray-808 dark:text-white">{{ $challan->challan_no }}</td>
-                                        <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 font-sans">৳{{ number_format((float)($challan->grand_total), (float)($challan->grand_total) == (int)($challan->grand_total) ? 0 : 2) }}</td>
-                                        <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 font-bold text-primary dark:text-primary-400 font-sans">৳{{ number_format((float)($challan->cash), (float)($challan->cash) == (int)($challan->cash) ? 0 : 2) }}</td>
-                                        <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 font-bold text-red-500 font-sans">৳{{ number_format((float)($challan->due), (float)($challan->due) == (int)($challan->due) ? 0 : 2) }}</td>
+                                        <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 font-sans">৳{{ number_format((float)($hData['due_before']), (float)($hData['due_before']) == (int)($hData['due_before']) ? 0 : 2) }}</td>
+                                        <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 font-bold text-primary dark:text-primary-400 font-sans">৳{{ number_format((float)($hData['paid']), (float)($hData['paid']) == (int)($hData['paid']) ? 0 : 2) }}</td>
+                                        <td class="px-3 py-3.5 text-right border-r border-gray-150 dark:border-slate-800 font-bold text-red-500 font-sans">৳{{ number_format((float)($hData['remaining']), (float)($hData['remaining']) == (int)($hData['remaining']) ? 0 : 2) }}</td>
                                         <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 text-gray-600 dark:text-slate-400 font-sans">{{ $challan->notes ?: '—' }}</td>
-                                        <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 font-sans font-semibold text-gray-800 dark:text-white">{{ $challan->due_payment_date ?: '—' }}</td>
+                                        <td class="px-3 py-3.5 border-r border-gray-150 dark:border-slate-800 font-sans font-semibold text-gray-800 dark:text-white">{{ $challan->due_payment_date ? \Carbon\Carbon::parse($challan->due_payment_date)->format('d-m-Y') : '—' }}</td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -426,8 +433,8 @@
                 </div>
                 <div class="text-right space-y-0.5 font-bold text-gray-800 text-[11px]">
                     <p class="font-black text-gray-900 text-sm">সিজন: {{ \App\Models\Setting::get('season', '২৫-২৬') }}</p>
-                    <p class="font-normal text-gray-600">প্রিন্ট তারিখ: {{ now()->format('d-m-Y') }}</p>
-                    <p class="font-normal text-gray-600">সময়: {{ now()->format('h:i:s a') }}</p>
+                    <p class="font-normal text-gray-600">প্রিন্ট তারিখ: {{ now('Asia/Dhaka')->format('d-m-Y') }}</p>
+                    <p class="font-normal text-gray-600">সময়: {{ now('Asia/Dhaka')->format('h:i:s a') }}</p>
                 </div>
             </div>
 
@@ -486,8 +493,12 @@
                     </thead>
                     <tbody>
                         @forelse($printChallans as $challan)
+                            @php
+                                $cDateStr = $challan->date ? \Carbon\Carbon::parse($challan->date)->format('d-m-Y') : ($challan->created_at ? \Carbon\Carbon::parse($challan->created_at)->setTimezone('Asia/Dhaka')->format('d-m-Y') : '');
+                                $cTimeStr = $challan->created_at ? \Carbon\Carbon::parse($challan->created_at)->setTimezone('Asia/Dhaka')->format('h:i A') : ($challan->updated_at ? \Carbon\Carbon::parse($challan->updated_at)->setTimezone('Asia/Dhaka')->format('h:i A') : now('Asia/Dhaka')->format('h:i A'));
+                            @endphp
                             <tr class="print-row">
-                                <td class="pt-cell text-center font-mono text-[10px]">{{ $challan->date ? $challan->date->format('d-m-Y h:i') : '' }}</td>
+                                <td class="pt-cell text-center font-mono text-[10px]">{{ $cDateStr }} {{ $cTimeStr }}</td>
                                 <td class="pt-cell text-center font-bold font-mono">{{ $challan->challan_no }}</td>
                                 <td class="pt-cell text-left font-semibold">
                                     @foreach($challan->items as $item)
@@ -541,9 +552,13 @@
                     <tbody>
                         @php $delCounter = 1; @endphp
                         @forelse($printChallans as $challan)
+                            @php
+                                $dDateStr = $challan->date ? \Carbon\Carbon::parse($challan->date)->format('d-m-Y') : ($challan->created_at ? \Carbon\Carbon::parse($challan->created_at)->setTimezone('Asia/Dhaka')->format('d-m-Y') : '');
+                                $dTimeStr = $challan->created_at ? \Carbon\Carbon::parse($challan->created_at)->setTimezone('Asia/Dhaka')->format('h:i A') : ($challan->updated_at ? \Carbon\Carbon::parse($challan->updated_at)->setTimezone('Asia/Dhaka')->format('h:i A') : now('Asia/Dhaka')->format('h:i A'));
+                            @endphp
                             @foreach($challan->items as $item)
                                 <tr class="print-row">
-                                    <td class="pt-cell text-center font-mono text-[10px]">{{ $challan->date ? $challan->date->format('d-m-Y h:i') : '' }}</td>
+                                    <td class="pt-cell text-center font-mono text-[10px]">{{ $dDateStr }} {{ $dTimeStr }}</td>
                                     <td class="pt-cell text-center font-bold font-mono">{{ $delCounter++ }}</td>
                                     <td class="pt-cell text-center font-mono font-bold">{{ $challan->challan_no }}</td>
                                     <td class="pt-cell text-left font-semibold">{{ $item->category_name }}</td>
@@ -581,12 +596,21 @@
                     </thead>
                     <tbody>
                         @forelse($printChallans as $challan)
+                            @php
+                                $hData = $dueHistoryData[$challan->id] ?? [
+                                    'due_before' => 0,
+                                    'paid'       => $challan->cash,
+                                    'remaining'  => 0,
+                                ];
+                                $dueDateStr = $challan->date ? \Carbon\Carbon::parse($challan->date)->format('d-m-Y') : ($challan->created_at ? \Carbon\Carbon::parse($challan->created_at)->setTimezone('Asia/Dhaka')->format('d-m-Y') : '');
+                                $dueTimeStr = $challan->created_at ? \Carbon\Carbon::parse($challan->created_at)->setTimezone('Asia/Dhaka')->format('h:i A') : ($challan->updated_at ? \Carbon\Carbon::parse($challan->updated_at)->setTimezone('Asia/Dhaka')->format('h:i A') : now('Asia/Dhaka')->format('h:i A'));
+                            @endphp
                             <tr class="print-row">
-                                <td class="pt-cell text-center font-mono text-[10px]">{{ $challan->date ? $challan->date->format('d-m-Y h:i PM') : '' }}</td>
+                                <td class="pt-cell text-center font-mono text-[10px]">{{ $dueDateStr }} {{ $dueTimeStr }}</td>
                                 <td class="pt-cell text-center font-bold font-mono">{{ $challan->challan_no }}</td>
-                                <td class="pt-cell text-right font-mono font-bold">৳{{ number_format($challan->grand_total) }}</td>
-                                <td class="pt-cell text-right font-mono font-bold text-gray-900">৳{{ number_format($challan->cash) }}</td>
-                                <td class="pt-cell text-right font-mono font-bold text-gray-900">৳{{ number_format($challan->due) }}</td>
+                                <td class="pt-cell text-right font-mono font-bold">৳{{ number_format($hData['due_before']) }}</td>
+                                <td class="pt-cell text-right font-mono font-bold text-gray-900">৳{{ number_format($hData['paid']) }}</td>
+                                <td class="pt-cell text-right font-mono font-bold text-gray-900">৳{{ number_format($hData['remaining']) }}</td>
                                 <td class="pt-cell text-left font-sans text-[10px]">{{ $challan->notes ?: '—' }}</td>
                                 <td class="pt-cell text-left">—</td>
                             </tr>
@@ -611,7 +635,7 @@
 
             <!-- Footer -->
             <div class="print-footer text-center text-[10px] text-gray-400 font-mono mt-8 border-t border-gray-200 pt-2">
-                রিপোর্ট প্রিন্ট: {{ now()->format('d-m-Y h:i A') }} | Software by CODENEXTIT.COM
+                রিপোর্ট প্রিন্ট: {{ now('Asia/Dhaka')->format('d-m-Y h:i A') }} | Software by CODENEXTIT.COM
             </div>
         </div>
     </div>

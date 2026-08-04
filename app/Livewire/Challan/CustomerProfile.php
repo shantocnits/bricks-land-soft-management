@@ -269,12 +269,18 @@ class CustomerProfile extends Component
 
     public function render()
     {
+        $customerScope = function($q) {
+            $q->where('customer_phone', $this->phone)
+              ->orWhere('customer_name', $this->phone);
+        };
+
         // Base query for stats (unfiltered by date for customer totals)
         $allChallans = Challan::with('items')
-            ->where(function($q) {
-                $q->where('customer_phone', $this->phone)
-                  ->orWhere('customer_name', $this->phone);
-            })->get();
+            ->where($customerScope)->get();
+
+        $totalSalesDue = (float) Challan::where($customerScope)->where('grand_total', '>', 0)->sum('due');
+        $totalCollectionsCash = (float) Challan::where($customerScope)->where('grand_total', 0)->sum('cash');
+        $netDue = max(0, $totalSalesDue - $totalCollectionsCash);
 
         // Calculate Stats
         $totalBricks = $allChallans->sum(fn($c) => $c->items->sum('quantity'));
@@ -283,17 +289,14 @@ class CustomerProfile extends Component
             'total_bricks' => $totalBricks,
             'delivered'    => $deliveredBricks,
             'remaining'    => max(0, $totalBricks - $deliveredBricks),
-            'total_value'  => $allChallans->sum('grand_total'),
-            'paid'         => $allChallans->sum('cash'),
-            'due'          => $allChallans->sum('due'),
+            'total_value'  => $allChallans->where('grand_total', '>', 0)->sum('grand_total'),
+            'paid'         => $allChallans->where('grand_total', '>', 0)->sum('cash') + $totalCollectionsCash,
+            'due'          => $netDue,
         ];
 
         // Base query for the customer's challans (name OR phone identity)
         $baseQuery = Challan::with('items')
-            ->where(function($q) {
-                $q->where('customer_phone', $this->phone)
-                  ->orWhere('customer_name', $this->phone);
-            });
+            ->where($customerScope);
 
         if ($this->dateFrom) {
             $baseQuery->whereDate('date', '>=', $this->dateFrom);
@@ -311,17 +314,37 @@ class CustomerProfile extends Component
 
         // List query (সব চালান tab) — collection receipts (grand_total = 0) excluded
         $query = (clone $baseQuery)->where('grand_total', '>', 0);
-
         $query->orderBy('id', 'desc');
 
-        // Print/statement collection — due_history tab keeps receipts, others exclude them
+        // Print/statement collection — due_history tab keeps receipts (grand_total = 0), others exclude them
         $printQuery = $this->activeTab === 'due_history'
-            ? clone $baseQuery
+            ? (clone $baseQuery)->where('grand_total', 0)
             : (clone $baseQuery)->where('grand_total', '>', 0);
 
         $printQuery->orderBy('id', 'desc');
-
         $printChallans = $printQuery->get();
+
+        // Calculate step-by-step due history running balance
+        $collectionRecords = Challan::where($customerScope)
+            ->where('grand_total', 0)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $runningDue = $totalSalesDue;
+        $dueHistoryData = [];
+
+        foreach ($collectionRecords as $col) {
+            $dueBefore = $runningDue;
+            $paid = (float) $col->cash;
+            $remaining = max(0, $dueBefore - $paid);
+            $runningDue = $remaining;
+
+            $dueHistoryData[$col->id] = [
+                'due_before' => $dueBefore,
+                'paid'       => $paid,
+                'remaining'  => $remaining,
+            ];
+        }
 
         // Calculate Print Totals for the view ($printTotal)
         $printTotal = [
@@ -335,12 +358,13 @@ class CustomerProfile extends Component
         ];
 
         return view('livewire.challan.customer-profile', [
-            'challans'      => $query->paginate(10),
-            'printChallans' => $printChallans,
-            'printTotal'    => $printTotal, // Added to resolve undefined variable error
-            'stats'         => $stats,
-            'categories'    => Category::all(),
-            'ledgers'       => Ledger::all()
+            'challans'       => $query->paginate(10),
+            'printChallans'  => $printChallans,
+            'printTotal'     => $printTotal,
+            'dueHistoryData' => $dueHistoryData,
+            'stats'          => $stats,
+            'categories'     => Category::all(),
+            'ledgers'        => Ledger::all()
         ])->layout('layouts.app');
     }
 }
