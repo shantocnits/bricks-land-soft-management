@@ -264,6 +264,72 @@ class TodayCollection extends Component
         $this->closeModal();
     }
 
+    public function saveAndPrint()
+    {
+        $this->validate([
+            'customer_name' => 'required|string|max:255',
+            'cash'          => 'required|numeric|min:0.01',
+            'due_payment_date' => 'nullable|date',
+            'notes'         => 'nullable|string'
+        ], [
+            'customer_name.required' => 'কাস্টমার আইডি দিয়ে কাস্টমার নির্বাচন করুন।',
+            'cash.required'          => 'জমার পরিমাণ আবশ্যক।',
+            'cash.min'               => 'জমার পরিমাণ শূন্যের বেশি হতে হবে।',
+        ]);
+
+        $due = 0 - floatval($this->cash);
+
+        $challanData = [
+            'customer_type'    => 'old',
+            'customer_phone'   => $this->customer_phone,
+            'customer_name'    => $this->customer_name,
+            'customer_address' => $this->customer_address,
+            'challan_no'       => $this->editingId ? Challan::find($this->editingId)->challan_no : $this->generateChallanNo(),
+            'date'             => $this->date ?: now()->toDateString(),
+            'challan_type'     => 'আজকের',
+            'notes'            => $this->notes,
+            'value'            => 0,
+            'total_value'      => 0,
+            'rent'             => 0,
+            'transport_rent'   => 0,
+            'discount'         => 0,
+            'grand_total'      => 0,
+            'cash'             => $this->cash,
+            'due'              => $due,
+            'send_sms'         => $this->send_sms,
+            'due_payment_date' => $this->due_payment_date ?: null,
+            'season'           => $this->season ?: \App\Models\Setting::get('season', '২৫-২৬'),
+        ];
+
+        if ($this->editingId) {
+            $challan = Challan::findOrFail($this->editingId);
+            $challan->update($challanData);
+            $this->dispatch('show-toast', message: 'জমা তথ্য সফলভাবে আপডেট করা হয়েছে।', type: 'success');
+        } else {
+            $challan = Challan::create($challanData);
+            $this->dispatch('show-toast', message: 'নতুন জমা তথ্য সফলভাবে সংরক্ষণ করা হয়েছে।', type: 'success');
+        }
+
+        if ($this->customer_name) {
+            Ledger::firstOrCreate(
+                ['name' => trim($this->customer_name)],
+                ['group' => 'চালান গ্রাহক', 'rate' => 0, 'divisor' => 1]
+            );
+        }
+
+        ActivityLog::log(
+            $this->editingId ? 'জমা আপডেট' : 'নতুন জমা',
+            "গ্রাহকঃ {$this->customer_name}। পরিমাণঃ {$this->cash} টাকা।"
+        );
+
+        $this->closeModal();
+
+        // Open print modal after save
+        $this->printChallan = Challan::with('items')->find($challan->id);
+        $this->isDuePrint = true;
+        $this->showPrintModal = true;
+    }
+
     public function edit($id)
     {
         $this->resetForm();

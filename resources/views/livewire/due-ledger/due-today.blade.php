@@ -17,32 +17,6 @@
             </div>
             
             <div class="grid grid-cols-2 gap-2 w-full sm:flex sm:items-center sm:gap-3 sm:w-auto">
-                <!-- Season Filter Dropdown -->
-                <div x-data="{ open: false }" class="relative w-full sm:w-auto">
-                    <button @click="open = !open" type="button" 
-                            class="flex items-center justify-between gap-1.5 px-3 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-white font-bold rounded-xl text-xs border border-gray-200 dark:border-slate-700 focus:outline-none transition-all cursor-pointer w-full whitespace-nowrap">
-                        <span>{{ $seasonFilter === 'all' ? 'সব সিজন' : $seasonFilter }}</span>
-                        <svg class="w-3.5 h-3.5 transition-transform duration-200 text-gray-550" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-                    
-                    <div x-show="open" 
-                         @click.outside="open = false"
-                         class="absolute top-full mt-1.5 right-0 z-[999] w-full sm:w-36 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden focus:outline-none"
-                         x-cloak>
-                        <div class="py-1">
-                            <button type="button" wire:click="setSeasonFilter('all')" @click="open = false" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-800 dark:text-white hover:bg-primary-50 dark:hover:bg-slate-800 hover:text-primary-dark dark:hover:text-primary-400 transition-colors font-sans">
-                                সব সিজন
-                            </button>
-                            @foreach($seasons as $seasonItem)
-                                <button type="button" wire:click="setSeasonFilter('{{ $seasonItem }}')" @click="open = false" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-800 dark:text-white hover:bg-primary-50 dark:hover:bg-slate-800 hover:text-primary-dark dark:hover:text-primary-400 transition-colors font-sans">
-                                    {{ $seasonItem }}
-                                </button>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
                 <!-- Date picker (Flatpickr) -->
                 <div class="relative flex items-center w-full">
                     <input type="text"
