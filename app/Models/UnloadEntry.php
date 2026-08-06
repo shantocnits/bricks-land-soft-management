@@ -8,6 +8,7 @@ class UnloadEntry extends Model
 {
     protected $fillable = [
         'date',
+        'season',
         'round'
     ];
 

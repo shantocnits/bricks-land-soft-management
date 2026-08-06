@@ -70,11 +70,12 @@ Used In Pages:
     
     $delFormattedTime = $timePrefix . ' ' . $delTimeObj->format('h:i');
     $printNowFormatted = now('Asia/Dhaka')->format('d-m-Y h:i A');
+    $printIssuedBy = auth()->check() ? auth()->user()->name : 'অজ্ঞাত';
 @endphp
 
 <!-- Modal Overlay Box -->
-<div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity overflow-y-auto" x-cloak>
-    <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 my-8 overflow-hidden transition-all" @click.away="$wire.closePrintModal()">
+<div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity overflow-y-auto" x-cloak @click.self="$wire.closePrintModal()">
+    <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 my-8 overflow-hidden transition-all">
         
         <!-- ======================================================================= -->
         <!-- 🔘 TOP CONTROL BAR: 4 PRINT FORMAT BUTTONS                              -->
@@ -264,7 +265,7 @@ Used In Pages:
                             @else
                                 <p class="text-gray-700"><span class="font-bold text-gray-900">চালানের তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $printChallan->created_at ? \Carbon\Carbon::parse($printChallan->created_at)->setTimezone('Asia/Dhaka')->format('h:i A') : now('Asia/Dhaka')->format('h:i A') }}</p>
                             @endif
-                            <p class="text-gray-700"><span class="font-bold text-gray-900">ইস্যু করেছে:</span></p>
+                            <p class="text-gray-700"><span class="font-bold text-gray-900">ইস্যু করেছে:</span> {{ $printIssuedBy }}</p>
                         </div>
                         <div class="text-right space-y-1 pl-4 border-r-4 border-black pr-2">
                             <p class="text-gray-900 font-black text-sm">{{ $printChallan->customer_name }}</p>
@@ -424,7 +425,7 @@ Used In Pages:
                     <div class="space-y-1.5">
                         <p class="text-gray-800"><span class="font-bold">কাস্টমার আইডি:</span> {{ $printChallan->ledger_id ?: $printChallan->id }}</p>
                         <p class="text-gray-800"><span class="font-bold">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $delFormattedTime }}</p>
-                        <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> Demo</p>
+                        <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> {{ $printIssuedBy }}</p>
                     </div>
                     <div class="text-right space-y-1 pl-4 border-r-4 border-black pr-2">
                         <p class="text-gray-900 font-black text-sm">{{ $printChallan->customer_name }}</p>
@@ -546,7 +547,7 @@ Used In Pages:
                             <div class="space-y-1">
                                 <p class="text-gray-800"><span class="font-bold">কাস্টমার আইডি:</span> {{ $printChallan->ledger_id ?: $printChallan->id }}</p>
                                 <p class="text-gray-800"><span class="font-bold">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $delFormattedTime }}</p>
-                                <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> Demo</p>
+                                <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> {{ $printIssuedBy }}</p>
                             </div>
                             <div class="text-right space-y-0.5 pl-3 border-r-4 border-black pr-1.5">
                                 <p class="text-gray-900 font-black text-xs">{{ $printChallan->customer_name }}</p>
@@ -614,7 +615,7 @@ Used In Pages:
                             <div class="space-y-1">
                                 <p class="text-gray-800"><span class="font-bold">কাস্টমার আইডি:</span> {{ $printChallan->ledger_id ?: $printChallan->id }}</p>
                                 <p class="text-gray-800"><span class="font-bold">ডেলিভারি তারিখ:</span> {{ $printChallan->date ? \Carbon\Carbon::parse($printChallan->date)->format('d-m-Y') : now()->format('d-m-Y') }}, {{ $delFormattedTime }}</p>
-                                <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> Demo</p>
+                                <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> {{ $printIssuedBy }}</p>
                             </div>
                             <div class="text-right space-y-0.5 pl-3 border-r-4 border-black pr-1.5">
                                 <p class="text-gray-900 font-black text-xs">{{ $printChallan->customer_name }}</p>

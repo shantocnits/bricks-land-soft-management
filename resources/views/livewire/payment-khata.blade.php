@@ -1105,7 +1105,7 @@
 
             <!-- Meta Bar: Date | Subtitle Pill | Total Payment -->
             <div
-                class="flex items-center justify-between py-1.5 text-xs font-bold text-gray-900 border-b border-gray-200">
+                class="flex items-center justify-between py-1.5 text-xs font-bold text-gray-900">
                 <div>
                     তারিখ: <span class="font-bold">{{ $formattedPrintDate }}</span>
                 </div>

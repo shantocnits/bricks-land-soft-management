@@ -9,42 +9,108 @@ if (!function_exists('toBanglaNum')) {
 
 <div class="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300 pb-12">
 
-    {{-- ─── Toast ─────────────────────────────────────────────────────────── --}}
-    <div x-data="{ show:false, message:'', type:'success' }"
-         x-init="window.addEventListener('show-toast', e=>{ message=e.detail.message; type=e.detail.type||'success'; show=true; setTimeout(()=>show=false,3000); })"
-         x-show="show" x-transition x-cloak
-         class="fixed top-4 right-4 z-[9999] px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 font-sans font-bold text-xs"
-         :class="type==='success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'">
-        <span x-text="type==='success' ? '✓' : '✕'"></span>
-        <span x-text="message"></span>
-    </div>
-
     {{-- ─── Main ──────────────────────────────────────────────────────────── --}}
     <div class="w-full">
 
-        {{-- Toolbar --}}
-        <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {{-- Toolbar Card --}}
+        <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 mb-6">
 
-            {{-- Left --}}
-            <div class="flex flex-wrap items-center gap-3">
+            {{-- Desktop Layout: 2 Sides (Left: New Load + Total Badge | Right: Date, Round, Report, Print) --}}
+            <div class="hidden md:flex md:items-center md:justify-between md:gap-4">
+                
+                {{-- Left Side --}}
+                <div class="flex items-center gap-3">
+                    <button wire:click="openModal()"
+                            class="px-4 py-2 bg-[#034C3C] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 font-sans">
+                        + নতুন লোড
+                    </button>
+
+                    <span class="inline-flex items-center px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 rounded-xl text-xs font-bold font-sans">
+                        সর্বমোট লোড: {{ toBanglaNum(number_format($totalQuantity)) }} পিস
+                    </span>
+                </div>
+
+                {{-- Right Side --}}
+                <div class="flex items-center gap-3">
+                    {{-- Datepicker Filter --}}
+                    <div class="relative flex items-center">
+                        <input type="text" data-flatpickr data-wire-prop="dateFilter" data-default="{{ $dateFilter }}"
+                               wire:model="dateFilter" placeholder="তারিখ" readonly
+                               class="pl-3 pr-8 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white w-36 font-sans font-semibold cursor-pointer focus:outline-none">
+                        <span class="absolute right-2.5 top-2.5 text-emerald-500 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                        </span>
+                    </div>
+
+                    {{-- Round Filter Dropdown (disabled when non-today date is selected) --}}
+                    @php $isNonToday = $dateFilter && $dateFilter !== now('Asia/Dhaka')->format('Y-m-d'); @endphp
+                    <div x-data="{ open:false }" class="relative">
+                        <button @click="open=!open" type="button"
+                                {{ $isNonToday ? 'disabled' : '' }}
+                                class="flex items-center justify-between gap-2.5 px-4 py-2 font-bold rounded-xl text-xs border cursor-pointer w-44 transition-all
+                                       {{ $isNonToday ? 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 border-gray-200 dark:border-slate-600 opacity-60 cursor-not-allowed' : 'bg-white dark:bg-slate-800 text-gray-800 dark:text-white border-gray-200 dark:border-slate-700' }}">
+                            <span class="font-sans truncate font-bold">
+                                {{ $roundFilter ? $roundFilter : 'সকল রাউন্ড' }}
+                            </span>
+                            <svg class="w-4 h-4 flex-shrink-0 transition-transform" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="open && !{{ $isNonToday ? 'true' : 'false' }}" @click.outside="open=false" x-cloak
+                             class="absolute right-0 z-[999] mt-1.5 w-52 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+                            <div class="py-1 bg-white dark:bg-slate-900">
+                                <button type="button" wire:click="$set('roundFilter','')" @click="open=false"
+                                        class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans bg-white dark:bg-slate-900">
+                                    সকল রাউন্ড
+                                </button>
+                                @foreach($rounds as $rnd)
+                                    <button type="button" wire:click="$set('roundFilter','{{ $rnd->name }}')" @click="open=false"
+                                            class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans bg-white dark:bg-slate-900">
+                                        {{ $rnd->name }}
+                                    </button>
+                                @endforeach
+                                @if($rounds->isEmpty())
+                                    <p class="px-4 py-3 text-xs text-gray-400 dark:text-slate-500 font-sans text-center">আজকে কোনো রাউন্ড তৈরি হয়নি</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Report Button --}}
+                    <button type="button" wire:click="$set('showReport',true)"
+                            class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans flex items-center gap-1.5 active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        রিপোর্ট
+                    </button>
+
+                    {{-- Print Button --}}
+                    <button type="button" onclick="window.print()"
+                            class="px-3.5 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans border border-gray-200 dark:border-slate-700 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                        প্রিন্ট
+                    </button>
+                </div>
+            </div>
+
+            {{-- Mobile Layout: 2 Columns Grid --}}
+            <div class="grid grid-cols-2 gap-2 md:hidden">
                 <button wire:click="openModal()"
-                        class="px-4 py-2 bg-[#034C3C] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer flex items-center gap-1.5 font-sans">
+                        class="col-span-1 px-4 py-2 bg-[#034C3C] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 font-sans">
                     + নতুন লোড
                 </button>
 
-                <span class="inline-flex items-center px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 rounded-xl text-xs font-bold font-sans">
+                <span class="col-span-1 inline-flex items-center justify-center px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 rounded-xl text-xs font-bold font-sans">
                     সর্বমোট লোড: {{ toBanglaNum(number_format($totalQuantity)) }} পিস
                 </span>
-            </div>
 
-            {{-- Right --}}
-            <div class="flex flex-wrap items-center gap-3">
-
-                {{-- Datepicker --}}
-                <div class="relative flex items-center">
+                <div class="col-span-1 relative flex items-center">
                     <input type="text" data-flatpickr data-wire-prop="dateFilter" data-default="{{ $dateFilter }}"
                            wire:model="dateFilter" placeholder="তারিখ" readonly
-                           class="pl-3 pr-8 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white w-36 font-sans font-semibold cursor-pointer focus:outline-none">
+                           class="w-full pl-3 pr-8 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white font-sans font-semibold cursor-pointer focus:outline-none">
                     <span class="absolute right-2.5 top-2.5 text-emerald-500 pointer-events-none">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
@@ -52,42 +118,40 @@ if (!function_exists('toBanglaNum')) {
                     </span>
                 </div>
 
-                {{-- Round Filter Dropdown --}}
-                <div x-data="{ open:false }" class="relative">
+                <div x-data="{ open:false }" class="col-span-1 relative">
                     <button @click="open=!open" type="button"
-                            class="flex items-center justify-between gap-2.5 px-4 py-2 bg-white dark:bg-slate-800 text-gray-800 dark:text-white font-bold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer w-44">
-                        <span class="font-sans truncate" x-text="$wire.roundFilter ? $wire.roundFilter : 'সকল রাউন্ড'"></span>
+                            class="w-full flex items-center justify-between gap-2.5 px-4 py-2 bg-white dark:bg-slate-800 text-gray-800 dark:text-white font-bold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer">
+                        <span class="font-sans truncate text-gray-800 dark:text-white font-bold">
+                            {{ $roundFilter ? $roundFilter : ($rounds->first()?->name ?? 'রাউন্ড সিলেক্ট করুন') }}
+                        </span>
                         <svg class="w-4 h-4 flex-shrink-0 transition-transform" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <div x-show="open" @click.outside="open=false" x-cloak
                          class="absolute z-[999] mt-1.5 w-52 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
-                        <div class="py-1">
-                            <button type="button" wire:click="$set('roundFilter','')" @click="open=false"
-                                    class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
-                                সকল রাউন্ড
-                            </button>
+                        <div class="py-1 bg-white dark:bg-slate-900">
                             @foreach($rounds as $rnd)
                                 <button type="button" wire:click="$set('roundFilter','{{ $rnd->name }}')" @click="open=false"
-                                        class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
+                                        class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans bg-white dark:bg-slate-900">
                                     {{ $rnd->name }}
                                 </button>
                             @endforeach
+                            @if($rounds->isEmpty())
+                                <p class="px-4 py-3 text-xs text-gray-400 dark:text-slate-500 font-sans text-center">কোনো রাউন্ড নেই</p>
+                            @endif
                         </div>
                     </div>
                 </div>
 
-                {{-- Report Button --}}
                 <button type="button" wire:click="$set('showReport',true)"
-                        class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans flex items-center gap-1.5 active:scale-95">
+                        class="col-span-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans flex items-center justify-center gap-1.5 active:scale-95">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     রিপোর্ট
                 </button>
 
-                {{-- Print --}}
                 <button type="button" onclick="window.print()"
-                        class="px-3 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans border border-gray-200 dark:border-slate-700 flex items-center gap-1.5">
+                        class="col-span-1 px-3 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans border border-gray-200 dark:border-slate-700 flex items-center justify-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
                     </svg>
@@ -96,8 +160,8 @@ if (!function_exists('toBanglaNum')) {
             </div>
         </div>
 
-        {{-- ─── Table Card ─────────────────────────────────────────────────── --}}
-        <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        {{-- ─── Desktop Table ───────────────────────────────────────────────── --}}
+        <div class="hidden sm:block bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse text-left border border-gray-200 dark:border-slate-800">
                     <thead>
@@ -112,6 +176,9 @@ if (!function_exists('toBanglaNum')) {
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-slate-800 font-sans text-xs">
                         @forelse($entries as $index => $entry)
+                            @php
+                                $isToday = $entry->date && \Carbon\Carbon::parse($entry->date)->isToday();
+                            @endphp
                             <tr class="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/10 transition-colors">
                                 <td class="py-3.5 px-4 text-gray-500 dark:text-slate-400 font-semibold border-r border-gray-150 dark:border-slate-800">
                                     {{ toBanglaNum($entries->firstItem() + $index) }}
@@ -131,20 +198,33 @@ if (!function_exists('toBanglaNum')) {
                                 </td>
                                 <td class="py-3.5 px-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button type="button" wire:click="edit({{ $entry->id }})" title="সম্পাদনা"
-                                                class="inline-flex text-emerald-600 hover:text-emerald-800 hover:scale-110 transition-all cursor-pointer focus:outline-none">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/>
-                                            </svg>
-                                        </button>
-                                        <button type="button" wire:click="delete({{ $entry->id }})"
-                                                wire:confirm="আপনি কি নিশ্চিতভাবে এই লোড হিসাবটি মুছে ফেলতে চান?"
-                                                title="মুছে ফেলুন"
-                                                class="inline-flex text-red-500 hover:text-red-700 hover:scale-110 transition-all cursor-pointer focus:outline-none">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                            </svg>
-                                        </button>
+                                        @if($isToday)
+                                            <button type="button" wire:click="edit({{ $entry->id }})" title="সম্পাদনা"
+                                                    class="inline-flex text-emerald-600 hover:text-emerald-800 hover:scale-110 transition-all cursor-pointer focus:outline-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/>
+                                                </svg>
+                                            </button>
+                                            <button type="button" wire:click="delete({{ $entry->id }})"
+                                                    wire:confirm="আপনি কি নিশ্চিতভাবে এই লোড হিসাবটি মুছে ফেলতে চান?"
+                                                    title="মুছে ফেলুন"
+                                                    class="inline-flex text-red-500 hover:text-red-700 hover:scale-110 transition-all cursor-pointer focus:outline-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        @else
+                                            <span title="পূর্বের দিনের তথ্য পরিবর্তনযোগ্য নয়" class="inline-flex text-gray-300 dark:text-slate-700 cursor-not-allowed">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/>
+                                                </svg>
+                                            </span>
+                                            <span title="পূর্বের দিনের তথ্য মোছা সম্ভব নয়" class="inline-flex text-gray-300 dark:text-slate-700 cursor-not-allowed">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </span>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -159,18 +239,14 @@ if (!function_exists('toBanglaNum')) {
                 </table>
             </div>
 
-            {{-- Pagination Footer --}}
+            {{-- Centered Pagination Footer --}}
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-4 border-t border-gray-100 dark:border-slate-800">
                 <div class="text-xs text-gray-500 dark:text-gray-400 font-sans font-semibold">
                     মোট: <strong class="text-gray-800 dark:text-white">{{ toBanglaNum($entries->total()) }} টি</strong>
                     | সর্বমোট লোড: <strong class="text-emerald-600 dark:text-emerald-400">{{ toBanglaNum(number_format($totalQuantity)) }} পিস</strong>
                 </div>
-
-                <div class="flex items-center gap-4">
-                    {{-- Pagination Links --}}
+                <div class="flex items-center justify-center gap-4">
                     {{ $entries->links() }}
-
-                    {{-- Per Page --}}
                     <div x-data="{ open:false }" class="relative">
                         <button @click="open=!open" type="button"
                                 class="flex items-center justify-between gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-gray-800 dark:text-white font-bold rounded-lg text-xs border border-gray-200 dark:border-slate-700 cursor-pointer">
@@ -192,6 +268,85 @@ if (!function_exists('toBanglaNum')) {
                 </div>
             </div>
         </div>
+
+        {{-- ─── Mobile Card View ────────────────────────────────────────────── --}}
+        <div class="sm:hidden space-y-3">
+            @forelse($entries as $index => $entry)
+                @php
+                    $isToday = $entry->date && \Carbon\Carbon::parse($entry->date)->isToday();
+                @endphp
+                <div class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 font-sans">
+                    <div class="flex items-start justify-between mb-2">
+                        <div>
+                            <span class="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">#{{ toBanglaNum($entries->firstItem() + $index) }}</span>
+                            <p class="text-sm font-black text-gray-900 dark:text-white mt-0.5">{{ toBanglaNum($entry->date->format('d-m-Y')) }}</p>
+                        </div>
+                        <span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-lg text-[11px] font-bold border border-emerald-100 dark:border-emerald-900/40">
+                            {{ $entry->round }}
+                        </span>
+                    </div>
+                    <p class="text-xs font-semibold mb-2 {{ str_contains($entry->description, 'পাকা') ? 'text-amber-600 dark:text-amber-400' : 'text-gray-700 dark:text-slate-300' }}">
+                        {{ $entry->description }}@if($entry->category) ({{ $entry->category }})@endif
+                    </p>
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800">
+                        <span class="text-sm font-black font-mono text-gray-900 dark:text-white">{{ toBanglaNum(number_format($entry->quantity)) }} পিস</span>
+                        <div class="flex items-center gap-3">
+                            @if($isToday)
+                                <button type="button" wire:click="edit({{ $entry->id }})"
+                                        class="text-emerald-600 hover:text-emerald-800 cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+                                </button>
+                                <button type="button" wire:click="delete({{ $entry->id }})"
+                                        wire:confirm="আপনি কি নিশ্চিতভাবে এই লোড হিসাবটি মুছে ফেলতে চান?"
+                                        class="text-red-500 hover:text-red-700 cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            @else
+                                <span title="পূর্বের দিনের তথ্য পরিবর্তনযোগ্য নয়" class="text-gray-300 dark:text-slate-700 cursor-not-allowed">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+                                </span>
+                                <span title="পূর্বের দিনের তথ্য মোছা সম্ভব নয়" class="text-gray-300 dark:text-slate-700 cursor-not-allowed">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-8 text-center text-sm font-semibold text-gray-400 dark:text-slate-500">
+                    কোনো লোড বিবরণ পাওয়া যায়নি।
+                </div>
+            @endforelse
+
+            {{-- Mobile Stats & Pagination (Dynamic Stats matching Desktop) --}}
+            <div class="flex flex-col items-center justify-center gap-3 pt-3 font-sans">
+                <div class="text-xs text-gray-500 dark:text-gray-400 font-semibold text-center">
+                    মোট: <strong class="text-gray-808 dark:text-white">{{ toBanglaNum($entries->total()) }} টি</strong>
+                    | সর্বমোট লোড: <strong class="text-emerald-600 dark:text-emerald-400">{{ toBanglaNum(number_format($totalQuantity)) }} পিস</strong>
+                </div>
+                <div class="flex items-center gap-3">
+                    {{ $entries->links() }}
+                    <div x-data="{ open:false }" class="relative">
+                        <button @click="open=!open" type="button"
+                                class="flex items-center justify-between gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-gray-808 dark:text-white font-bold rounded-lg text-xs border border-gray-200 dark:border-slate-707 cursor-pointer">
+                            <span class="font-sans">{{ toBanglaNum($perPage) }} / পেজ</span>
+                            <svg class="w-3.5 h-3.5 transition-transform" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="open" @click.outside="open=false" x-cloak
+                             class="absolute bottom-full mb-1.5 right-0 z-[999] w-32 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-808 rounded-xl shadow-xl overflow-hidden">
+                            <div class="py-1">
+                                @foreach([10,20,30,50] as $size)
+                                    <button type="button" wire:click="$set('perPage',{{ $size }})" @click="open=false"
+                                            class="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-808 hover:text-emerald-700 dark:hover:text-emerald-404 font-sans cursor-pointer">
+                                        {{ toBanglaNum($size) }} / পেজ
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -202,7 +357,7 @@ if (!function_exists('toBanglaNum')) {
          class="fixed inset-0 z-[9990] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
          x-cloak x-transition>
 
-        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 md:p-8 max-w-lg w-full relative shadow-2xl">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 md:p-8 max-w-lg w-full relative">
 
             {{-- Close --}}
             <button @click="show=false" class="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 cursor-pointer focus:outline-none">
@@ -216,80 +371,77 @@ if (!function_exists('toBanglaNum')) {
             <div class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    {{-- Datepicker --}}
+                    {{-- Date Field (Today Dynamic, Non-editable for new load) --}}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">তারিখ <span class="text-red-500">*</span></label>
-                        <div class="relative" wire:ignore>
-                            <input type="text" data-flatpickr data-wire-prop="date"
-                                   wire:model.lazy="date"
-                                   placeholder="তারিখ নির্বাচন করুন"
-                                   class="w-full pl-3 pr-9 py-2.5 text-xs font-bold rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-sans cursor-pointer transition-all">
+                        <div class="relative">
+                            <input type="text" value="{{ now('Asia/Dhaka')->format('d-m-Y') }}" readonly
+                                   class="w-full pl-3 pr-9 py-2.5 text-xs font-bold rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 font-sans cursor-not-allowed">
                             <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             </span>
                         </div>
-                        @error('date')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
+                        <p class="text-gray-400 text-[10px] mt-1 font-sans">শুধুমাত্র আজকের লোড যোগ করা যাবে</p>
                     </div>
 
-                    {{-- Round Dropdown --}}
+                    {{-- Round Dropdown with Add Round inside dropdown menu (Image 1 style) --}}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">রাউন্ড <span class="text-red-500">*</span></label>
-                        <div x-data="{ open: false }" class="relative">
+
+                        <div x-data="{ 
+                            open: false,
+                            search: '',
+                            match(name) {
+                                if (!this.search || !this.search.trim()) return true;
+                                let s = this.search.trim().toLowerCase();
+                                let eng = ['0','1','2','3','4','5','6','7','8','9'];
+                                let bg  = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+                                let bnSearch = s;
+                                eng.forEach((e, i) => { bnSearch = bnSearch.replaceAll(e, bg[i]); });
+                                let enSearch = s;
+                                bg.forEach((b, i) => { enSearch = enSearch.replaceAll(b, eng[i]); });
+                                let n = name.toLowerCase();
+                                return n.includes(s) || n.includes(bnSearch) || n.includes(enSearch);
+                            }
+                        }" class="relative">
                             <button @click="open = !open" type="button"
                                     class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none">
-                                <span class="font-sans truncate" x-text="$wire.round ? $wire.round : 'সিলেক্ট করুন'"></span>
+                                <span class="font-sans truncate text-gray-800 dark:text-white" x-text="$wire.round ? $wire.round : 'সিলেক্ট করুন'"></span>
                                 <svg class="w-4 h-4 flex-shrink-0 transition-transform text-gray-400" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                             </button>
 
                             <div x-show="open" @click.outside="open=false" x-cloak
-                                 class="absolute left-0 right-0 z-[9999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden font-sans">
+                                 class="absolute left-0 right-0 z-[9999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden font-sans">
                                 
-                                {{-- Add new round --}}
-                                <div class="border-b border-gray-150 dark:border-slate-800 p-2 bg-gray-50/50 dark:bg-slate-950/20">
-                                    @if($showAddRound)
-                                        <div class="flex gap-1.5">
-                                            <div class="relative flex items-center flex-1">
-                                                <input type="text" wire:model="newRoundName" placeholder="রাউন্ড নম্বর"
-                                                       class="w-full pl-3 pr-20 py-2 text-xs rounded-lg border border-gray-200 dark:border-slate-707 bg-white dark:bg-slate-800 text-gray-808 dark:text-white font-sans font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                                <span class="absolute right-2 text-[10px] text-gray-400 dark:text-gray-550 font-sans font-bold select-none pointer-events-none">রাউন্ড</span>
-                                            </div>
-                                            <button type="button" wire:click="addRound()"
-                                                    class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg transition-all cursor-pointer">
-                                                যোগ
-                                            </button>
-                                            <button type="button" wire:click="$set('showAddRound',false)"
-                                                    class="px-1.5 py-2 text-gray-400 hover:text-gray-600 cursor-pointer">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                            </button>
+                                {{-- Add / Search Round Form inside dropdown at the top --}}
+                                <div class="border-b border-gray-150 dark:border-slate-800 p-2 bg-gray-50 dark:bg-slate-800">
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="relative flex items-center flex-1">
+                                            <input type="text" wire:model="newRoundName" x-model="search" @input="open = true" placeholder="রাউন্ড নম্বর"
+                                                   wire:keydown.enter="addRound()"
+                                                   class="w-full pl-3 pr-14 py-2 text-xs rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-white font-sans font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                            <span class="absolute right-2 text-[10px] text-gray-400 dark:text-gray-500 font-sans font-bold select-none pointer-events-none">রাউন্ড</span>
                                         </div>
-                                        @error('newRoundName')<p class="text-red-500 text-[10px] mt-1 font-sans px-1">{{ $message }}</p>@enderror
-                                    @else
-                                        <button type="button" wire:click="$set('showAddRound',true)"
-                                                class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer font-sans">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                                            নতুন রাউন্ড যোগ করুন
+                                        <button type="button" wire:click="addRound()"
+                                                class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg transition-all cursor-pointer">
+                                            যোগ
                                         </button>
-                                    @endif
+                                    </div>
+                                    @error('newRoundName')<p class="text-red-500 text-[10px] mt-1 font-sans px-1">{{ $message }}</p>@enderror
                                 </div>
 
                                 {{-- Rounds List --}}
-                                <div class="py-1 max-h-52 overflow-y-auto">
-                                    @foreach($rounds as $rnd)
-                                        <div class="flex items-center justify-between group px-1">
-                                            <button type="button"
-                                                    wire:click="$set('round','{{ $rnd->name }}')"
-                                                    @click="open=false"
-                                                    class="flex-1 text-left px-3 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer font-sans">
-                                                {{ $rnd->name }}
-                                            </button>
-                                            <button type="button"
-                                                    wire:click="deleteRound({{ $rnd->id }})"
-                                                    wire:confirm="'{{ $rnd->name }}' রাউন্ড মুছে ফেলবেন?"
-                                                    class="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 opacity-0 group-hover:opacity-100 transition-all cursor-pointer focus:outline-none flex-shrink-0 mr-1.5">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                            </button>
-                                        </div>
+                                <div class="py-1 max-h-52 overflow-y-auto bg-white dark:bg-slate-900">
+                                    @foreach($allRounds as $rnd)
+                                        <button type="button" x-show="match('{{ $rnd->name }}')"
+                                                wire:click="$set('round','{{ $rnd->name }}')" @click="open=false"
+                                                class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer bg-white dark:bg-slate-900">
+                                            {{ $rnd->name }}
+                                        </button>
                                     @endforeach
+                                    @if($allRounds->isEmpty())
+                                        <p class="px-4 py-3 text-xs text-gray-400 dark:text-slate-500 font-sans">কোনো রাউন্ড নেই — উপরে নতুন যোগ করুন</p>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -297,55 +449,55 @@ if (!function_exists('toBanglaNum')) {
                     </div>
                 </div>
 
-                {{-- Load Type Dropdown (root-level, full-width) --}}
+                {{-- Load Type Dropdown --}}
                 <div>
-                    <label class="block text-xs font-bold text-gray-505 dark:text-slate-400 mb-1.5 font-sans">লোডের ধরণ <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">লোডের ধরণ <span class="text-red-500">*</span></label>
                     <div x-data="{ open: false }" class="relative">
                         <button @click="open = !open" type="button"
-                                class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-808 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-707 cursor-pointer focus:outline-none"
-                                :class="{ 'border-emerald-505 ring-2 ring-emerald-500/20': open }">
+                                class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none"
+                                :class="{ 'border-emerald-500 ring-2 ring-emerald-500/20': open }">
                             <span class="font-sans truncate" x-text="$wire.description ? $wire.description : 'সিলেক্ট করুন'"></span>
                             <svg class="w-4 h-4 flex-shrink-0 transition-transform text-gray-400" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
 
                         <div x-show="open" @click.outside="open=false" x-cloak
-                             class="absolute left-0 right-0 z-[9999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-808 rounded-xl shadow-2xl overflow-hidden font-sans">
+                             class="absolute left-0 right-0 z-[9999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden font-sans">
                             <div class="py-1">
                                 @foreach($descriptions as $desc)
                                     <button type="button"
                                             wire:click="$set('description','{{ $desc }}')"
                                             @click="open=false"
-                                            class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-202 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer font-sans">
+                                            class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer">
                                         {{ $desc }}
                                     </button>
                                 @endforeach
                             </div>
                         </div>
                     </div>
-                    @error('description')<p class="text-red-505 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
+                    @error('description')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {{-- Category (শ্রেণি) Dropdown --}}
+                    {{-- Category Dropdown (shown only when পাকা ইট লোড হয়েছে selected) --}}
                     <div x-data="{ open: false }" class="relative"
-                        x-show="$wire.description === 'পাকা ইট লোড হয়েছে'" x-transition x-cloak>
+                        x-show="$wire.description && ($wire.description.includes('পাকা ইট') || $wire.description === 'পাকা ইট লোড হয়েছে' || $wire.description === 'পাকা ইট লোড হয়েছে')" x-transition x-cloak>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">শ্রেণি <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <button @click="open = !open" type="button"
-                                    class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-808 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                    class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                                     :class="{ 'border-emerald-500 ring-2 ring-emerald-500/20': open }">
                                 <span class="font-sans truncate text-gray-800 dark:text-white" x-text="$wire.category ? $wire.category : 'শ্রেণি'"></span>
                                 <svg class="w-4 h-4 flex-shrink-0 transition-transform text-gray-400" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                             </button>
 
                             <div x-show="open" @click.outside="open=false" x-cloak
-                                 class="absolute left-0 right-0 z-[9999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-808 rounded-xl shadow-2xl overflow-hidden font-sans">
-                                <div class="py-1 max-h-52 overflow-y-auto font-sans">
+                                 class="absolute left-0 right-0 z-[9999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden font-sans">
+                                <div class="py-1 max-h-52 overflow-y-auto bg-white dark:bg-slate-900 font-sans">
                                     @foreach($categories as $cat)
                                         <button type="button"
                                                 wire:click="$set('category','{{ $cat->name }}')"
                                                 @click="open=false"
-                                                class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer font-sans">
+                                                class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer bg-white dark:bg-slate-900">
                                             {{ $cat->name }}
                                         </button>
                                     @endforeach
@@ -356,10 +508,10 @@ if (!function_exists('toBanglaNum')) {
                     </div>
 
                     {{-- Quantity --}}
-                    <div :class="$wire.description === 'পাকা ইট লোড হয়েছে' ? '' : 'sm:col-span-2'">
+                    <div :class="$wire.description && ($wire.description.includes('পাকা ইট') || $wire.description === 'পাকা ইট লোড হয়েছে' || $wire.description === 'পাকা ইট লোড হয়েছে') ? '' : 'sm:col-span-2'">
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পরিমাণ <span class="text-red-500">*</span></label>
                         <input type="number" wire:model="quantity" placeholder="লোডের পরিমাণ"
-                               class="w-full px-3 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-707 bg-gray-50 dark:bg-slate-800 text-gray-808 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                               class="w-full px-3 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
                         @error('quantity')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
                     </div>
                 </div>
@@ -372,7 +524,7 @@ if (!function_exists('toBanglaNum')) {
                     ক্লিয়ার
                 </button>
                 <button type="button" wire:click="save()"
-                        class="px-6 py-2.5 bg-[#034C3C] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95">
+                        class="px-6 py-2.5 bg-[#034C3C] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-95">
                     {{ $editingId ? 'আপডেট করুন' : 'সংরক্ষণ করুন' }}
                 </button>
             </div>
@@ -387,7 +539,7 @@ if (!function_exists('toBanglaNum')) {
          class="fixed inset-0 z-[9990] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
          x-cloak x-transition>
 
-        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 md:p-8 max-w-xl w-full relative shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 md:p-8 max-w-xl w-full relative max-h-[90vh] overflow-y-auto">
 
             {{-- Close --}}
             <button @click="show=false" class="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 cursor-pointer focus:outline-none">
@@ -428,7 +580,6 @@ if (!function_exists('toBanglaNum')) {
                             </tr>
                         @endforelse
 
-                        {{-- Total row --}}
                         @if($reportRows->count() > 1)
                             <tr class="bg-emerald-50/60 dark:bg-emerald-950/20 border-t-2 border-emerald-200 dark:border-emerald-900">
                                 <td class="py-3 px-4 font-extrabold text-gray-900 dark:text-white border-r border-gray-200 dark:border-slate-700">মোট</td>

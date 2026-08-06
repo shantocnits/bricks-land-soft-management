@@ -145,9 +145,12 @@ Supported Layout Modes ($type):
                     @php
                         $plDateStr1 = $challan->date ? \Carbon\Carbon::parse($challan->date)->format('d-m-Y') : now('Asia/Dhaka')->format('d-m-Y');
                         $plTimeStr1 = $challan->created_at ? \Carbon\Carbon::parse($challan->created_at)->setTimezone('Asia/Dhaka')->format('h:i A') : ($challan->updated_at ? \Carbon\Carbon::parse($challan->updated_at)->setTimezone('Asia/Dhaka')->format('h:i A') : now('Asia/Dhaka')->format('h:i A'));
+                        $plCustomerId = $challan->ledger_id ?: $challan->id;
+                        $plIssuedBy = auth()->check() ? auth()->user()->name : 'অজ্ঞাত';
                     @endphp
-                    <p class="text-gray-800"><span class="font-bold">{{ $isDuePrint ? 'জমার তারিখ:' : 'চালানের তারিখ:' }}</span> {{ $plDateStr1 }} {{ $plTimeStr1 }}</p>
-                    <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span></p>
+                    <p class="text-gray-800"><span class="font-bold">কাস্টমার আইডি:</span> {{ $plCustomerId }}</p>
+                    <p class="text-gray-800"><span class="font-bold">{{ $isDuePrint ? 'জমার তারিখ:' : 'চালানের তারিখ:' }}</span> {{ $plDateStr1 }}, {{ $plTimeStr1 }}</p>
+                    <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> {{ $plIssuedBy }}</p>
                 </div>
                 <div class="text-right space-y-1 pl-4 border-r-4 border-black pr-2">
                     <p class="text-gray-900 font-black text-sm">{{ $challan->customer_name }}</p>
@@ -285,8 +288,8 @@ Supported Layout Modes ($type):
                     </div>
                 </div>
                 <div class="text-right space-y-1">
-                    <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wider font-mono">INVOICE</h1>
-                    <p class="text-xs font-semibold text-gray-500">গ্রাহক চালান কপি</p>
+                    <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wider font-mono">{{ $isDuePrint ? 'RECEIPT' : 'INVOICE' }}</h1>
+                    <p class="text-xs font-semibold text-gray-500">{{ $isDuePrint ? 'গ্রাহক জমা কপি' : 'গ্রাহক চালান কপি' }}</p>
                     <p class="text-[11px] text-gray-500 font-mono">প্রিন্ট: {{ $printTime }}</p>
                 </div>
             </div>
@@ -298,9 +301,12 @@ Supported Layout Modes ($type):
                     @php
                         $plDateStr2 = $challan->date ? \Carbon\Carbon::parse($challan->date)->format('d-m-Y') : now('Asia/Dhaka')->format('d-m-Y');
                         $plTimeStr2 = $challan->created_at ? \Carbon\Carbon::parse($challan->created_at)->setTimezone('Asia/Dhaka')->format('h:i A') : ($challan->updated_at ? \Carbon\Carbon::parse($challan->updated_at)->setTimezone('Asia/Dhaka')->format('h:i A') : now('Asia/Dhaka')->format('h:i A'));
+                        $plCustomerId2 = $challan->ledger_id ?: $challan->id;
+                        $plIssuedBy2 = auth()->check() ? auth()->user()->name : 'অজ্ঞাত';
                     @endphp
-                    <p class="text-gray-800"><span class="font-bold">{{ $isDuePrint ? 'জমার তারিখ:' : 'চালানের তারিখ:' }}</span> {{ $plDateStr2 }} {{ $plTimeStr2 }}</p>
-                    <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span></p>
+                    <p class="text-gray-800"><span class="font-bold">কাস্টমার আইডি:</span> {{ $plCustomerId2 }}</p>
+                    <p class="text-gray-800"><span class="font-bold">{{ $isDuePrint ? 'জমার তারিখ:' : 'চালানের তারিখ:' }}</span> {{ $plDateStr2 }}, {{ $plTimeStr2 }}</p>
+                    <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> {{ $plIssuedBy2 }}</p>
                 </div>
                 <div class="text-right space-y-1 pl-4 border-r-4 border-black pr-2">
                     <p class="text-gray-900 font-black text-sm">{{ $challan->customer_name }}</p>
@@ -436,8 +442,8 @@ Supported Layout Modes ($type):
                     </div>
                 </div>
                 <div class="text-right space-y-1">
-                    <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wider font-mono">INVOICE</h1>
-                    <p class="text-xs font-semibold text-gray-500">অফিস চালান কপি</p>
+                    <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wider font-mono">{{ $isDuePrint ? 'RECEIPT' : 'INVOICE' }}</h1>
+                    <p class="text-xs font-semibold text-gray-500">{{ $isDuePrint ? 'অফিস জমা কপি' : 'অফিস চালান কপি' }}</p>
                     <p class="text-[11px] text-gray-500 font-mono">প্রিন্ট: {{ $printTime }}</p>
                 </div>
             </div>
@@ -449,9 +455,12 @@ Supported Layout Modes ($type):
                     @php
                         $plDateStr3 = $challan->date ? \Carbon\Carbon::parse($challan->date)->format('d-m-Y') : now('Asia/Dhaka')->format('d-m-Y');
                         $plTimeStr3 = $challan->created_at ? \Carbon\Carbon::parse($challan->created_at)->setTimezone('Asia/Dhaka')->format('h:i A') : ($challan->updated_at ? \Carbon\Carbon::parse($challan->updated_at)->setTimezone('Asia/Dhaka')->format('h:i A') : now('Asia/Dhaka')->format('h:i A'));
+                        $plCustomerId3 = $challan->ledger_id ?: $challan->id;
+                        $plIssuedBy3 = auth()->check() ? auth()->user()->name : 'অজ্ঞাত';
                     @endphp
-                    <p class="text-gray-800"><span class="font-bold">{{ $isDuePrint ? 'জমার তারিখ:' : 'চালানের তারিখ:' }}</span> {{ $plDateStr3 }} {{ $plTimeStr3 }}</p>
-                    <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span></p>
+                    <p class="text-gray-800"><span class="font-bold">কাস্টমার আইডি:</span> {{ $plCustomerId3 }}</p>
+                    <p class="text-gray-800"><span class="font-bold">{{ $isDuePrint ? 'জমার তারিখ:' : 'চালানের তারিখ:' }}</span> {{ $plDateStr3 }}, {{ $plTimeStr3 }}</p>
+                    <p class="text-gray-800"><span class="font-bold">ইস্যু করেছে:</span> {{ $plIssuedBy3 }}</p>
                 </div>
                 <div class="text-right space-y-1 pl-4 border-r-4 border-black pr-2">
                     <p class="text-gray-900 font-black text-sm">{{ $challan->customer_name }}</p>
@@ -571,7 +580,7 @@ Supported Layout Modes ($type):
     @elseif($type === 'pos-customer')
         <div class="max-w-[300px] mr-auto ml-0 bg-white min-h-screen p-2 text-gray-900 font-sans text-xs space-y-3 border-0 shadow-none text-left">
             <div class="text-center space-y-1 border-b border-dashed border-gray-400 pb-2">
-                <p class="text-[11px] underline font-bold text-gray-800">চালান রশিদ</p>
+                <p class="text-[11px] underline font-bold text-gray-800">{{ $isDuePrint ? 'জমা রশিদ' : 'চালান রশিদ' }}</p>
                 <h2 class="text-xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
                 <p class="text-[11px] text-gray-600 font-medium">{{ $companyAddress }}</p>
                 <p class="text-[11px] text-gray-600 font-mono">{{ $companyPhone }}</p>
@@ -580,25 +589,45 @@ Supported Layout Modes ($type):
 
             @if($challan)
             <div class="space-y-1 text-[11px] border-b border-dashed border-gray-400 pb-2 font-mono">
-                <div class="flex justify-between"><span>চালান: {{ $challan->challan_no }}</span><span>কাস্টমার: {{ $challan->customer_name }}</span></div>
+                <div class="flex justify-between"><span>{{ $isDuePrint ? 'জমার আইডী:' : 'চালান:' }} {{ $challan->ledger_id ?: $challan->id }}</span><span>কাস্টমার: {{ $challan->customer_name }}</span></div>
                 <div class="flex justify-between"><span>তারিখ: {{ $challan->date ? \Carbon\Carbon::parse($challan->date)->format('d-m-Y') : now()->format('d-m-Y') }}</span><span>ঠিকানা: {{ $challan->customer_address ?: 'ঘোড়াঘাট' }}</span></div>
                 <div class="flex justify-between"><span>সময়: {{ now()->format('h:i A') }}</span><span>মোবাইল: {{ $challan->customer_phone ?: '০১৬৫৬৪৫৬৪৫৬' }}</span></div>
             </div>
 
+            @if(!$isDuePrint)
             <div class="border-b border-dashed border-gray-400 pb-2 text-[11px]">
                 <div class="flex justify-between font-bold border-b border-gray-200 pb-1 mb-1 text-gray-900"><span>শ্রেণি</span><span>পরিমাণ</span><span>দর</span><span>মূল্য</span></div>
                 @foreach($challan->items as $item)
                     <div class="flex justify-between font-mono"><span>{{ $item->category_name }}</span><span>{{ $item->quantity }}</span><span>৳{{ $item->rate }}</span><span>৳{{ number_format($item->amount) }}</span></div>
                 @endforeach
             </div>
+            @endif
 
             <div class="space-y-1.5 text-[11px] font-mono">
-                <div class="flex justify-between text-gray-700"><span>মোট মূল্য</span><span>৳ {{ number_format($challan->total_value ?: $challan->items->sum('amount')) }}</span></div>
-                <div class="flex justify-between text-gray-700"><span>ছাড়</span><span>৳ {{ number_format($challan->discount ?: 0) }}</span></div>
-                <div class="flex justify-between text-gray-700"><span>গাড়ি ভাড়া</span><span>৳ {{ number_format($challan->transport_rent ?: 0) }}</span></div>
-                <div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200 text-xs"><span>সর্বমোট</span><span>৳ {{ number_format($challan->grand_total) }}</span></div>
-                <div class="flex justify-between font-bold text-emerald-600"><span>জমা</span><span>৳ {{ number_format($challan->cash) }}</span></div>
-                <div class="flex justify-between font-bold text-rose-600"><span>বাকি</span><span>৳ {{ number_format($challan->due) }}</span></div>
+                @if($isDuePrint)
+                    @php
+                        if (!isset($plNetDue)) {
+                            $plCash = floatval($challan->cash ?? 0);
+                            $plCustName = $challan->customer_name;
+                            $plCustPhone = $challan->customer_phone;
+                            $plNetDue = (float)\App\Models\Challan::where(function($q) use ($plCustName, $plCustPhone) {
+                                $q->where('customer_name', $plCustName);
+                                if ($plCustPhone) { $q->orWhere('customer_phone', $plCustPhone); }
+                            })->sum('due');
+                            $plPrevDue = $plNetDue + $plCash;
+                        }
+                    @endphp
+                    <div class="flex justify-between text-gray-700"><span>মোট বাকি ছিল</span><span>৳ {{ number_format($plPrevDue) }}</span></div>
+                    <div class="flex justify-between font-bold text-emerald-600"><span>জমা দেওয়া</span><span>৳ {{ number_format($plCash) }}</span></div>
+                    <div class="flex justify-between font-bold text-rose-600 pt-1 border-t border-gray-200 text-xs"><span>বর্তমান বাকি</span><span>৳ {{ number_format($plNetDue) }}</span></div>
+                @else
+                    <div class="flex justify-between text-gray-700"><span>মোট মূল্য</span><span>৳ {{ number_format($challan->total_value ?: $challan->items->sum('amount')) }}</span></div>
+                    <div class="flex justify-between text-gray-700"><span>ছাড়</span><span>৳ {{ number_format($challan->discount ?: 0) }}</span></div>
+                    <div class="flex justify-between text-gray-700"><span>গাড়ি ভাড়া</span><span>৳ {{ number_format($challan->transport_rent ?: 0) }}</span></div>
+                    <div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200 text-xs"><span>সর্বমোট</span><span>৳ {{ number_format($challan->grand_total) }}</span></div>
+                    <div class="flex justify-between font-bold text-emerald-600"><span>জমা</span><span>৳ {{ number_format($challan->cash) }}</span></div>
+                    <div class="flex justify-between font-bold text-rose-600"><span>বাকি</span><span>৳ {{ number_format($challan->due) }}</span></div>
+                @endif
             </div>
             @else
                 <div>{{ $slot }}</div>
@@ -624,7 +653,7 @@ Supported Layout Modes ($type):
             <!-- Customer Slip Top -->
             <div class="bg-white p-2 text-gray-900 space-y-2">
                 <div class="text-center space-y-1 border-b border-dashed border-gray-400 pb-2">
-                <p class="text-[11px] underline font-bold text-gray-800">চালান রশিদ (গ্রাহক কপি)</p>
+                <p class="text-[11px] underline font-bold text-gray-800">{{ $isDuePrint ? 'জমা রশিদ (গ্রাহক কপি)' : 'চালান রশিদ (গ্রাহক কপি)' }}</p>
                 <h2 class="text-xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
                 <p class="text-[11px] text-gray-600 font-medium">{{ $companyAddress }}</p>
                 <p class="text-[11px] text-gray-600 font-mono">{{ $companyPhone }}</p>
@@ -633,25 +662,45 @@ Supported Layout Modes ($type):
 
             @if($challan)
             <div class="space-y-1 text-[11px] border-b border-dashed border-gray-400 pb-2 font-mono">
-                <div class="flex justify-between"><span>চালান: {{ $challan->challan_no }}</span><span>কাস্টমার: {{ $challan->customer_name }}</span></div>
+                <div class="flex justify-between"><span>{{ $isDuePrint ? 'জমার আইডী:' : 'চালান:' }} {{ $challan->ledger_id ?: $challan->id }}</span><span>কাস্টমার: {{ $challan->customer_name }}</span></div>
                 <div class="flex justify-between"><span>তারিখ: {{ $challan->date ? \Carbon\Carbon::parse($challan->date)->format('d-m-Y') : now()->format('d-m-Y') }}</span><span>ঠিকানা: {{ $challan->customer_address ?: 'ঘোড়াঘাট' }}</span></div>
                 <div class="flex justify-between"><span>সময়: {{ now()->format('h:i A') }}</span><span>মোবাইল: {{ $challan->customer_phone ?: '০১৬৫৬৪৫৬৪৫৬' }}</span></div>
             </div>
 
+            @if(!$isDuePrint)
             <div class="border-b border-dashed border-gray-400 pb-2 text-[11px]">
                 <div class="flex justify-between font-bold border-b border-gray-200 pb-1 mb-1 text-gray-900"><span>শ্রেণি</span><span>পরিমাণ</span><span>দর</span><span>মূল্য</span></div>
                 @foreach($challan->items as $item)
                     <div class="flex justify-between font-mono"><span>{{ $item->category_name }}</span><span>{{ $item->quantity }}</span><span>৳{{ $item->rate }}</span><span>৳{{ number_format($item->amount) }}</span></div>
                 @endforeach
             </div>
+            @endif
 
             <div class="space-y-1.5 text-[11px] font-mono">
-                <div class="flex justify-between text-gray-700"><span>মোট মূল্য</span><span>৳ {{ number_format($challan->total_value ?: $challan->items->sum('amount')) }}</span></div>
-                <div class="flex justify-between text-gray-700"><span>ছাড়</span><span>৳ {{ number_format($challan->discount ?: 0) }}</span></div>
-                <div class="flex justify-between text-gray-700"><span>গাড়ি ভাড়া</span><span>৳ {{ number_format($challan->transport_rent ?: 0) }}</span></div>
-                <div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200 text-xs"><span>সর্বমোট</span><span>৳ {{ number_format($challan->grand_total) }}</span></div>
-                <div class="flex justify-between font-bold text-emerald-600"><span>জমা</span><span>৳ {{ number_format($challan->cash) }}</span></div>
-                <div class="flex justify-between font-bold text-rose-600"><span>বাকি</span><span>৳ {{ number_format($challan->due) }}</span></div>
+                @if($isDuePrint)
+                    @php
+                        if (!isset($plNetDue)) {
+                            $plCash = floatval($challan->cash ?? 0);
+                            $plCustName = $challan->customer_name;
+                            $plCustPhone = $challan->customer_phone;
+                            $plNetDue = (float)\App\Models\Challan::where(function($q) use ($plCustName, $plCustPhone) {
+                                $q->where('customer_name', $plCustName);
+                                if ($plCustPhone) { $q->orWhere('customer_phone', $plCustPhone); }
+                            })->sum('due');
+                            $plPrevDue = $plNetDue + $plCash;
+                        }
+                    @endphp
+                    <div class="flex justify-between text-gray-700"><span>মোট বাকি ছিল</span><span>৳ {{ number_format($plPrevDue) }}</span></div>
+                    <div class="flex justify-between font-bold text-emerald-600"><span>জমা দেওয়া</span><span>৳ {{ number_format($plCash) }}</span></div>
+                    <div class="flex justify-between font-bold text-rose-600 pt-1 border-t border-gray-200 text-xs"><span>বর্তমান বাকি</span><span>৳ {{ number_format($plNetDue) }}</span></div>
+                @else
+                    <div class="flex justify-between text-gray-700"><span>মোট মূল্য</span><span>৳ {{ number_format($challan->total_value ?: $challan->items->sum('amount')) }}</span></div>
+                    <div class="flex justify-between text-gray-700"><span>ছাড়</span><span>৳ {{ number_format($challan->discount ?: 0) }}</span></div>
+                    <div class="flex justify-between text-gray-700"><span>গাড়ি ভাড়া</span><span>৳ {{ number_format($challan->transport_rent ?: 0) }}</span></div>
+                    <div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200 text-xs"><span>সর্বমোট</span><span>৳ {{ number_format($challan->grand_total) }}</span></div>
+                    <div class="flex justify-between font-bold text-emerald-600"><span>জমা</span><span>৳ {{ number_format($challan->cash) }}</span></div>
+                    <div class="flex justify-between font-bold text-rose-600"><span>বাকি</span><span>৳ {{ number_format($challan->due) }}</span></div>
+                @endif
             </div>
             @else
                 <div>{{ $slot }}</div>
@@ -676,7 +725,7 @@ Supported Layout Modes ($type):
             <!-- Office Slip Bottom -->
             <div class="bg-white p-2 text-gray-900 space-y-2">
                 <div class="text-center space-y-1 border-b border-dashed border-gray-400 pb-2">
-                <p class="text-[11px] underline font-bold text-gray-800">চালান রশিদ (অফিস কপি)</p>
+                <p class="text-[11px] underline font-bold text-gray-800">{{ $isDuePrint ? 'জমা রশিদ (অফিস কপি)' : 'চালান রশিদ (অফিস কপি)' }}</p>
                 <h2 class="text-xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h2>
                 <p class="text-[11px] text-gray-600 font-medium">{{ $companyAddress }}</p>
                 <p class="text-[11px] text-gray-600 font-mono">{{ $companyPhone }}</p>
@@ -685,25 +734,45 @@ Supported Layout Modes ($type):
 
             @if($challan)
             <div class="space-y-1 text-[11px] border-b border-dashed border-gray-400 pb-2 font-mono">
-                <div class="flex justify-between"><span>চালান: {{ $challan->challan_no }}</span><span>কাস্টমার: {{ $challan->customer_name }}</span></div>
+                <div class="flex justify-between"><span>{{ $isDuePrint ? 'জমার আইডী:' : 'চালান:' }} {{ $challan->ledger_id ?: $challan->id }}</span><span>কাস্টমার: {{ $challan->customer_name }}</span></div>
                 <div class="flex justify-between"><span>তারিখ: {{ $challan->date ? \Carbon\Carbon::parse($challan->date)->format('d-m-Y') : now()->format('d-m-Y') }}</span><span>ঠিকানা: {{ $challan->customer_address ?: 'ঘোড়াঘাট' }}</span></div>
                 <div class="flex justify-between"><span>সময়: {{ now()->format('h:i A') }}</span><span>মোবাইল: {{ $challan->customer_phone ?: '০১৬৫৬৪৫৬৪৫৬' }}</span></div>
             </div>
 
+            @if(!$isDuePrint)
             <div class="border-b border-dashed border-gray-400 pb-2 text-[11px]">
                 <div class="flex justify-between font-bold border-b border-gray-200 pb-1 mb-1 text-gray-900"><span>শ্রেণি</span><span>পরিমাণ</span><span>দর</span><span>মূল্য</span></div>
                 @foreach($challan->items as $item)
                     <div class="flex justify-between font-mono"><span>{{ $item->category_name }}</span><span>{{ $item->quantity }}</span><span>৳{{ $item->rate }}</span><span>৳{{ number_format($item->amount) }}</span></div>
                 @endforeach
             </div>
+            @endif
 
             <div class="space-y-1.5 text-[11px] font-mono">
-                <div class="flex justify-between text-gray-700"><span>মোট মূল্য</span><span>৳ {{ number_format($challan->total_value ?: $challan->items->sum('amount')) }}</span></div>
-                <div class="flex justify-between text-gray-700"><span>ছাড়</span><span>৳ {{ number_format($challan->discount ?: 0) }}</span></div>
-                <div class="flex justify-between text-gray-700"><span>গাড়ি ভাড়া</span><span>৳ {{ number_format($challan->transport_rent ?: 0) }}</span></div>
-                <div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200 text-xs"><span>সর্বমোট</span><span>৳ {{ number_format($challan->grand_total) }}</span></div>
-                <div class="flex justify-between font-bold text-emerald-600"><span>জমা</span><span>৳ {{ number_format($challan->cash) }}</span></div>
-                <div class="flex justify-between font-bold text-rose-600"><span>বাকি</span><span>৳ {{ number_format($challan->due) }}</span></div>
+                @if($isDuePrint)
+                    @php
+                        if (!isset($plNetDue)) {
+                            $plCash = floatval($challan->cash ?? 0);
+                            $plCustName = $challan->customer_name;
+                            $plCustPhone = $challan->customer_phone;
+                            $plNetDue = (float)\App\Models\Challan::where(function($q) use ($plCustName, $plCustPhone) {
+                                $q->where('customer_name', $plCustName);
+                                if ($plCustPhone) { $q->orWhere('customer_phone', $plCustPhone); }
+                            })->sum('due');
+                            $plPrevDue = $plNetDue + $plCash;
+                        }
+                    @endphp
+                    <div class="flex justify-between text-gray-700"><span>মোট বাকি ছিল</span><span>৳ {{ number_format($plPrevDue) }}</span></div>
+                    <div class="flex justify-between font-bold text-emerald-600"><span>জমা দেওয়া</span><span>৳ {{ number_format($plCash) }}</span></div>
+                    <div class="flex justify-between font-bold text-rose-600 pt-1 border-t border-gray-200 text-xs"><span>বর্তমান বাকি</span><span>৳ {{ number_format($plNetDue) }}</span></div>
+                @else
+                    <div class="flex justify-between text-gray-700"><span>মোট মূল্য</span><span>৳ {{ number_format($challan->total_value ?: $challan->items->sum('amount')) }}</span></div>
+                    <div class="flex justify-between text-gray-700"><span>ছাড়</span><span>৳ {{ number_format($challan->discount ?: 0) }}</span></div>
+                    <div class="flex justify-between text-gray-700"><span>গাড়ি ভাড়া</span><span>৳ {{ number_format($challan->transport_rent ?: 0) }}</span></div>
+                    <div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200 text-xs"><span>সর্বমোট</span><span>৳ {{ number_format($challan->grand_total) }}</span></div>
+                    <div class="flex justify-between font-bold text-emerald-600"><span>জমা</span><span>৳ {{ number_format($challan->cash) }}</span></div>
+                    <div class="flex justify-between font-bold text-rose-600"><span>বাকি</span><span>৳ {{ number_format($challan->due) }}</span></div>
+                @endif
             </div>
             @else
                 <div>{{ $slot }}</div>

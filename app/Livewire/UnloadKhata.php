@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\LoadEntry;
 use App\Models\LoadRound;
+use App\Models\Setting;
 use App\Models\UnloadEntry;
 use App\Models\UnloadItem;
 use Livewire\Component;
@@ -37,19 +38,23 @@ class UnloadKhata extends Component
 
     public function mount()
     {
-        // Set default values for modal inputs
+        // Default dateFilter to empty string so lifetime totals are shown initially
+        $this->dateFilter = '';
         $this->date = now()->format('Y-m-d');
         $firstRound = LoadRound::orderBy('sort_order')->first();
         $this->round = $firstRound ? $firstRound->name : '';
+        $this->roundFilter = $firstRound ? $firstRound->name : '';
 
         // Ensure target brick categories exist
-        $targetNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং ছালট', '৩ নং গরিয়া', 'এলোট', '3 no it'];
+        $targetNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং ছালট', '৩ নং গরিয়া', 'এলোট', '৩ নং ইট'];
         foreach ($targetNames as $name) {
             Category::firstOrCreate(
                 ['name' => $name],
                 ['type' => 'ইট', 'rate' => 0.00]
             );
         }
+
+        Category::where('name', '3 no it')->update(['name' => '৩ নং ইট']);
 
         $this->category = '১ নং';
     }
@@ -126,8 +131,9 @@ class UnloadKhata extends Component
 
         if (!$entry) {
             $entry = UnloadEntry::create([
-                'date'  => $this->date,
-                'round' => $this->round,
+                'date'   => $this->date,
+                'season' => Setting::get('season', '২৫-২৬'),
+                'round'  => $this->round,
             ]);
         }
 
@@ -158,6 +164,12 @@ class UnloadKhata extends Component
     public function edit($id)
     {
         $entry = UnloadEntry::findOrFail($id);
+
+        if (!$entry->date || !$entry->date->isToday()) {
+            $this->dispatch('show-toast', message: 'পূর্বের দিনের আনলোড হিসাব পরিবর্তন করা যাবে না।', type: 'error');
+            return;
+        }
+
         $this->editingId = $entry->id;
         $this->date      = $entry->date->format('Y-m-d');
         $this->round     = $entry->round;
@@ -177,8 +189,15 @@ class UnloadKhata extends Component
 
     public function delete($id)
     {
-        UnloadEntry::findOrFail($id)->delete();
-        $this->dispatch('show-toast', message: 'আনলোড হিসাব মুছে ফেলা হয়েছে।', type: 'success');
+        $entry = UnloadEntry::findOrFail($id);
+
+        if (!$entry->date || !$entry->date->isToday()) {
+            $this->dispatch('show-toast', message: 'পূর্বের দিনের আনলোড হিসাব মুছে ফেলা যাবে না।', type: 'error');
+            return;
+        }
+
+        $entry->delete();
+        $this->dispatch('show-toast', message: 'আনলোড হিসাব মুছে ফেলা হয়েছে এবং স্টক সামঞ্জস্য করা হয়েছে।', type: 'success');
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -188,22 +207,25 @@ class UnloadKhata extends Component
         $goriyaName = Category::whereIn('name', ['৩ নং গরিয়া', '৩ নং গরিয়া'])->first()?->name ?? '৩ নং গরিয়া';
         $elotName = Category::whereIn('name', ['এলোট', 'এলোটি'])->first()?->name ?? 'এলোট';
 
-        $targetNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', $goriyaName, '৩ নং ছালট', $elotName, '3 no it'];
+        $targetNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', $goriyaName, '৩ নং ছালট', $elotName, '৩ নং ইট'];
 
         // 1. Get Categories of type 'ইট' for main table columns — CASE WHEN works in both MySQL and SQLite
         $whenClauses = implode(' ', array_map(fn($i) => "WHEN name = ? THEN $i", array_keys($targetNames)));
         $brickCategories = Category::whereIn('name', $targetNames)
             ->orderByRaw("CASE {$whenClauses} ELSE 999 END", array_values($targetNames))
-            ->get();
+            ->get()
+            ->unique('name');
 
-        // Get all categories for modal dropdown select (exactly matching headers)
-        $allCategories = $brickCategories;
+        // Modal dropdown uses the same ordered brick category list as the table headers.
+        // Order: ১ নং, পিকেট, ২ নং (ক), ২ নং (খ), ৩ নং গরিয়া, ৩ নং ছালট, এলোট, ৩ নং ইট
 
-        // 2. Fetch rounds options
+        // Permanent round list from LoadRound model
+        $activeSeason = Setting::get('season', '২৫-২৬');
         $rounds = LoadRound::orderBy('sort_order')->get();
+        $allRounds = $rounds;
 
-        // 3. Paginated entries
-        $query = UnloadEntry::query()->with('items');
+        // 3. Paginated entries — filtered by season
+        $query = UnloadEntry::query()->with('items')->where('season', $activeSeason);
         if ($this->dateFilter) {
             $query->whereDate('date', $this->dateFilter);
         }
@@ -213,18 +235,28 @@ class UnloadKhata extends Component
         $entries = $query->orderBy('date', 'desc')->paginate($this->perPage);
 
         // Calculate total bricks for dynamic calculations in main table footer
-        $totalQuantitySum = UnloadItem::whereHas('entry', function ($q) {
+        $totalQuantitySum = UnloadItem::whereHas('entry', function ($q) use ($activeSeason) {
+            $q->where('season', $activeSeason);
             if ($this->dateFilter)  $q->whereDate('date', $this->dateFilter);
             if ($this->roundFilter) $q->where('round', $this->roundFilter);
         })
         ->whereIn('category_name', $brickCategories->pluck('name'))
         ->sum('quantity');
 
-        // 4. Report datasets
+        // 4. Report datasets (If dateFilter is set -> filter by dateFilter, else sum all dates for lifetime total)
         // Tab 1 & Tab 2 dataset (Quantity & Percentage)
-        $qtyReport = UnloadEntry::selectRaw('unload_entries.round, unload_items.category_name, SUM(unload_items.quantity) as total_qty')
+        $qtyQuery = UnloadEntry::selectRaw('unload_entries.round, unload_items.category_name, SUM(unload_items.quantity) as total_qty')
             ->join('unload_items', 'unload_entries.id', '=', 'unload_items.unload_entry_id')
-            ->groupBy('unload_entries.round', 'unload_items.category_name')
+            ->where('unload_entries.season', $activeSeason);
+
+        if ($this->dateFilter) {
+            $qtyQuery->whereDate('unload_entries.date', $this->dateFilter);
+        }
+        if ($this->roundFilter) {
+            $qtyQuery->where('unload_entries.round', $this->roundFilter);
+        }
+
+        $qtyReport = $qtyQuery->groupBy('unload_entries.round', 'unload_items.category_name')
             ->get();
 
         $reportRows = $qtyReport->groupBy('round')->map(function ($items, $round) use ($brickCategories) {
@@ -240,30 +272,58 @@ class UnloadKhata extends Component
         })->values();
 
         // Tab 3 dataset (Bricks and Adla Comparison with Load Khata)
-        $unloadReport = UnloadItem::selectRaw('unload_entries.round, categories.type, SUM(unload_items.quantity) as total_qty')
+        $categoryTypes = Category::pluck('type', 'name')->toArray();
+
+        $unloadItemsQuery = UnloadItem::selectRaw('unload_entries.round, unload_items.category_name, SUM(unload_items.quantity) as total_qty')
             ->join('unload_entries', 'unload_entries.id', '=', 'unload_items.unload_entry_id')
-            ->join('categories', 'unload_items.category_name', '=', 'categories.name')
-            ->groupBy('unload_entries.round', 'categories.type')
+            ->where('unload_entries.season', $activeSeason);
+
+        if ($this->dateFilter) {
+            $unloadItemsQuery->whereDate('unload_entries.date', $this->dateFilter);
+        }
+        if ($this->roundFilter) {
+            $unloadItemsQuery->where('unload_entries.round', $this->roundFilter);
+        }
+
+        $unloadItemsReport = $unloadItemsQuery->groupBy('unload_entries.round', 'unload_items.category_name')
             ->get()
             ->groupBy('round');
 
-        $loadReport = LoadEntry::selectRaw('round, SUM(quantity) as total_qty')
-            ->groupBy('round')
+        // Load quantities per round
+        $loadQuery = LoadEntry::selectRaw('round, SUM(quantity) as total_qty')
+            ->where('season', $activeSeason);
+
+        if ($this->dateFilter) {
+            $loadQuery->whereDate('date', $this->dateFilter);
+        }
+        if ($this->roundFilter) {
+            $loadQuery->where('round', $this->roundFilter);
+        }
+
+        $loadReport = $loadQuery->groupBy('round')
             ->pluck('total_qty', 'round')
             ->toArray();
 
         $allReportRounds = array_unique(array_merge(
             array_keys($loadReport),
-            $unloadReport->keys()->toArray()
+            $unloadItemsReport->keys()->toArray()
         ));
 
         $compareRows = collect();
         foreach ($allReportRounds as $rnd) {
             $loadQty = $loadReport[$rnd] ?? 0;
-            $roundUnloads = $unloadReport->get($rnd) ?? collect();
-            
-            $brickQty = $roundUnloads->where('type', 'ইট')->sum('total_qty');
-            $adlaQty = $roundUnloads->where('type', 'আধলা')->sum('total_qty');
+            $items = $unloadItemsReport->get($rnd) ?? collect();
+
+            $brickQty = 0;
+            $adlaQty = 0;
+            foreach ($items as $itm) {
+                $catType = $categoryTypes[$itm->category_name] ?? 'ইট';
+                if ($catType === 'আধলা' || str_contains($itm->category_name, 'আদলা') || str_contains($itm->category_name, 'আধলা')) {
+                    $adlaQty += $itm->total_qty;
+                } else {
+                    $brickQty += $itm->total_qty;
+                }
+            }
 
             $compareRows->push([
                 'round' => $rnd,
@@ -276,8 +336,8 @@ class UnloadKhata extends Component
         return view('livewire.unload-khata', [
             'entries'          => $entries,
             'brickCategories'  => $brickCategories,
-            'allCategories'    => $allCategories,
             'rounds'           => $rounds,
+            'allRounds'        => $allRounds,
             'totalQuantitySum' => $totalQuantitySum,
             'reportRows'       => $reportRows,
             'compareRows'      => $compareRows,

@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\LoadEntry;
 use App\Models\LoadRound;
+use App\Models\Setting;
+use App\Models\UnloadEntry;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -45,27 +47,27 @@ class LoadKhata extends Component
 
     public function mount()
     {
+        // Default dateFilter to empty string so lifetime totals are shown initially
+        $this->dateFilter = '';
+
         // Set default round to first in DB
         $firstRound = LoadRound::orderBy('sort_order')->first();
         $this->round = $firstRound ? $firstRound->name : '';
+        $this->roundFilter = $firstRound ? $firstRound->name : '';
 
         // Ensure target brick categories exist (same as unload page)
-        $targetNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং গরিয়া', '৩ নং ছালট', 'এলোট', '3 no it'];
+        $targetNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং গরিয়া', '৩ নং ছালট', 'এলোট', '৩ নং ইট'];
         foreach ($targetNames as $name) {
             Category::firstOrCreate(
                 ['name' => $name],
                 ['type' => 'ইট', 'rate' => 0.00]
             );
         }
+        
+        // Update legacy '3 no it' if present in database
+        Category::where('name', '3 no it')->update(['name' => '৩ নং ইট']);
 
         $this->category = '১ নং';
-
-        // Seed default entries if table is empty
-        if (LoadEntry::count() === 0) {
-            LoadEntry::create(['date' => '2026-07-09', 'round' => '-১ নম্বর রাউন্ড', 'description' => 'ইট থেকে লোড হয়েছে', 'quantity' => 5000]);
-            LoadEntry::create(['date' => '2026-07-09', 'round' => '-১ নম্বর রাউন্ড', 'description' => 'পাকা ইট লোড হয়েছে (১ নং)', 'quantity' => 5000]);
-            LoadEntry::create(['date' => '2026-07-08', 'round' => '-১ নম্বর রাউন্ড', 'description' => 'মাঠ থেকে লোড হয়েছে', 'quantity' => 5000]);
-        }
     }
 
     public function updatingDateFilter()  { $this->resetPage(); }
@@ -90,7 +92,7 @@ class LoadKhata extends Component
     public function resetForm()
     {
         $this->editingId    = null;
-        $this->date         = '';
+        $this->date         = now()->format('Y-m-d');
         $this->round        = '';
         $this->description  = 'মাঠ থেকে লোড হয়েছে';
         $this->category     = '';
@@ -118,7 +120,8 @@ class LoadKhata extends Component
         $categoryToSave = $isPakaIt ? $this->category : '';
 
         $data = [
-            'date'        => $this->date,
+            'date'        => $this->editingId ? $this->date : now()->format('Y-m-d'),
+            'season'      => Setting::get('season', '২৫-২৬'),
             'round'       => $this->round,
             'description' => $this->description,
             'category'    => $categoryToSave,
@@ -126,9 +129,16 @@ class LoadKhata extends Component
         ];
 
         if ($this->editingId) {
-            LoadEntry::findOrFail($this->editingId)->update($data);
+            $entry = LoadEntry::findOrFail($this->editingId);
+            if (!$entry->date || !$entry->date->isToday()) {
+                $this->dispatch('show-toast', message: 'পূর্বের দিনের লোড হিসাব আপডেট করা যাবে না।', type: 'error');
+                return;
+            }
+            $entry->update($data);
             $msg = 'লোড হিসাব আপডেট হয়েছে।';
         } else {
+            // Only today's load can be added
+            $data['date'] = now()->format('Y-m-d');
             LoadEntry::create($data);
             $msg = 'নতুন লোড সংরক্ষিত হয়েছে।';
         }
@@ -140,6 +150,12 @@ class LoadKhata extends Component
     public function edit($id)
     {
         $entry = LoadEntry::findOrFail($id);
+
+        if (!$entry->date || !$entry->date->isToday()) {
+            $this->dispatch('show-toast', message: 'পূর্বের দিনের লোড হিসাব পরিবর্তন করা যাবে না।', type: 'error');
+            return;
+        }
+
         $this->editingId   = $entry->id;
         $this->date        = $entry->date->format('Y-m-d');
         $this->round       = $entry->round;
@@ -160,8 +176,34 @@ class LoadKhata extends Component
 
     public function delete($id)
     {
-        LoadEntry::findOrFail($id)->delete();
-        $this->dispatch('show-toast', message: 'লোড হিসাব মুছে ফেলা হয়েছে।', type: 'success');
+        $entry = LoadEntry::findOrFail($id);
+
+        if (!$entry->date || !$entry->date->isToday()) {
+            $this->dispatch('show-toast', message: 'পূর্বের দিনের লোড হিসাব মুছে ফেলা যাবে না।', type: 'error');
+            return;
+        }
+
+        $roundName = $entry->round;
+        $entryDate = $entry->date->format('Y-m-d');
+        $entry->delete();
+
+        // If no more load entries remain for this round on this date,
+        // remove the linked unload_entry (and its items via cascade)
+        $remainingForDate = LoadEntry::where('round', $roundName)
+            ->whereDate('date', $entryDate)
+            ->count();
+        if ($remainingForDate === 0) {
+            UnloadEntry::where('round', $roundName)
+                ->whereDate('date', $entryDate)
+                ->delete();
+        }
+
+        // When all load entries for this round are gone (any date), delete the round itself
+        if (LoadEntry::where('round', $roundName)->count() === 0) {
+            LoadRound::where('name', $roundName)->delete();
+        }
+
+        $this->dispatch('show-toast', message: 'লোড হিসাব মুছে ফেলা হয়েছে এবং সংশ্লিষ্ট আনলোড ডেটাও মুছে ফেলা হয়েছে।', type: 'success');
     }
 
     // ── Round Management ────────────────────────────────────────────────────
@@ -212,29 +254,41 @@ class LoadKhata extends Component
     // ── Render ───────────────────────────────────────────────────────────────
     public function render()
     {
-        $rounds = LoadRound::orderBy('sort_order')->get();
+        // Active season from global topbar selector
+        $activeSeason = Setting::get('season', '২৫-২৬');
 
-        $query = LoadEntry::query();
+        // Permanent round list from LoadRound model
+        $rounds = LoadRound::orderBy('sort_order')->get();
+        $allRounds = $rounds;
+
+        // Main table query — filtered by season
+        $query = LoadEntry::query()->where('season', $activeSeason);
         if ($this->dateFilter)  $query->whereDate('date', $this->dateFilter);
         if ($this->roundFilter) $query->where('round', $this->roundFilter);
         $entries = $query->orderBy('date', 'desc')->paginate($this->perPage);
 
-        $totalQuantity = LoadEntry::sum('quantity');
+        $totalQuantity = LoadEntry::where('season', $activeSeason)->sum('quantity');
 
-        // Report: per-round breakdown (কাঁচা vs পাকা)
-        $reportRows = LoadEntry::selectRaw('`round`, description, category, SUM(quantity) as total')
-            ->groupBy('round', 'description', 'category')
+        // Report: per-round breakdown (কাঁচা vs পাকা) — season & round filtered
+        $reportQuery = LoadEntry::selectRaw('`round`, description, category, SUM(quantity) as total')
+            ->where('season', $activeSeason);
+        if ($this->dateFilter) {
+            $reportQuery->whereDate('date', $this->dateFilter);
+        }
+        if ($this->roundFilter) {
+            $reportQuery->where('round', $this->roundFilter);
+        }
+        $reportRows = $reportQuery->groupBy('round', 'description', 'category')
             ->get()
             ->groupBy('round')
             ->map(function ($rows, $round) {
-                // If description contains "পাকা", count as cooked. Otherwise raw.
                 $raw    = $rows->filter(fn($r) => !str_contains($r->description, 'পাকা'))->sum('total');
-                $cooked = $rows->filter(fn($r) => str_contains($r->description, 'পাকা'))->sum('total');
+                $cooked = $rows->filter(fn($r) =>  str_contains($r->description, 'পাকা'))->sum('total');
                 return ['round' => $round, 'raw' => $raw, 'cooked' => $cooked, 'total' => $raw + $cooked];
             })->values();
 
-        // Ordered brick category names — CASE WHEN works in both MySQL and SQLite
-        $categoryNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং গরিয়া', '৩ নং ছালট', 'এলোট', '3 no it'];
+        // Ordered brick category names
+        $categoryNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং গরিয়া', '৩ নং ছালট', 'এলোট', '৩ নং ইট'];
         $whenClauses = implode(' ', array_map(fn($i) => "WHEN name = ? THEN $i", array_keys($categoryNames)));
         $categories = Category::whereIn('name', $categoryNames)
             ->orderByRaw("CASE {$whenClauses} ELSE 999 END", array_values($categoryNames))
@@ -243,9 +297,11 @@ class LoadKhata extends Component
         return view('livewire.load-khata', [
             'entries'       => $entries,
             'rounds'        => $rounds,
+            'allRounds'     => $allRounds,
             'totalQuantity' => $totalQuantity,
             'reportRows'    => $reportRows,
             'categories'    => $categories,
+            'activeSeason'  => $activeSeason,
         ])->layout('layouts.app');
     }
 }
