@@ -472,7 +472,7 @@
     <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4" wire:click.self="$set('showReportModal', false)">
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-gray-255 dark:border-slate-700 shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150">
             <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3 mb-4">
-                <h3 class="font-bold text-sm font-sans text-gray-800 dark:text-white flex items-center gap-2">ডেলিভারি রিপোর্ট 📊</h3>
+                <h3 class="font-bold text-sm font-sans text-gray-800 dark:text-white flex items-center gap-2">ডেলিভারি দিতে হবে 📊</h3>
                 <button type="button" wire:click="$set('showReportModal', false)" class="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>

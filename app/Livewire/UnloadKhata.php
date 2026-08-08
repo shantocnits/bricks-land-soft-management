@@ -325,6 +325,8 @@ class UnloadKhata extends Component
                 }
             }
 
+            $adlaQty = max(0, $loadQty - $brickQty);
+
             $compareRows->push([
                 'round' => $rnd,
                 'load'  => $loadQty,
@@ -341,6 +343,7 @@ class UnloadKhata extends Component
             'totalQuantitySum' => $totalQuantitySum,
             'reportRows'       => $reportRows,
             'compareRows'      => $compareRows,
+            'activeSeason'     => $activeSeason,
         ])->layout('layouts.app');
     }
 }

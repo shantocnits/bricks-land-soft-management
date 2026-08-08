@@ -15,6 +15,9 @@ if (!function_exists('toBanglaNum')) {
 if (!function_exists('toBanglaDateTime')) {
     function toBanglaDateTime($date) {
         if (!$date) return '';
+        if (is_string($date)) {
+            $date = \Carbon\Carbon::parse($date);
+        }
         $d = $date->format('d-m-Y');
         $hour = (int)$date->format('H');
         $timeStr = $date->format('h:i');
@@ -150,6 +153,10 @@ if (!function_exists('toBanglaDateTime')) {
                             <span class="text-gray-500 dark:text-slate-400">আধলা ডেলিভারি</span>
                             <span class="font-mono font-bold text-gray-800 dark:text-white">{{ toBanglaNum(number_format($adlaDelivered)) }}</span>
                         </div>
+                        <div class="flex items-center justify-between py-1.5 border-b border-gray-150 dark:border-slate-800/50">
+                            <span class="text-gray-500 dark:text-slate-400">আধলা ও অন্যান্য বাকি</span>
+                            <span class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ toBanglaNum(number_format($otherDeliveryRemaining)) }}</span>
+                        </div>
                         <div class="flex items-center justify-between py-1.5">
                             <span class="text-emerald-600 dark:text-emerald-400 font-bold">আধলা স্টক রয়েছে</span>
                             <span class="font-mono font-black text-emerald-600 dark:text-emerald-400">{{ toBanglaNum(number_format($adlaRemainingStock)) }}</span>
@@ -168,7 +175,7 @@ if (!function_exists('toBanglaDateTime')) {
                             <span class="font-mono font-bold text-gray-800 dark:text-white">{{ toBanglaNum(number_format($fieldBricksRemaining)) }}</span>
                         </div>
                         <div class="flex items-center justify-between py-1.5 border-b border-gray-150 dark:border-slate-800/50">
-                            <span class="text-gray-500 dark:text-slate-400">ইঁটে রয়েছে</span>
+                            <span class="text-gray-500 dark:text-slate-400">স্টকে রয়েছে</span>
                             <span class="font-mono font-bold {{ $kilnBricksRemaining < 0 ? 'text-rose-500' : 'text-gray-800 dark:text-white' }}">{{ toBanglaNum(number_format($kilnBricksRemaining)) }}</span>
                         </div>
                         <div class="flex items-center justify-between py-1.5">
@@ -193,25 +200,29 @@ if (!function_exists('toBanglaDateTime')) {
                                     <th class="py-3 px-4 text-left font-bold border-r border-gray-150 dark:border-slate-800">বিবরণ</th>
                                     <th class="py-3 px-4 text-left font-bold border-r border-gray-150 dark:border-slate-800">শ্রেণি</th>
                                     <th class="py-3 px-4 text-center font-bold border-r border-gray-150 dark:border-slate-800">স্টক ++</th>
-                                    <th class="py-3 px-4 text-center font-bold">স্টক --</th>
+                                    <th class="py-3 px-4 text-center font-bold border-r border-gray-150 dark:border-slate-800">স্টক --</th>
+                                    <th class="py-3 px-4 text-left font-bold">ইউজার</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-150 dark:divide-slate-800/50">
                                 @forelse($adjustments as $adj)
                                     <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                                        <td class="py-3 px-4 text-gray-600 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 whitespace-nowrap">{{ toBanglaDateTime($adj->date) }}</td>
-                                        <td class="py-3 px-4 text-gray-808 dark:text-white font-medium border-r border-gray-150 dark:border-slate-800 max-w-[150px] truncate" title="{{ $adj->description }}">{{ $adj->description ?: '-' }}</td>
-                                        <td class="py-3 px-4 font-bold text-gray-808 dark:text-white border-r border-gray-150 dark:border-slate-800">{{ $adj->category_name }}</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 whitespace-nowrap">{{ toBanglaDateTime($adj->created_at ?? $adj->date) }}</td>
+                                        <td class="py-3 px-4 text-gray-800 dark:text-white font-medium border-r border-gray-150 dark:border-slate-800 max-w-[150px] truncate" title="{{ $adj->description }}">{{ $adj->description ?: '-' }}</td>
+                                        <td class="py-3 px-4 font-bold text-gray-800 dark:text-white border-r border-gray-150 dark:border-slate-800">{{ $adj->category_name }}</td>
                                         <td class="py-3 px-4 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800">
                                             {{ $adj->stock_plus > 0 ? toBanglaNum(number_format($adj->stock_plus)) : '০' }}
                                         </td>
-                                        <td class="py-3 px-4 text-center font-mono font-bold text-rose-500">
+                                        <td class="py-3 px-4 text-center font-mono font-bold text-rose-500 border-r border-gray-150 dark:border-slate-800">
                                             {{ $adj->stock_minus > 0 ? toBanglaNum(number_format($adj->stock_minus)) : '০' }}
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-slate-300 font-semibold whitespace-nowrap">
+                                            {{ $adj->user->name ?? 'admin' }}
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="py-12 text-center text-gray-400">কোনো স্টক আপডেট রেকর্ড খুঁজে পাওয়া যায়নি</td>
+                                        <td colspan="6" class="py-12 text-center text-gray-400">কোনো স্টক আপডেট রেকর্ড খুঁজে পাওয়া যায়নি</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -258,20 +269,6 @@ if (!function_exists('toBanglaDateTime')) {
             </div>
         </div>
 
-        <!-- Success Alert -->
-        @if (session()->has('message'))
-            <div x-data="{ show: true }" 
-                 x-show="show" 
-                 x-init="setTimeout(() => show = false, 3000)"
-                 x-transition:leave="transition ease-in duration-300"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-250 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 rounded-2xl flex items-center gap-3 text-sm shadow-sm font-sans mb-6"
-                 x-cloak>
-                <span class="font-medium">{{ session('message') }}</span>
-            </div>
-        @endif
-
         {{-- Form Panel --}}
         <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-colors duration-300 mb-6">
             <form wire:submit.prevent="save" class="space-y-4">
@@ -289,8 +286,8 @@ if (!function_exists('toBanglaDateTime')) {
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">শ্রেণি <span class="text-red-500">*</span></label>
                         <div x-data="{ open: false }" class="relative">
                             <button @click="open = !open" type="button"
-                                    class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-808 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none">
-                                <span class="font-sans truncate text-gray-880 dark:text-white" x-text="$wire.category ? $wire.category : 'শ্রেণি'"></span>
+                                    class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none">
+                                <span class="font-sans truncate text-gray-800 dark:text-white" x-text="$wire.category ? $wire.category : 'শ্রেণি'"></span>
                                 <svg class="w-4 h-4 flex-shrink-0 transition-transform text-gray-400" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                             </button>
 
@@ -315,7 +312,7 @@ if (!function_exists('toBanglaDateTime')) {
                     <div>
                         <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1.5 font-sans">স্টক ++</label>
                         <input type="number" wire:model.defer="stock_plus" placeholder="যোগ করুন"
-                               class="w-full px-3 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-808 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                               class="w-full px-3 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
                         @error('stock_plus')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
                     </div>
 
@@ -325,8 +322,8 @@ if (!function_exists('toBanglaDateTime')) {
                         <div class="flex gap-2">
                             <div class="flex-1">
                                 <input type="number" wire:model.defer="stock_minus" placeholder="বিয়োগ করুন"
-                                       class="w-full px-3 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-808 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                                @error('stock_minus')<p class="text-red-505 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
+                                       class="w-full px-3 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                @error('stock_minus')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
                             </div>
                             <button type="submit"
                                     class="px-5 py-2.5 bg-[#034C3C] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md active:scale-95 whitespace-nowrap">
@@ -350,13 +347,16 @@ if (!function_exists('toBanglaDateTime')) {
                             <th class="py-3.5 px-4 text-center font-bold border-r border-white/10">স্টক ++</th>
                             <th class="py-3.5 px-4 text-center font-bold border-r border-white/10">স্টক --</th>
                             <th class="py-3.5 px-4 text-left font-bold border-r border-white/10">ইউজার</th>
-                            <th class="py-3.5 px-4 text-center font-bold">বাটন</th>
+                            <th class="py-3.5 px-4 text-center font-bold">অ্যাকশন</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-150 dark:divide-slate-800/50">
                         @forelse($adjustments as $adj)
+                            @php
+                                $isToday = $adj->date && \Carbon\Carbon::parse($adj->date)->isToday();
+                            @endphp
                             <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                                <td class="py-3.5 px-4 text-gray-600 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 whitespace-nowrap">{{ toBanglaDateTime($adj->date) }}</td>
+                                <td class="py-3.5 px-4 text-gray-600 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800 whitespace-nowrap">{{ toBanglaDateTime($adj->created_at ?? $adj->date) }}</td>
                                 <td class="py-3.5 px-4 text-gray-800 dark:text-white font-medium border-r border-gray-150 dark:border-slate-800 max-w-[150px] truncate" title="{{ $adj->description }}">{{ $adj->description ?: '-' }}</td>
                                 <td class="py-3.5 px-4 font-bold text-gray-800 dark:text-white border-r border-gray-150 dark:border-slate-800">{{ $adj->category_name }}</td>
                                 <td class="py-3.5 px-4 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800">
@@ -366,15 +366,31 @@ if (!function_exists('toBanglaDateTime')) {
                                     {{ $adj->stock_minus > 0 ? toBanglaNum(number_format($adj->stock_minus)) : '০' }}
                                 </td>
                                 <td class="py-3.5 px-4 text-gray-600 dark:text-slate-300 border-r border-gray-150 dark:border-slate-800">{{ $adj->user->name ?? 'Demo' }}</td>
-                                <td class="py-3.5 px-4 text-center">
-                                    <button type="button"
-                                            wire:click="deleteAdjustment({{ $adj->id }})"
-                                            wire:confirm="আপনি কি নিশ্চিতভাবে এই স্টক আপডেট রেকর্ডটি মুছে ফেলতে চান?"
-                                            class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg cursor-pointer focus:outline-none">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                    <div class="flex items-center justify-center gap-2">
+                                        @if($isToday)
+                                            <button type="button"
+                                                    wire:click="editAdjustment({{ $adj->id }})"
+                                                    title="এডিট করুন"
+                                                    class="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer focus:outline-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+                                            </button>
+                                            <button type="button"
+                                                    wire:click="deleteAdjustment({{ $adj->id }})"
+                                                    wire:confirm="আপনি কি নিশ্চিতভাবে এই স্টক আপডেট রেকর্ডটি মুছে ফেলতে চান?"
+                                                    title="মুছে ফেলুন"
+                                                    class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors cursor-pointer focus:outline-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        @else
+                                            <span title="পূর্বের দিনের তথ্য পরিবর্তনযোগ্য নয়" class="p-1 text-gray-300 dark:text-slate-700 cursor-not-allowed">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+                                            </span>
+                                            <span title="পূর্বের দিনের তথ্য মোছা সম্ভব নয়" class="p-1 text-gray-300 dark:text-slate-700 cursor-not-allowed">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -416,6 +432,92 @@ if (!function_exists('toBanglaDateTime')) {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Edit Stock Record Modal -->
+    @if($showEditModal)
+        <div class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-sans">
+            <div @click.outside="$wire.closeEditModal()" class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-150 dark:border-slate-800 overflow-hidden transform transition-all">
+                {{-- Modal Header --}}
+                <div class="flex items-center justify-between px-6 py-4 bg-[#034C3C] text-white">
+                    <h3 class="text-sm font-bold flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+                        স্টক আপডেট রেকর্ড সংশোধন
+                    </h3>
+                    <button type="button" wire:click="closeEditModal" class="text-white/80 hover:text-white cursor-pointer p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                {{-- Modal Body Form --}}
+                <form wire:submit.prevent="updateAdjustment" class="p-6 space-y-4">
+                    {{-- Reason/Description --}}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">স্টক পরিবর্তনের কারণ লিখুন</label>
+                        <input type="text" wire:model.defer="edit_description" placeholder="কারণ লিখুন"
+                               class="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-sans">
+                        @error('edit_description')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
+                    </div>
+
+                    {{-- Category Choice Dropdown --}}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">শ্রেণি <span class="text-red-500">*</span></label>
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open" type="button"
+                                    class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white font-semibold rounded-xl text-xs border border-gray-200 dark:border-slate-700 cursor-pointer focus:outline-none">
+                                <span class="font-sans truncate text-gray-800 dark:text-white" x-text="$wire.edit_category ? $wire.edit_category : 'শ্রেণি'"></span>
+                                <svg class="w-4 h-4 flex-shrink-0 transition-transform text-gray-400" :class="{'rotate-180':open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+
+                            <div x-show="open" @click.outside="open=false" x-cloak
+                                 class="absolute left-0 right-0 z-[99999] mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden font-sans">
+                                <div class="py-1 max-h-52 overflow-y-auto font-sans">
+                                    @foreach($allCategories as $cat)
+                                        <button type="button"
+                                                wire:click="$set('edit_category','{{ $cat->name }}')"
+                                                @click="open=false"
+                                                class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans cursor-pointer">
+                                            {{ $cat->name }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        @error('edit_category')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        {{-- Stock Increase (স্টক ++) --}}
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1.5 font-sans">স্টক ++</label>
+                            <input type="number" wire:model.defer="edit_stock_plus" placeholder="যোগ করুন"
+                                   class="w-full px-3.5 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                            @error('edit_stock_plus')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
+                        </div>
+
+                        {{-- Stock Decrease (স্টক --) --}}
+                        <div>
+                            <label class="block text-xs font-bold text-rose-500 mb-1.5 font-sans">স্টক --</label>
+                            <input type="number" wire:model.defer="edit_stock_minus" placeholder="বিয়োগ করুন"
+                                   class="w-full px-3.5 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                            @error('edit_stock_minus')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    {{-- Modal Buttons --}}
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
+                        <button type="button" wire:click="closeEditModal"
+                                class="px-5 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer">
+                            বাতিল
+                        </button>
+                        <button type="submit"
+                                class="px-6 py-2 bg-[#034C3C] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md active:scale-95">
+                            আপডেট করুন
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif

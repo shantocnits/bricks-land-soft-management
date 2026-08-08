@@ -86,7 +86,7 @@ if (!function_exists('toBanglaNum')) {
                     </button>
 
                     {{-- Print Button --}}
-                    <button type="button" onclick="window.print()"
+                    <button type="button" onclick="printChallanArea('unload-khata-table-print')"
                             class="px-3.5 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans border border-gray-200 dark:border-slate-700 flex items-center gap-1.5">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
@@ -150,7 +150,7 @@ if (!function_exists('toBanglaNum')) {
                     রিপোর্ট
                 </button>
 
-                <button type="button" onclick="window.print()"
+                <button type="button" onclick="printChallanArea('unload-khata-table-print')"
                         class="col-span-1 px-3 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans border border-gray-200 dark:border-slate-700 flex items-center justify-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
@@ -739,7 +739,7 @@ if (!function_exists('toBanglaNum')) {
 
                 {{-- Print Button Centered Below Table --}}
                 <div class="flex justify-center mt-6 pt-4 border-t border-gray-100 dark:border-slate-800">
-                    <button type="button" onclick="window.print()"
+                    <button type="button" onclick="printChallanArea('unload-report-modal-print')"
                             class="px-6 py-2 bg-[#034C3C] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 active:scale-95 font-sans">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
@@ -752,4 +752,28 @@ if (!function_exists('toBanglaNum')) {
         </div>
     </div>
 
+    <!-- Hidden Printable Container for Unload Khata Main Table -->
+    <div id="unload-khata-table-print" style="display:none;">
+        <x-print-layout type="unload-report"
+                        :entries="$entries->items()"
+                        :brickCategories="$brickCategories"
+                        :dateFilter="$dateFilter"
+                        :roundFilter="$roundFilter"
+                        :activeSeason="$activeSeason"
+                        :totalUnloadSum="$totalQuantitySum"
+                        :isModalReport="false" />
+    </div>
+
+    <!-- Hidden Printable Container for Unload Report Modal -->
+    <div id="unload-report-modal-print" style="display:none;">
+        <x-print-layout type="unload-report"
+                        :reportRows="$reportRows"
+                        :compareRows="$compareRows"
+                        :brickCategories="$brickCategories"
+                        :dateFilter="$dateFilter"
+                        :roundFilter="$roundFilter"
+                        :activeSeason="$activeSeason"
+                        :activeTab="$activeTab"
+                        :isModalReport="true" />
+    </div>
 </div>

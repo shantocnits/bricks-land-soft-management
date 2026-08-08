@@ -42,6 +42,15 @@ Supported Layout Modes ($type):
     'cashJer' => 0,
     'viewTotalCashIn' => 0,
     'viewTotalCashOut' => 0,
+    'dateFilter' => '',
+    'roundFilter' => '',
+    'totalLoadSum' => 0,
+    'totalUnloadSum' => 0,
+    'brickCategories' => null,
+    'reportRows' => null,
+    'compareRows' => null,
+    'activeTab' => 'quantity',
+    'isModalReport' => false,
 ])
 
 @php
@@ -82,9 +91,13 @@ Supported Layout Modes ($type):
                     size: A4 portrait !important;
                     margin: 5mm !important;
 
+                @elseif($type === 'unload-report')
+                    size: A4 landscape !important;
+                    margin: 6mm !important;
+
                 @else
                     size: A4 portrait !important;
-                    margin: 5mm !important;
+                    margin: 6mm !important;
                 @endif
             }
             html, body {
@@ -1070,7 +1083,7 @@ Supported Layout Modes ($type):
             <!-- Bottom Print Footer -->
             <div class="pt-3 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-500 font-semibold print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
                 <div>রিপোর্ট প্রিন্ট: {{ $printTime }}</div>
-                <div>Software by: Payratech.com</div>
+                <div>Software by: Codenextit.com</div>
         </div>
 
     {{-- ======================================================================= --}}
@@ -1219,7 +1232,7 @@ Supported Layout Modes ($type):
 
             <!-- Bottom Print Footer -->
             <div class="pt-3 border-t border-gray-200 text-center text-[10px] text-gray-500 font-semibold print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
-                রিপোর্ট প্রিন্ট: {{ \Carbon\Carbon::now('Asia/Dhaka')->format('d-m-Y h:i A') }} | Software by: Payratech.com
+                রিপোর্ট প্রিন্ট: {{ \Carbon\Carbon::now('Asia/Dhaka')->format('d-m-Y h:i A') }} | Software by: Codenextit.com
             </div>
         </div>
 
@@ -1390,7 +1403,448 @@ Supported Layout Modes ($type):
             <!-- Bottom Print Footer -->
             <div class="pt-3 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-500 font-semibold print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
                 <div>রিপোর্ট প্রিন্ট: {{ \Carbon\Carbon::now('Asia/Dhaka')->format('d-m-Y h:i A') }}</div>
-                <div>Software by: Payratech.com</div>
+                <div>Software by: Codenextit.com</div>
+            </div>
+        </div>
+
+    {{-- ======================================================================= --}}
+    {{-- 🧱 MODE 9: LOAD KHATA REPORT PRINT LAYOUT                              --}}
+    {{--    (লোড খাতা টেবিল প্রিন্ট লেআউট - পোট্রেট)                              --}}
+    {{-- ======================================================================= --}}
+    @elseif($type === 'load-report')
+        <style media="print">
+            @page {
+                size: A4 portrait !important;
+                margin: 8mm 8mm !important;
+            }
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            table { page-break-inside: auto; }
+            tr    { page-break-inside: avoid; break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            .print-page-break-avoid { page-break-inside: avoid; break-inside: avoid; }
+        </style>
+        <div class="bg-white p-4 text-gray-900 font-sans max-w-4xl mx-auto space-y-4 border-0">
+            
+            <!-- Header Section -->
+            <div class="text-center space-y-1 pb-3 border-b-2 border-gray-800">
+                <h1 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h1>
+                <p class="text-xs font-semibold text-gray-700">{{ $companyAddress }}</p>
+                <p class="text-xs font-mono font-semibold text-gray-700">{{ $companyPhone }}</p>
+                <p class="text-xs font-bold text-gray-800">প্রোপাইটরঃ {{ $proprietor }}</p>
+            </div>
+
+            <!-- Sub Header Metadata Row -->
+            @php
+                if (!function_exists('toBnNumPrint')) {
+                    function toBnNumPrint($num) {
+                        if ($num === null || $num === '') return '';
+                        $eng = ['0','1','2','3','4','5','6','7','8','9'];
+                        $bn  = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+                        return str_replace($eng, $bn, (string)$num);
+                    }
+                }
+
+                $formattedDate = $dateFilter ? \Carbon\Carbon::parse($dateFilter)->format('d-m-Y') : null;
+                $dateLabel = $formattedDate ? toBnNumPrint($formattedDate) : 'সকল তারিখ';
+                $seasonStr = $activeSeason ?: \App\Models\Setting::get('season', '২৫-২৬');
+
+                $entryList = is_object($entries) && method_exists($entries, 'items') ? $entries->items() : ($entries ?? []);
+                $calculatedTotalLoad = $totalLoadSum ?: (is_array($entryList) || is_object($entryList) ? collect($entryList)->sum('quantity') : 0);
+            @endphp
+            <div class="flex items-center justify-between py-2 text-xs font-bold">
+                <div>
+                    <span>তারিখ: {{ $dateLabel }} | {{ $seasonStr }}</span>
+                </div>
+
+                <div class="px-8 py-1.5 bg-gray-200 text-gray-900 rounded-full font-bold text-sm tracking-wide border border-gray-300">
+                    লোডের রিপোর্ট
+                </div>
+
+                <div class="text-right font-bold text-sm">
+                    মোট লোড: <span class="font-mono text-gray-900 font-black">{{ toBnNumPrint(number_format($calculatedTotalLoad)) }}</span>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <table class="w-full text-xs border-collapse border border-gray-400 mt-2">
+                <thead>
+                    <tr class="bg-gray-100 font-bold text-gray-900 border-b border-gray-400 text-center">
+                        <th class="p-2.5 border-r border-gray-400 w-12">নং</th>
+                        <th class="p-2.5 border-r border-gray-400 w-28">তারিখ</th>
+                        <th class="p-2.5 border-r border-gray-400 w-24">রাউন্ড</th>
+                        <th class="p-2.5 border-r border-gray-400 text-left">লোডের বিবরণ</th>
+                        <th class="p-2.5 text-center w-32">পরিমাণ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-300 font-sans">
+                    @php $rowNum = 1; @endphp
+                    @forelse($entryList as $entry)
+                        @php
+                            $eObj = is_array($entry) ? (object)$entry : $entry;
+                            $eDate = isset($eObj->date) ? ($eObj->date instanceof \Carbon\Carbon ? $eObj->date->format('d-m-Y') : \Carbon\Carbon::parse($eObj->date)->format('d-m-Y')) : '-';
+                            $desc = $eObj->description ?? '';
+                            if (!empty($eObj->category)) {
+                                $desc .= ' (' . $eObj->category . ')';
+                            }
+                        @endphp
+                        <tr class="hover:bg-gray-50 border-b border-gray-300 text-xs">
+                            <td class="p-2.5 text-center font-mono font-bold border-r border-gray-300">
+                                {{ toBnNumPrint($rowNum++) }}
+                            </td>
+                            <td class="p-2.5 text-center font-mono border-r border-gray-300">
+                                {{ toBnNumPrint($eDate) }}
+                            </td>
+                            <td class="p-2.5 text-center font-bold border-r border-gray-300">
+                                {{ toBnNumPrint($eObj->round ?? '-') }}
+                            </td>
+                            <td class="p-2.5 text-left font-semibold border-r border-gray-300 text-gray-900">
+                                {{ $desc }}
+                            </td>
+                            <td class="p-2.5 text-center font-mono font-black text-gray-900">
+                                {{ toBnNumPrint(number_format($eObj->quantity ?? 0)) }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="p-4 text-center text-gray-400 font-bold">কোন লোড তথ্য পাওয়া যায়নি</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+
+            <!-- Signatures Row (Page break protected) -->
+            <div class="pt-16 pb-6 flex items-center justify-between font-bold text-xs text-gray-900 print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
+                <div class="text-center w-40">
+                    <div class="border-t border-gray-900 pt-1.5 font-bold">ম্যানেজার</div>
+                </div>
+                <div class="text-center w-40">
+                    <div class="border-t border-gray-900 pt-1.5 font-bold">মালিক</div>
+                </div>
+            </div>
+
+            <!-- Bottom Print Footer -->
+            <div class="pt-3 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-500 font-semibold print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
+                <div>রিপোর্ট প্রিন্ট: {{ toBnNumPrint(\Carbon\Carbon::now('Asia/Dhaka')->format('d-m-Y h:i A')) }}</div>
+                <div>Software by: Codenextit.com</div>
+            </div>
+        </div>
+
+    {{-- ======================================================================= --}}
+    {{-- 🧱 MODE 10: UNLOAD KHATA & REPORT PRINT LAYOUT (LANDSCAPE)              --}}
+    {{--    (আনলোড খাতা টেবিল ও আনলোড রিপোর্ট মডাল প্রিন্ট লেআউট - ল্যান্ডস্কেপ) --}}
+    {{-- ======================================================================= --}}
+    @elseif($type === 'unload-report')
+        <style media="print">
+            @page {
+                size: A4 landscape !important;
+                margin: 6mm 6mm !important;
+            }
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            table { page-break-inside: auto; }
+            tr    { page-break-inside: avoid; break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            .print-page-break-avoid { page-break-inside: avoid; break-inside: avoid; }
+        </style>
+        <div class="bg-white p-4 text-gray-900 font-sans max-w-6xl mx-auto space-y-4 border-0">
+            
+            <!-- Header Section -->
+            <div class="text-center space-y-1 pb-3 border-b-2 border-gray-800">
+                <h1 class="text-2xl font-black text-gray-900 tracking-wide">{{ $companyName }}</h1>
+                <p class="text-xs font-semibold text-gray-700">{{ $companyAddress }}</p>
+                <p class="text-xs font-mono font-semibold text-gray-700">{{ $companyPhone }}</p>
+                <p class="text-xs font-bold text-gray-800">প্রোপাইটরঃ {{ $proprietor }}</p>
+            </div>
+
+            @php
+                if (!function_exists('toBnNumPrint')) {
+                    function toBnNumPrint($num) {
+                        if ($num === null || $num === '') return '';
+                        $eng = ['0','1','2','3','4','5','6','7','8','9'];
+                        $bn  = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+                        return str_replace($eng, $bn, (string)$num);
+                    }
+                }
+
+                $formattedDate = $dateFilter ? \Carbon\Carbon::parse($dateFilter)->format('d-m-Y') : null;
+                $dateLabel = $formattedDate ? toBnNumPrint($formattedDate) : null;
+                $seasonStr = $activeSeason ?: \App\Models\Setting::get('season', '২৫-২৬');
+
+                $cats = $brickCategories ?? [];
+                if (empty($cats)) {
+                    $targetNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং ছালট', '৩ নং গরিয়া', 'এলোট', '৩ নং ইট'];
+                    $cats = \App\Models\Category::whereIn('name', $targetNames)->get();
+                }
+
+                $entryList = is_object($entries) && method_exists($entries, 'items') ? $entries->items() : ($entries ?? []);
+                $calculatedTotalUnload = $totalUnloadSum ?: (is_array($entryList) || is_object($entryList) ? collect($entryList)->sum(function($e) {
+                    $items = is_object($e) && method_exists($e, 'items') ? $e->items : ($e->items ?? []);
+                    return is_object($items) || is_array($items) ? collect($items)->sum('quantity') : 0;
+                }) : 0);
+            @endphp
+
+            @if(!empty($isModalReport))
+                {{-- ------------------------------------------------------------- --}}
+                {{-- UNLOAD REPORT MODAL PRINT (Image 3 Style)                      --}}
+                {{-- ------------------------------------------------------------- --}}
+                @php
+                    $tabTitleMap = [
+                        'quantity' => 'সিজনের সংখ্যায় আনলোড রিপোর্ট',
+                        'percentage' => 'সিজনের শতকরায় আনলোড রিপোর্ট',
+                        'bricks_adla' => 'ইট এবং আধলার তুলনা রিপোর্ট',
+                    ];
+                    $currentTabBadge = ($seasonStr . ' ' . ($tabTitleMap[$activeTab ?? 'quantity'] ?? 'সিজনের আনলোড রিপোর্ট'));
+                @endphp
+                <div class="flex items-center justify-between py-2 text-xs font-bold">
+                    <div>
+                        <span>প্রিন্ট তারিখ: {{ toBnNumPrint(now('Asia/Dhaka')->format('d-m-Y')) }}</span>
+                    </div>
+
+                    <div class="px-8 py-1.5 bg-gray-200 text-gray-900 rounded-full font-bold text-sm tracking-wide border border-gray-300">
+                        {{ $currentTabBadge }}
+                    </div>
+
+                    <div class="w-32 text-right"></div>
+                </div>
+
+                @if(($activeTab ?? 'quantity') === 'quantity' || ($activeTab ?? 'quantity') === 'percentage')
+                    <table class="w-full text-xs border-collapse border border-gray-400 mt-2">
+                        <thead>
+                            <tr class="bg-gray-100 font-bold text-gray-900 border-b border-gray-400 text-center">
+                                <th class="p-2 border-r border-gray-400">রাউন্ড</th>
+                                @foreach($cats as $cat)
+                                    <th class="p-2 border-r border-gray-400">{{ $cat->name }}</th>
+                                @endforeach
+                                <th class="p-2">মোট ইট</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-300 font-sans">
+                            @php
+                                $colTotals = [];
+                                foreach($cats as $cat) { $colTotals[$cat->name] = 0; }
+                                $grandTotalAllRounds = 0;
+                            @endphp
+                            @forelse($reportRows ?? [] as $row)
+                                @php
+                                    $rObj = is_array($row) ? (object)$row : $row;
+                                    $rRound = $rObj->round ?? '';
+                                    $rTotal = $rObj->total ?? 0;
+                                    $grandTotalAllRounds += $rTotal;
+                                @endphp
+                                <tr class="hover:bg-gray-50 border-b border-gray-300 text-xs text-center">
+                                    <td class="p-2 font-bold border-r border-gray-300 text-gray-900">
+                                        {{ toBnNumPrint($rRound) }}
+                                    </td>
+                                    @foreach($cats as $cat)
+                                        @php
+                                            $val = is_array($row) ? ($row[$cat->name] ?? 0) : ($rObj->{$cat->name} ?? 0);
+                                            $colTotals[$cat->name] += (float)$val;
+                                            $displayVal = ($activeTab ?? 'quantity') === 'percentage' 
+                                                ? ($rTotal > 0 ? toBnNumPrint(number_format(($val / $rTotal) * 100, 1)) . '%' : '০%')
+                                                : ($val > 0 ? toBnNumPrint(number_format($val)) : '০');
+                                        @endphp
+                                        <td class="p-2 font-mono border-r border-gray-300">
+                                            {{ $displayVal }}
+                                        </td>
+                                    @endforeach
+                                    <td class="p-2 font-mono font-black border-r border-gray-300 text-gray-900">
+                                        {{ ($activeTab ?? 'quantity') === 'percentage' ? '১০০%' : toBnNumPrint(number_format($rTotal)) }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="{{ count($cats) + 2 }}" class="p-4 text-center text-gray-400 font-bold">কোন রিপোর্ট ডাটা পাওয়া যায়নি</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        <tfoot>
+                            <tr class="font-bold bg-gray-100 border-t-2 border-gray-400 text-xs text-center">
+                                <td class="p-2 border-r border-gray-400 font-black">Total নম্বর রাউন্ড</td>
+                                @foreach($cats as $cat)
+                                    @php
+                                        $cTot = $colTotals[$cat->name] ?? 0;
+                                        $cDisp = ($activeTab ?? 'quantity') === 'percentage'
+                                            ? ($grandTotalAllRounds > 0 ? toBnNumPrint(number_format(($cTot / $grandTotalAllRounds) * 100, 1)) . '%' : '০%')
+                                            : toBnNumPrint(number_format($cTot));
+                                    @endphp
+                                    <td class="p-2 font-mono font-bold border-r border-gray-400">{{ $cDisp }}</td>
+                                @endforeach
+                                <td class="p-2 font-mono font-black text-gray-900">{{ ($activeTab ?? 'quantity') === 'percentage' ? '১০০%' : toBnNumPrint(number_format($grandTotalAllRounds)) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                @else
+                    {{-- Tab 3: Bricks & Adla Comparison --}}
+                    <table class="w-full text-xs border-collapse border border-gray-400 mt-2">
+                        <thead>
+                            <tr class="bg-gray-100 font-bold text-gray-900 border-b border-gray-400 text-center">
+                                <th class="p-2 border-r border-gray-400">রাউন্ড</th>
+                                <th class="p-2 border-r border-gray-400">মোট লোড</th>
+                                <th class="p-2 border-r border-gray-400">ইট আনলোড</th>
+                                <th class="p-2 border-r border-gray-400">আধলা আনলোড</th>
+                                <th class="p-2 border-r border-gray-400">ইট %</th>
+                                <th class="p-2">আধলা %</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-300 font-sans">
+                            @php
+                                $totLoadComp  = 0;
+                                $totBrickComp = 0;
+                            @endphp
+                            @forelse($compareRows ?? [] as $cRow)
+                                @php
+                                    $cObj = is_array($cRow) ? (object)$cRow : $cRow;
+                                    $cLoad = $cObj->load ?? 0;
+                                    $cBrick = $cObj->brick ?? 0;
+                                    $cAdla = max(0, $cLoad - $cBrick);
+                                    $cBrickPct = $cLoad > 0 ? round(($cBrick / $cLoad) * 100, 2) : 0;
+                                    $cAdlaPct = $cLoad > 0 ? round(100 - $cBrickPct, 2) : 0;
+
+                                    $totLoadComp += $cLoad;
+                                    $totBrickComp += $cBrick;
+                                @endphp
+                                <tr class="hover:bg-gray-50 border-b border-gray-300 text-xs text-center">
+                                    <td class="p-2 font-bold border-r border-gray-300">{{ toBnNumPrint($cObj->round ?? '-') }}</td>
+                                    <td class="p-2 font-mono border-r border-gray-300">{{ toBnNumPrint(number_format($cLoad)) }}</td>
+                                    <td class="p-2 font-mono border-r border-gray-300">{{ toBnNumPrint(number_format($cBrick)) }}</td>
+                                    <td class="p-2 font-mono border-r border-gray-300">{{ toBnNumPrint(number_format($cAdla)) }}</td>
+                                    <td class="p-2 font-mono border-r border-gray-300">{{ toBnNumPrint(number_format((float)$cBrickPct, $cBrickPct == intval($cBrickPct) ? 0 : 2)) }} %</td>
+                                    <td class="p-2 font-mono">{{ toBnNumPrint(number_format((float)$cAdlaPct, $cAdlaPct == intval($cAdlaPct) ? 0 : 2)) }} %</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="6" class="p-4 text-center text-gray-400 font-bold">কোনো তুলনা ডাটা পাওয়া যায়নি</td></tr>
+                            @endforelse
+                        </tbody>
+                        @if(collect($compareRows ?? [])->count() > 0)
+                            @php
+                                $totAdlaComp = max(0, $totLoadComp - $totBrickComp);
+                                $totBrickPctSum = $totLoadComp > 0 ? round(($totBrickComp / $totLoadComp) * 100, 2) : 0;
+                                $totAdlaPctSum = $totLoadComp > 0 ? round(100 - $totBrickPctSum, 2) : 0;
+                            @endphp
+                            <tfoot>
+                                <tr class="font-bold bg-gray-100 border-t-2 border-gray-400 text-xs text-center">
+                                    <td class="p-2 border-r border-gray-400 font-black">মোট</td>
+                                    <td class="p-2 font-mono font-black border-r border-gray-400">{{ toBnNumPrint(number_format($totLoadComp)) }}</td>
+                                    <td class="p-2 font-mono font-black border-r border-gray-400">{{ toBnNumPrint(number_format($totBrickComp)) }}</td>
+                                    <td class="p-2 font-mono font-black border-r border-gray-400">{{ toBnNumPrint(number_format($totAdlaComp)) }}</td>
+                                    <td class="p-2 font-mono font-black border-r border-gray-400">{{ toBnNumPrint(number_format((float)$totBrickPctSum, $totBrickPctSum == intval($totBrickPctSum) ? 0 : 2)) }} %</td>
+                                    <td class="p-2 font-mono font-black">{{ toBnNumPrint(number_format((float)$totAdlaPctSum, $totAdlaPctSum == intval($totAdlaPctSum) ? 0 : 2)) }} %</td>
+                                </tr>
+                            </tfoot>
+                        @endif
+                    </table>
+                @endif
+
+            @else
+                {{-- ------------------------------------------------------------- --}}
+                {{-- UNLOAD KHATA MAIN TABLE LIST PRINT (Image 2 Style)            --}}
+                {{-- ------------------------------------------------------------- --}}
+                <div class="flex items-center justify-between py-2 text-xs font-bold">
+                    <div>
+                        <span>{{ $dateLabel ? 'তারিখ: '.$dateLabel.' | ' : '' }}সিজন: {{ $seasonStr }}</span>
+                    </div>
+
+                    <div class="px-8 py-1.5 bg-gray-200 text-gray-900 rounded-full font-bold text-sm tracking-wide border border-gray-300">
+                        আনলোড রিপোর্ট
+                    </div>
+
+                    <div class="text-right font-bold text-sm">
+                        সর্বমোট আনলোড: <span class="font-mono text-gray-900 font-black">{{ toBnNumPrint(number_format($calculatedTotalUnload)) }}</span>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <table class="w-full text-xs border-collapse border border-gray-400 mt-2">
+                    <thead>
+                        <tr class="bg-gray-100 font-bold text-gray-900 border-b border-gray-400 text-center">
+                            <th class="p-2 border-r border-gray-400 w-10">নং</th>
+                            <th class="p-2 border-r border-gray-400 w-24">তারিখ</th>
+                            <th class="p-2 border-r border-gray-400 w-20">রাউন্ড</th>
+                            @foreach($cats as $cat)
+                                <th class="p-2 border-r border-gray-400">{{ $cat->name }}</th>
+                            @endforeach
+                            <th class="p-2 w-24">মোট ইট</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-300 font-sans">
+                        @php
+                            $rowNum = 1;
+                            $colSumMap = [];
+                            foreach($cats as $cat) { $colSumMap[$cat->name] = 0; }
+                            $grandTotalUnloadTable = 0;
+                        @endphp
+                        @forelse($entryList as $entry)
+                            @php
+                                $eObj = is_array($entry) ? (object)$entry : $entry;
+                                $eDate = isset($eObj->date) ? ($eObj->date instanceof \Carbon\Carbon ? $eObj->date->format('d-m-Y') : \Carbon\Carbon::parse($eObj->date)->format('d-m-Y')) : '-';
+                                $itemsColl = is_object($eObj) && method_exists($eObj, 'items') ? $eObj->items : ($eObj->items ?? []);
+                                $itemsColl = is_object($itemsColl) ? $itemsColl : collect($itemsColl ?? []);
+                                $rowTotalQty = 0;
+                            @endphp
+                            <tr class="hover:bg-gray-50 border-b border-gray-300 text-xs text-center">
+                                <td class="p-2 font-mono font-bold border-r border-gray-300">
+                                    {{ toBnNumPrint($rowNum++) }}
+                                </td>
+                                <td class="p-2 font-mono border-r border-gray-300">
+                                    {{ toBnNumPrint($eDate) }}
+                                </td>
+                                <td class="p-2 font-bold border-r border-gray-300">
+                                    {{ toBnNumPrint($eObj->round ?? '-') }}
+                                </td>
+                                @foreach($cats as $cat)
+                                    @php
+                                        $itemMatch = $itemsColl->where('category_name', $cat->name)->first();
+                                        $q = $itemMatch ? ($itemMatch->quantity ?? 0) : 0;
+                                        $colSumMap[$cat->name] += $q;
+                                        $rowTotalQty += $q;
+                                    @endphp
+                                    <td class="p-2 font-mono border-r border-gray-300">
+                                        {{ $q > 0 ? toBnNumPrint(number_format($q)) : '-' }}
+                                    </td>
+                                @endforeach
+                                @php $grandTotalUnloadTable += $rowTotalQty; @endphp
+                                <td class="p-2 font-mono font-black border-r border-gray-300 text-gray-900">
+                                    {{ $rowTotalQty > 0 ? toBnNumPrint(number_format($rowTotalQty)) : '-' }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="{{ count($cats) + 4 }}" class="p-4 text-center text-gray-400 font-bold">কোন আনলোড তথ্য পাওয়া যায়নি</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            @endif
+
+            <!-- Signatures Row (Page break protected) -->
+            <div class="pt-16 pb-6 flex items-center justify-between font-bold text-xs text-gray-900 print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
+                <div class="text-center w-40">
+                    <div class="border-t border-gray-900 pt-1.5 font-bold">ম্যানেজার</div>
+                </div>
+                <div class="text-center w-40">
+                    <div class="border-t border-gray-900 pt-1.5 font-bold">মালিক</div>
+                </div>
+            </div>
+
+            <!-- Bottom Print Footer -->
+            <div class="pt-3 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-500 font-semibold print-page-break-avoid" style="page-break-inside: avoid; break-inside: avoid;">
+                <div>রিপোর্ট প্রিন্ট: {{ toBnNumPrint(\Carbon\Carbon::now('Asia/Dhaka')->format('d-m-Y h:i A')) }}</div>
+                <div>Software by: Codenextit.com</div>
             </div>
         </div>
 

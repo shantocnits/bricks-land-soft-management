@@ -317,7 +317,7 @@
             var pageSize = 'A4 portrait';
             var marginSize = '5mm';
             var cloneHeight = 'auto';
-            if (printAreaId === 'print-a4-dual') {
+            if (printAreaId === 'print-a4-dual' || (printAreaId && printAreaId.indexOf('unload') !== -1)) {
                 pageSize = 'A4 landscape';
                 marginSize = '5mm';
             } else if (printAreaId === 'print-pos-customer') {
