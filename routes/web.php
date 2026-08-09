@@ -84,7 +84,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/update-season', function (\Illuminate\Http\Request $request) {
         $season = $request->input('season', '২৫-২৬');
         \App\Models\Setting::set('season', $season);
-        return response()->json(['success' => true, 'season' => $season]);
+        return response()->json(['success' => true, 'season' => $season], 200, [], JSON_UNESCAPED_UNICODE)->setCharset('UTF-8');
     })->name('update-season');
 });
 

@@ -63,8 +63,7 @@ class LedgerAdd extends Component
     public function syncGroupOptions()
     {
         $groupsJson = Setting::get('ledger_groups');
-        $defaultGroups = ['কাস্টমার', 'সরবরাহকারী', 'লেবার', 'মাটি', 'স্টাফ', 'খরচ', 'আয়', 'অন্যান্য'];
-        $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: $defaultGroups) : $defaultGroups;
+        $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
         
         $dbGroups = Ledger::whereNotNull('group')
             ->pluck('group')
@@ -74,7 +73,7 @@ class LedgerAdd extends Component
             ->values()
             ->toArray();
 
-        $merged = array_merge($savedGroups, $dbGroups, $defaultGroups);
+        $merged = array_merge($savedGroups, $dbGroups);
         
         $seen = [];
         $unique = [];
@@ -93,59 +92,7 @@ class LedgerAdd extends Component
 
     public function mount()
     {
-        // Preseed defaults if empty
-        if (Ledger::count() === 0) {
-            $defaultLedgers = [
-                ['name' => 'কেএইচ-০১ (আব্দুল কুদ্দুস)', 'group' => 'কাস্টমার', 'rate' => 9.00, 'divisor' => 1],
-                ['name' => 'কেএইচ-০২ (করিম এন্টারপ্রাইজ)', 'group' => 'কাস্টমার', 'rate' => 8.50, 'divisor' => 1],
-                ['name' => 'এসটি-০৫ (মাটি সরবরাহকারী)', 'group' => 'সরবরাহকারী', 'rate' => 1500.00, 'divisor' => 100],
-                ['name' => 'এমজি-০৩ (কয়লা হিসাব)', 'group' => 'খরচ', 'rate' => 20000.00, 'divisor' => 1],
-                ['name' => 'মেল', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => 'লোড মিস্ত্রি', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => 'বেজা মাটি', 'group' => 'মাটি', 'rate' => null, 'divisor' => 1],
-                ['name' => '১ নং মেল', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => '২ নং মেল', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => '৩ নং মেল', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => 'পোড়াই', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => 'তেইলি লেবার', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => 'রাবিশ ম্যান', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => 'ক্লিন পরিষ্কার', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => 'সাদা মাটি', 'group' => 'মাটি', 'rate' => null, 'divisor' => 1],
-                ['name' => 'লাল মাটি', 'group' => 'মাটি', 'rate' => null, 'divisor' => 1],
-                ['name' => 'অফিসিয়াল খরচ', 'group' => 'খরচ', 'rate' => null, 'divisor' => 1],
-                ['name' => 'কারেন্ট বিল', 'group' => 'খরচ', 'rate' => null, 'divisor' => 1],
-                ['name' => 'হাওয়ার তেল', 'group' => 'খরচ', 'rate' => null, 'divisor' => 1],
-                ['name' => 'ভাটি স্টাফ', 'group' => 'স্টাফ', 'rate' => null, 'divisor' => 1],
-                ['name' => 'স্টাফ খরচ', 'group' => 'স্টাফ', 'rate' => null, 'divisor' => 1],
-                ['name' => 'মোটরসাইকেল', 'group' => 'খরচ', 'rate' => null, 'divisor' => 1],
-                ['name' => 'বেকু', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-                ['name' => 'মেসি', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-                ['name' => 'জমির টাকা', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-                ['name' => 'বালু', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-                ['name' => 'খড়ির হিসাব', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-                ['name' => 'ফর্মার হিসাব', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-                ['name' => 'মালামাল', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-                ['name' => 'মেরামত বিল', 'group' => 'খরচ', 'rate' => null, 'divisor' => 1],
-                ['name' => 'অনুদান', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-                ['name' => 'লেবার খরচ', 'group' => 'লেবার', 'rate' => null, 'divisor' => 1],
-                ['name' => 'কাস্টমার কম দেওয়া', 'group' => 'কাস্টমার', 'rate' => null, 'divisor' => 1],
-                ['name' => 'জমা স্টক', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-                ['name' => 'অন্যান্য', 'group' => 'অন্যান্য', 'rate' => null, 'divisor' => 1],
-            ];
-            $i = 1;
-            foreach ($defaultLedgers as $item) {
-                Ledger::create([
-                    'serial' => $i++,
-                    'name' => $item['name'],
-                    'group' => $item['group'],
-                    'rate' => $item['rate'],
-                    'divisor' => $item['divisor']
-                ]);
-            }
-        }
-
         $this->syncGroupOptions();
-        Setting::set('ledger_groups', json_encode($this->groupOptions));
     }
 
     public function addGroup($name = null)
@@ -171,8 +118,7 @@ class LedgerAdd extends Component
             }
 
             $groupsJson = Setting::get('ledger_groups');
-            $defaultGroups = ['কাস্টমার', 'সরবরাহকারী', 'লেবার', 'মাটি', 'স্টাফ', 'খরচ', 'আয়', 'অন্যান্য'];
-            $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: $defaultGroups) : $defaultGroups;
+            $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
 
             $savedGroups = array_values(array_filter($savedGroups, fn($g) => mb_strtolower(trim($g), 'UTF-8') !== mb_strtolower($newGroup, 'UTF-8')));
             array_unshift($savedGroups, $newGroup);
@@ -278,8 +224,7 @@ class LedgerAdd extends Component
 
         if ($group !== '') {
             $groupsJson = Setting::get('ledger_groups');
-            $defaultGroups = ['কাস্টমার', 'সরবরাহকারী', 'লেবার', 'মাটি', 'স্টাফ', 'খরচ', 'আয়', 'অন্যান্য'];
-            $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: $defaultGroups) : $defaultGroups;
+            $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
 
             $savedGroups = array_values(array_diff($savedGroups, [$group]));
             array_unshift($savedGroups, $group);

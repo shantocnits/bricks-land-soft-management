@@ -97,7 +97,34 @@ if (!function_exists('toKhotianDateTimeParts')) {
         </div>
 
         {{-- Ledger Groups Grid with Hover Dropdown (Matching Screenshot 4) --}}
-        <div x-data="{ hoverGroup: null, dropRect: null, staying: false }" class="relative">
+        <div x-data="{
+            hoverGroup: null,
+            dropStyle: '',
+            staying: false,
+            openDropdown(group, el) {
+                this.hoverGroup = group;
+                this.staying = false;
+                const rect = el.getBoundingClientRect();
+                const gap = 6;
+                const dd = this.$refs.kDropdown;
+                const ddH = (dd && dd.offsetHeight) ? dd.offsetHeight : 300;
+                const left = Math.max(8, Math.min(rect.left + rect.width / 2 - 144, window.innerWidth - 296));
+                let top = (window.innerHeight - rect.bottom - gap) >= ddH
+                    ? rect.bottom + gap
+                    : Math.max(8, rect.top - gap - ddH);
+                this.dropStyle = 'left:' + left + 'px; top:' + top + 'px;';
+                this.$nextTick(() => {
+                    const dd2 = this.$refs.kDropdown;
+                    if (dd2 && dd2.offsetHeight && dd2.offsetHeight !== ddH) {
+                        const h = dd2.offsetHeight;
+                        top = (window.innerHeight - rect.bottom - gap) >= h
+                            ? rect.bottom + gap
+                            : Math.max(8, rect.top - gap - h);
+                        this.dropStyle = 'left:' + left + 'px; top:' + top + 'px;';
+                    }
+                });
+            }
+        }" class="relative">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse($groupedData as $groupName => $gData)
                     @php 
@@ -105,12 +132,16 @@ if (!function_exists('toKhotianDateTimeParts')) {
                         $hasSubs = $subKhotiyansCount > 0;
                     @endphp
 
-                    <div @mouseenter="if ({{ $hasSubs ? 'true' : 'false' }}) { hoverGroup = {{ json_encode($groupName) }}; dropRect = $el.getBoundingClientRect(); }"
+                    <div @mouseenter="if ({{ $hasSubs ? 'true' : 'false' }}) { openDropdown({{ json_encode($groupName) }}, $el); }"
                          @mouseleave="setTimeout(() => { if (hoverGroup === {{ json_encode($groupName) }} && !staying) hoverGroup = null; }, 150)"
                          class="relative">
                         
                         <!-- Group Box Card -->
-                        <div wire:click="selectLedger('{{ $groupName }}')"
+                        @php
+                            $groupNet = $gData['total_net_balance'];
+                            $primaryClick = $gData['primary_name'] ?? $groupName;
+                        @endphp
+                        <div wire:click="selectLedger('{{ $primaryClick }}')"
                              class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-5 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between gap-4 group">
                             <div class="flex items-center gap-4 min-w-0">
                                 <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/20 text-[#034C3C] dark:text-emerald-400 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
@@ -120,8 +151,8 @@ if (!function_exists('toKhotianDateTimeParts')) {
                                 </div>
                                 <div class="min-w-0">
                                     <h4 class="text-sm font-black text-gray-808 dark:text-white font-sans truncate" title="{{ $groupName }}">{{ $groupName }}</h4>
-                                    <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
-                                        ৳ {{ toBanglaNum(number_format($gData['total_payment'])) }}
+                                    <p class="text-xs font-semibold {{ $groupNet < 0 ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} mt-1 font-mono">
+                                        ৳ {{ $groupNet < 0 ? '-' : '' }}{{ toBanglaNum(number_format(abs($groupNet))) }}
                                     </p>
                                 </div>
                             </div>
@@ -142,11 +173,12 @@ if (!function_exists('toKhotianDateTimeParts')) {
 
             <!-- Floating Hover Dropdown for Sub-Khotiyans (Matching Screenshot 4!) -->
             <template x-teleport="body">
-                <div x-show="hoverGroup !== null"
+                <div x-show="hoverGroup !== null && dropStyle !== ''"
+                     x-ref="kDropdown"
                      @mouseenter="staying = true"
                      @mouseleave="staying = false; hoverGroup = null"
                      class="fixed z-[999999] w-72 bg-white dark:bg-slate-900 border border-emerald-500/40 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden font-sans p-2 space-y-1"
-                     :style="dropRect ? ('left: ' + Math.max(8, Math.min(dropRect.left + dropRect.width/2 - 144, window.innerWidth - 296)) + 'px; top: ' + (dropRect.bottom + 6) + 'px;') : ''"
+                     :style="dropStyle"
                      x-cloak>
                     @foreach($groupedData as $gName => $gData)
                         <div x-show="hoverGroup === {{ json_encode($gName) }}" class="space-y-1">
@@ -155,25 +187,21 @@ if (!function_exists('toKhotianDateTimeParts')) {
                                 <span class="text-[10px] text-gray-500 dark:text-slate-400 font-semibold">খতিয়ান সমূহ</span>
                             </div>
                             <div class="max-h-60 overflow-y-auto space-y-1 custom-scrollbar pr-1">
-                                @forelse($gData['khotiyans'] as $kName => $kSum)
+                                @forelse($gData['khotiyans'] as $kName => $kData)
+                                    @php
+                                        $displayNet = $kName === $gName ? $gData['total_net_balance'] : $kData['net'];
+                                        $isNeg = $displayNet < 0;
+                                    @endphp
                                     <button type="button"
-                                            wire:click="selectLedger('{{ $kName }}')"
+                                            wire:click="selectLedger({{ json_encode($kName) }})"
                                             @click="hoverGroup = null; staying = false"
                                             class="w-full flex items-center justify-between p-2 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-xl transition-all text-left cursor-pointer group/item">
                                         <div class="flex items-center gap-2 min-w-0">
-                                            @if($kName === $gName)
-                                                <span class="text-xs">📁</span>
-                                                <span class="text-xs font-black text-emerald-600 dark:text-emerald-400 group-hover/item:text-emerald-700 dark:group-hover/item:text-emerald-300 truncate">
-                                                    {{ $kName }}
-                                                    <span class="text-[9px] text-gray-400 font-normal ml-1">(সব)</span>
-                                                </span>
-                                            @else
-                                                <span class="text-xs">📖</span>
-                                                <span class="text-xs font-bold text-gray-808 dark:text-slate-200 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 truncate">{{ $kName }}</span>
-                                            @endif
+                                            <span class="text-xs">📖</span>
+                                            <span class="text-xs font-bold text-gray-808 dark:text-slate-200 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 truncate">{{ $kName }}</span>
                                         </div>
-                                        <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap ml-2">
-                                            ৳ {{ toBanglaNum(number_format($kSum)) }}
+                                        <span class="text-xs font-mono font-bold {{ $isNeg ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} whitespace-nowrap ml-2">
+                                            ৳ {{ $isNeg ? '-' : '' }}{{ toBanglaNum(number_format(abs($displayNet))) }}
                                         </span>
                                     </button>
                                 @empty
@@ -208,11 +236,16 @@ if (!function_exists('toKhotianDateTimeParts')) {
                     <span class="px-3.5 py-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-black">
                         অগ্রিম: {{ toBanglaNum(number_format($totalAdvance)) }}
                     </span>
-                    <span class="px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-250 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-black">
-                        পরিশোধঃ {{ toBanglaNum(number_format($totalPayment)) }}
+                    <span class="px-3.5 py-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 rounded-xl text-xs font-black">
+                        পরিশোধ: {{ toBanglaNum(number_format($totalDeduction)) }}
                     </span>
-                    <span class="px-3.5 py-2 {{ ($totalAdvance - $totalPayment) < 0 ? 'bg-rose-50 border-rose-200 text-rose-707 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400' : 'bg-emerald-50 border-emerald-200 text-emerald-707' }} border rounded-xl text-xs font-black">
-                        অগ্রিম বাকি: {{ toBanglaNum(number_format($totalAdvance - $totalPayment)) }}
+                    @php $advanceRemaining = $totalAdvance - $totalDeduction; @endphp
+                    <span class="px-3.5 py-2 {{ $advanceRemaining < 0 ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' }} border rounded-xl text-xs font-black">
+                        অগ্রিম বাকি: {{ toBanglaNum(number_format($advanceRemaining)) }}
+                    </span>
+                    @php $netBalance = ($totalAdvance + $totalPayment) - $totalBill; @endphp
+                    <span class="px-3.5 py-2 {{ $netBalance < 0 ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' }} border rounded-xl text-xs font-black">
+                        {{ $netBalance >= 0 ? 'বেশি পেমেন্ট' : 'পেমেন্ট বাকি' }}: {{ $netBalance < 0 ? '-' : '' }}{{ toBanglaNum(number_format(abs($netBalance))) }}
                     </span>
                 </div>
             </div>
@@ -336,10 +369,13 @@ if (!function_exists('toKhotianDateTimeParts')) {
                     @if($payments->count() > 0)
                         <tfoot>
                             <tr class="bg-gray-50 dark:bg-slate-800 font-sans text-xs border-t-2 border-gray-200 dark:border-slate-700">
-                                <td colspan="3" class="py-3 px-4 font-bold border-r border-gray-150 dark:border-slate-800 text-gray-700 dark:text-slate-300">
+                                <td colspan="8" class="py-3 px-4 font-bold border-r border-gray-150 dark:border-slate-800 text-gray-700 dark:text-slate-300">
                                     মোট পেমেন্ট {{ toBanglaNum($count) }} টি | পরিমাণ {{ toBanglaNum(number_format($totalQty)) }} | মোট বিল ৳{{ toBanglaNum(number_format($totalBill)) }} | পেমেন্ট ৳{{ toBanglaNum(number_format($totalPayment)) }}
                                 </td>
-                                <td colspan="9" class="py-3 px-4"></td>
+                                @php $tfootNet = ($totalAdvance + $totalPayment) - $totalBill; @endphp
+                                <td colspan="4" class="py-3 px-4 text-right font-bold {{ $tfootNet < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                                    নিট ব্যালেন্স: ৳{{ $tfootNet < 0 ? '-' : '' }}{{ toBanglaNum(number_format(abs($tfootNet))) }}
+                                </td>
                             </tr>
                         </tfoot>
                     @endif

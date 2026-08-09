@@ -139,33 +139,30 @@ class Khotian extends Component
             })->get();
 
             $groupedData = [];
+            $initKhotiyan = fn() => ['payment' => 0, 'advance' => 0, 'bill' => 0, 'net' => 0];
+            $initGroup = fn($g) => [
+                'group_name' => $g,
+                'total_payment' => 0,
+                'total_advance' => 0,
+                'total_bill' => 0,
+                'total_net_balance' => 0,
+                'khotiyans' => [$g => $initKhotiyan()],
+                'direct_payment' => 0,
+                'has_payments' => false
+            ];
 
             // 1. Initialize defined groups — always seed group name itself as first (fallback) khotiyan item
             foreach ($allGroups as $g) {
-                $groupedData[$g] = [
-                    'group_name' => $g,
-                    'total_payment' => 0,
-                    'khotiyans' => [
-                        $g => 0  // Group name itself as default/fallback selectable option
-                    ],
-                    'direct_payment' => 0
-                ];
+                $groupedData[$g] = $initGroup($g);
             }
 
             foreach ($dbLedgers as $l) {
                 $g = trim($l->group) ?: 'অন্যান্য';
                 if (!isset($groupedData[$g])) {
-                    $groupedData[$g] = [
-                        'group_name' => $g,
-                        'total_payment' => 0,
-                        'khotiyans' => [
-                            $g => 0  // Group name itself as default/fallback selectable option
-                        ],
-                        'direct_payment' => 0
-                    ];
+                    $groupedData[$g] = $initGroup($g);
                 }
                 if (!isset($groupedData[$g]['khotiyans'][$l->name])) {
-                    $groupedData[$g]['khotiyans'][$l->name] = 0;
+                    $groupedData[$g]['khotiyans'][$l->name] = $initKhotiyan();
                 }
             }
 
@@ -174,19 +171,19 @@ class Khotian extends Component
                 $name = trim($p->ledger);
                 $lowerName = mb_strtolower($name);
                 $payAmount = (float)$p->payment;
+                $advanceAmount = (float)$p->advance;
+                $billAmount = (float)$p->total;
 
                 $group = $ledgerGroupMap[$lowerName] ?? (in_array($name, $allGroups) ? $name : 'অন্যান্য');
 
                 if (!isset($groupedData[$group])) {
-                    $groupedData[$group] = [
-                        'group_name' => $group,
-                        'total_payment' => 0,
-                        'khotiyans' => [],
-                        'direct_payment' => 0
-                    ];
+                    $groupedData[$group] = $initGroup($group);
                 }
 
+                $groupedData[$group]['has_payments'] = true;
                 $groupedData[$group]['total_payment'] += $payAmount;
+                $groupedData[$group]['total_advance'] += $advanceAmount;
+                $groupedData[$group]['total_bill'] += $billAmount;
 
                 // Match with sub-khotiyans
                 $matchedKey = null;
@@ -198,21 +195,43 @@ class Khotian extends Component
                 }
 
                 if ($matchedKey) {
-                    $groupedData[$group]['khotiyans'][$matchedKey] += $payAmount;
+                    $groupedData[$group]['khotiyans'][$matchedKey]['payment'] += $payAmount;
+                    $groupedData[$group]['khotiyans'][$matchedKey]['advance'] += $advanceAmount;
+                    $groupedData[$group]['khotiyans'][$matchedKey]['bill'] += $billAmount;
                 } else {
-                    // Direct group payment or unlisted khotiyan under this group
                     $groupedData[$group]['direct_payment'] += $payAmount;
                     if (!empty($groupedData[$group]['khotiyans'])) {
-                        // Fallback: Allocate direct group payment to existing khotiyans or create fallback entry
                         if (!isset($groupedData[$group]['khotiyans'][$name])) {
-                            $groupedData[$group]['khotiyans'][$name] = 0;
+                            $groupedData[$group]['khotiyans'][$name] = $initKhotiyan();
                         }
-                        $groupedData[$group]['khotiyans'][$name] += $payAmount;
+                        $groupedData[$group]['khotiyans'][$name]['payment'] += $payAmount;
+                        $groupedData[$group]['khotiyans'][$name]['advance'] += $advanceAmount;
+                        $groupedData[$group]['khotiyans'][$name]['bill'] += $billAmount;
                     } else {
-                        $groupedData[$group]['khotiyans'][$name] = $payAmount;
+                        $groupedData[$group]['khotiyans'][$name] = ['payment' => $payAmount, 'advance' => $advanceAmount, 'bill' => $billAmount, 'net' => 0];
                     }
                 }
             }
+
+            // 3. Compute net balance for each khotiyan and group: net = (payment + advance) - bill
+            foreach ($groupedData as &$gData) {
+                $groupNet = 0;
+                $primaryName = null;
+                foreach ($gData['khotiyans'] as $kName => &$kData) {
+                    $kData['net'] = ($kData['payment'] + $kData['advance']) - $kData['bill'];
+                    $groupNet += $kData['net'];
+                    if ($primaryName === null && $kName !== $gData['group_name']) {
+                        $primaryName = $kName;
+                    }
+                }
+                unset($kData);
+                $gData['total_net_balance'] = $groupNet;
+                $gData['primary_name'] = $primaryName;
+            }
+            unset($gData);
+
+            // Show only groups that have at least one payment/transaction in the active season
+            $groupedData = array_filter($groupedData, fn($gData) => !empty($gData['has_payments']));
 
             // Filter out empty groups if search is performed
             if (!empty($this->search)) {
@@ -221,9 +240,9 @@ class Khotian extends Component
                 foreach ($groupedData as $gName => $gData) {
                     $matchesGroup = str_contains(mb_strtolower($gName), $term);
                     $matchingKhotiyans = [];
-                    foreach ($gData['khotiyans'] as $kName => $kSum) {
+                    foreach ($gData['khotiyans'] as $kName => $kData) {
                         if ($matchesGroup || str_contains(mb_strtolower($kName), $term)) {
-                            $matchingKhotiyans[$kName] = $kSum;
+                            $matchingKhotiyans[$kName] = $kData;
                         }
                     }
                     if ($matchesGroup || !empty($matchingKhotiyans)) {

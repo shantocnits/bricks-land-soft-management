@@ -338,7 +338,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -373,11 +372,11 @@
                             <label
                                 class="block text-xs font-bold text-gray-650 dark:text-slate-350 mb-1.5 font-sans">খতিয়ান
                                 <span class="text-red-500">*</span></label>
-                            <div class="relative">
-                                <input type="text" readonly placeholder="খতিয়ান নির্বাচন করুন"
-                                    wire:click="$set('showKhotiyanModal', true)" wire:model="selectedLedger"
-                                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-sm font-semibold font-sans cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-450">
+                            <div class="relative cursor-pointer" @click="$wire.set('showKhotiyanModal', true)">
+                                <input type="text" readonly placeholder="খতিয়ান নির্বাচন করুন"
+                                    wire:model="selectedLedger"
+                                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-sm font-semibold font-sans cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20 pointer-events-none">
+                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-450 pointer-events-none">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -396,8 +395,15 @@
                                 class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">পেমেন্টের
                                 ধরণ <span class="text-red-500">*</span></label>
 
-                            <div x-data="{ open: false }" class="relative">
-                                <button @click="open = !open" type="button"
+                            <div x-data="{
+                                open: false,
+                                dropRect: null,
+                                dropStyle() {
+                                    if (!this.dropRect) return '';
+                                    return 'position:fixed;left:' + this.dropRect.left + 'px;top:' + (this.dropRect.bottom + 4) + 'px;width:' + this.dropRect.width + 'px;z-index:9999999;';
+                                }
+                            }" class="relative">
+                                <button @click="open = !open; dropRect = $el.getBoundingClientRect()" type="button"
                                     class="w-full flex items-center justify-between gap-2.5 px-4 py-3 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white font-bold rounded-xl text-sm border border-gray-200 dark:border-slate-700 focus:outline-none transition-all cursor-pointer">
                                     <span class="font-sans"
                                         x-text="$wire.paymentType ? $wire.paymentType : 'সিলেক্ট করুন'"></span>
@@ -408,19 +414,22 @@
                                     </svg>
                                 </button>
 
-                                <div x-show="open" @click.outside="open = false"
-                                    class="absolute z-[99999] mt-1.5 w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden focus:outline-none"
-                                    x-cloak>
-                                    <div class="py-1">
-                                        @foreach (['রেগুলার', 'অগ্রিম', 'বাকি'] as $type)
-                                            <button type="button" wire:click="$set('paymentType', '{{ $type }}')"
-                                                @click="open = false;"
-                                                class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-855 dark:text-white hover:bg-emerald-50 dark:hover:bg-slate-700 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
-                                                {{ $type }}
-                                            </button>
-                                        @endforeach
+                                <template x-teleport="body">
+                                    <div x-show="open" @click.outside="open = false"
+                                        :style="dropStyle()"
+                                        class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden font-sans"
+                                        x-cloak>
+                                        <div class="py-1">
+                                            @foreach (['রেগুলার', 'অগ্রিম', 'বাকি'] as $type)
+                                                <button type="button" wire:click="$set('paymentType', '{{ $type }}')"
+                                                    @click="open = false"
+                                                    class="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-855 dark:text-white hover:bg-emerald-50 dark:hover:bg-slate-700 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors font-sans">
+                                                    {{ $type }}
+                                                </button>
+                                            @endforeach
+                                        </div>
                                     </div>
-                                </div>
+                                </template>
                             </div>
 
                             @error('paymentType')
@@ -598,7 +607,7 @@
         </div>
     </template>
 
-    <!-- Modal 2: "খতিয়ান নির্বাচন করুন" sub-modal -->
+        <!-- Modal 2: "খতিয়ান নির্বাচন করুন" sub-modal -->
     <template x-teleport="body">
         <div x-data="{ show: @entangle('showKhotiyanModal') }" x-show="show" @click.self="show = false"
             class="fixed inset-0 z-[99999]" x-cloak>
@@ -647,22 +656,35 @@
                     </div>
 
                     <!-- Professional Group Box Cards Grid -->
-                    <div x-data="{ hoverGroup: null, dropRect: null, staying: false }" class="relative">
+                    <div x-data="{
+                        hoverGroup: null,
+                        dropStyle: '',
+                        staying: false,
+                        positionDrop(el) {
+                            const r = el.getBoundingClientRect();
+                            const gap = 6;
+                            const estH = 220;
+                            const left = Math.max(8, Math.min(r.left + r.width/2 - 128, window.innerWidth - 272));
+                            const top = (window.innerHeight - r.bottom - gap) >= estH
+                                ? (r.bottom + gap)
+                                : Math.max(8, r.top - gap - estH);
+                            this.dropStyle = 'left: ' + left + 'px; top: ' + top + 'px;';
+                        }
+                    }" class="relative">
                         <div
                             class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[420px] overflow-y-auto pr-1">
-                            @forelse($groupedLedgers as $groupName => $groupLedgers)
+                            @foreach($groupedLedgers as $groupName => $groupLedgers)
                                 @php
-                                    // Exclude the group-name fallback item from count & hasItems check
                                     $realLedgers = array_values(array_filter($groupLedgers, fn($l) => empty($l['is_group_fallback'])));
                                     $hasItems = count($realLedgers) > 0;
                                     $displayCount = count($realLedgers);
                                 @endphp
-                                <div @mouseenter="if ({{ $hasItems ? 'true' : 'false' }}) { hoverGroup = {{ json_encode($groupName) }}; dropRect = $el.getBoundingClientRect(); }"
+                                <div @mouseenter="if ({{ $hasItems ? 'true' : 'false' }}) { hoverGroup = {{ json_encode($groupName) }}; positionDrop($el); }"
                                     @mouseleave="setTimeout(() => { if (hoverGroup === {{ json_encode($groupName) }} && !staying) hoverGroup = null; }, 150)"
                                     class="relative">
 
                                     <!-- Group Box Card -->
-                                    <div @click="if ({{ $hasItems ? 'true' : 'false' }}) { hoverGroup = (hoverGroup === {{ json_encode($groupName) }} ? null : {{ json_encode($groupName) }}); dropRect = $el.getBoundingClientRect(); } else { $wire.selectLedger({{ json_encode($groupName) }}); $wire.set('showKhotiyanModal', false); hoverGroup = null; }"
+                                    <div @click="if ({{ $hasItems ? 'true' : 'false' }}) { hoverGroup = (hoverGroup === {{ json_encode($groupName) }} ? null : {{ json_encode($groupName) }}); positionDrop($el); } else { $wire.selectLedger({{ json_encode($groupName) }}); $wire.set('showKhotiyanModal', false); hoverGroup = null; }"
                                         class="w-full p-3 bg-slate-50 dark:bg-slate-800/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-gray-200 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-2xl cursor-pointer transition-all group/box flex items-center justify-between shadow-2xs relative">
 
                                         <!-- Group Name & Count Badge -->
@@ -676,10 +698,7 @@
                                         </span>
                                     </div>
                                 </div>
-                            @empty
-                                <div class="col-span-4 py-10 text-center text-gray-400 font-sans text-xs">কোনো গ্রুপ পাওয়া
-                                    যায়নি।</div>
-                            @endforelse
+                            @endforeach
                         </div>
 
                         <!-- Hover Dropdown: shows all khotiyans under this group -->
@@ -687,7 +706,7 @@
                             <div x-show="hoverGroup !== null" @mouseenter="staying = true"
                                 @mouseleave="staying = false; hoverGroup = null"
                                 class="fixed z-[9999999] w-64 bg-[#0f1c2e] dark:bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden font-sans"
-                                :style="dropRect ? ('left: ' + Math.max(8, Math.min(dropRect.left + dropRect.width/2 - 128, window.innerWidth - 272)) + 'px; top: ' + (dropRect.bottom + 6) + 'px;') : ''"
+                                :style="dropStyle"
                                 x-cloak>
                                 <!-- Header -->
                                 <div
@@ -700,21 +719,25 @@
                                     <div x-show="hoverGroup === {{ json_encode($gName) }}"
                                         class="max-h-56 overflow-y-auto py-1">
                                         @forelse($gLedgers as $gLedg)
+                                            @if(!($gLedg['is_group_fallback'] ?? false))
+                                            @php
+                                                $bal = $gLedg['balance'] ?? 0;
+                                                $balColor = $bal >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                                                $balText = '৳' . number_format(abs($bal));
+                                                if ($bal < 0) $balText = '-' . $balText;
+                                            @endphp
                                             <button type="button"
                                                 wire:click="selectLedger({{ json_encode($gLedg['name']) }})"
                                                 @click="hoverGroup = null; staying = false; $wire.set('showKhotiyanModal', false)"
                                                 class="w-full flex items-center justify-between px-3.5 py-2 hover:bg-emerald-700/20 transition-colors text-left cursor-pointer group/item">
-                                                @if(!empty($gLedg['is_group_fallback']))
-                                                    <span class="text-xs font-black text-emerald-400 group-hover/item:text-emerald-300 font-sans truncate">
-                                                        📁 {{ $gLedg['name'] }}
-                                                        <span class="text-[9px] text-slate-500 font-normal ml-1">(গ্রুপ ডিফল্ট)</span>
-                                                    </span>
-                                                @else
-                                                    <span class="text-xs font-semibold text-slate-200 group-hover/item:text-emerald-300 font-sans truncate">
-                                                        {{ $gLedg['name'] }}
-                                                    </span>
-                                                @endif
+                                                <span class="text-xs font-semibold text-slate-200 group-hover/item:text-emerald-300 font-sans truncate">
+                                                    {{ $gLedg['name'] }}
+                                                </span>
+                                                <span class="text-[10px] font-bold font-mono {{ $balColor }} ml-2 shrink-0">
+                                                    {{ $balText }}
+                                                </span>
                                             </button>
+                                            @endif
                                         @empty
                                             <div class="px-3 py-3 text-center text-[10px] text-slate-500 italic">কোনো খতিয়ান
                                                 যুক্ত নেই</div>
@@ -730,7 +753,7 @@
         </div>
     </template>
 
-    <!-- Modal 4: "নতুন খতিয়ান / সম্পাদনা খতিয়ান" modal form -->
+        <!-- Modal 4: "নতুন খতিয়ান / সম্পাদনা খতিয়ান" modal form -->
     <template x-teleport="body">
         <div x-data="{ show: @entangle('showNewKhotiyanModal') }" x-show="show" @click.self="show = false"
             class="fixed inset-0 z-[999999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
@@ -773,8 +796,21 @@
                         @enderror
                     </div>
 
-                    <!-- Group Dropdown: Dynamic with filter/add & Folder Icon (Teleported to Root) -->
-                    <div class="relative" x-data="{ openGroup: false, search: '', dropRect: null }">
+                    <!-- Group Dropdown: Dynamic with filter/add -->
+                    <div class="relative" x-data="{
+                        openGroup: false,
+                        search: '',
+                        dropRect: null,
+                        groupStyle() {
+                            if (!this.dropRect) return '';
+                            const gap = 6;
+                            const estH = 300;
+                            const top = (window.innerHeight - this.dropRect.bottom - gap) >= estH
+                                ? (this.dropRect.bottom + gap)
+                                : Math.max(8, this.dropRect.top - gap - estH);
+                            return 'left: ' + this.dropRect.left + 'px; top: ' + top + 'px; width: ' + this.dropRect.width + 'px; position: fixed;';
+                        }
+                    }">
                         <label
                             class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">খতিয়ানের
                             গ্রুপ</label>
@@ -791,12 +827,12 @@
                         <template x-teleport="body">
                             <div x-show="openGroup" @click.outside="openGroup = false" x-transition
                                 class="fixed z-[99999999] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden font-sans"
-                                :style="dropRect ? ('left: ' + dropRect.left + 'px; top: ' + (dropRect.bottom + 6) + 'px; width: ' + dropRect.width + 'px; position: fixed;') : ''"
+                                :style="groupStyle()"
                                 x-cloak>
                                 <!-- Single Filter + Add Input -->
                                 <div
                                     class="p-2 border-b border-gray-100 dark:border-slate-800 flex items-center gap-1.5">
-                                    <input type="text" x-model="search" wire:model="newGroupInput"
+                                    <input type="text" x-model="search"
                                         placeholder="ফিল্টার বা নতুন গ্রুপ..."
                                         class="flex-1 min-w-0 py-1.5 px-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 transition-all font-sans font-medium"
                                         @keydown.enter.prevent="$wire.addGroup(search); search = ''">
@@ -806,17 +842,12 @@
                                     </button>
                                 </div>
 
-                                <!-- Options List with Folder Icons (Delete removed) -->
+                                <!-- Options List in classical style without folder icon -->
                                 <div class="max-h-60 overflow-y-auto py-1">
                                     @foreach($ledgerGroups as $group)
                                         <div class="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all cursor-pointer flex items-center gap-2"
                                             x-show="search === '' || {{ json_encode($group) }}.toLowerCase().includes(search.toLowerCase())"
                                             @click="$wire.set('newLedgerGroup', {{ json_encode($group) }}); openGroup = false; search = ''">
-                                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none"
-                                                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0A2.25 2.25 0 004.5 15h15a2.25 2.25 0 002.25-2.25m-19.5 0v.243a2.25 2.25 0 00.864 1.765l.775.62c.39.312.617.781.617 1.274v1.848a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25v-1.848c0-.493.227-.962.617-1.274l.775-.62a2.25 2.25 0 00.864-1.765V12.75M3.75 6h4.875c.621 0 1.15.402 1.314 1.002L10.3 8.5H20.25A2.25 2.25 0 0122.5 10.75v.75H1.5v-.75A2.25 2.25 0 013.75 6z" />
-                                            </svg>
                                             <span
                                                 class="text-xs font-semibold text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans block truncate">
                                                 {{ $group }}
@@ -844,7 +875,6 @@
             </div>
         </div>
     </template>
-
     <!-- Modal 3: "গ্রুপ অনুযায়ী পেমেন্ট রিপোর্ট" -->
     <template x-teleport="body">
         <div x-data="{ open: @entangle('showReportModal') }" x-show="open" @click.self="open = false"
@@ -1246,3 +1276,5 @@
     </style>
 
 </div>
+
+

@@ -287,7 +287,20 @@
                         </div>
 
                         <!-- Group Dropdown: Dynamic with filter/add & Folder Icon (Teleported to Root) -->
-                        <div class="relative" x-data="{ open2: false, search: '', rect2: null }">
+                        <div class="relative" x-data="{
+                            open2: false,
+                            search: '',
+                            rect2: null,
+                            groupStyle2() {
+                                if (!this.rect2) return '';
+                                const gap = 6;
+                                const estH = 300;
+                                const top = (window.innerHeight - this.rect2.bottom - gap) >= estH
+                                    ? (this.rect2.bottom + gap)
+                                    : Math.max(8, this.rect2.top - gap - estH);
+                                return 'left: ' + this.rect2.left + 'px; top: ' + top + 'px; width: ' + this.rect2.width + 'px; position: fixed;';
+                            }
+                        }">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">খতিয়ানের গ্রুপ</label>
                             <button type="button" @click="open2 = !open2; rect2 = $el.getBoundingClientRect()"
                                 class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none cursor-pointer text-left transition-all">
@@ -305,7 +318,7 @@
                             <template x-teleport="body">
                             <div x-show="open2" @click.outside="open2 = false" x-transition
                                 class="fixed z-[99999999] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden font-sans"
-                                :style="rect2 ? ('left: ' + rect2.left + 'px; top: ' + (rect2.bottom + 6) + 'px; width: ' + rect2.width + 'px; position: fixed;') : ''"
+                                :style="groupStyle2()"
                                 x-cloak>
                                 <!-- Single Filter + Add Input -->
                                 <div class="p-2 border-b border-gray-100 dark:border-slate-800 flex items-center gap-1.5">
