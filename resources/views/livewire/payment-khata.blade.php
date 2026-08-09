@@ -438,62 +438,83 @@
                             class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-808 dark:text-white text-sm font-semibold font-sans focus:outline-none focus:ring-2 focus:ring-emerald-500/20"></textarea>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-3">
-                        <!-- Qty -->
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পরিমাণ</label>
-                            <input type="number" wire:model.live.debounce.300ms="quantity"
-                                class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
-                                placeholder="0">
-                        </div>
-                        <!-- Rate -->
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">রেট</label>
-                            <input type="number" wire:model.live.debounce.300ms="rate"
-                                class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
-                                placeholder="0">
-                        </div>
-                        <!-- Total Bill -->
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">মোট
-                                বিল</label>
-                            <input type="number" step="0.01" wire:model.live.debounce.300ms="totalBill"
-                                class="w-full px-3 py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-700/60 bg-emerald-50/40 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs font-black font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                                placeholder="0">
-                        </div>
+                    <!-- Advance Payment Field (shown when type = অগ্রিম) -->
+                    <div x-show="$wire.paymentType === 'অগ্রিম'" x-cloak>
+                        <label class="block text-xs font-bold text-rose-500 dark:text-rose-400 mb-1.5 font-sans">
+                            অগ্রিম টাকা <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" step="0.01" wire:model="advance"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-808 dark:text-white text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            placeholder="0">
+                        @error('advance')
+                            <p class="text-red-500 text-xs mt-1.5 font-semibold font-sans">{{ $message }}</p>
+                        @enderror
                     </div>
 
-                    <div class="grid grid-cols-3 gap-3">
-                        <!-- Deduction -->
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">কর্তন</label>
-                            <input type="number" wire:model.live.debounce.300ms="deduction"
-                                class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
-                                placeholder="0">
+                    <!-- Due Payment Field (shown when type = বাকি) -->
+                    <div x-show="$wire.paymentType === 'বাকি'" x-cloak>
+                        <label class="block text-xs font-bold text-rose-500 dark:text-rose-400 mb-1.5 font-sans">
+                            বাকি টাকা <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" step="0.01" wire:model="purchaseReceive"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-808 dark:text-white text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            placeholder="0">
+                        @error('purchaseReceive')
+                            <p class="text-red-500 text-xs mt-1.5 font-semibold font-sans">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Regular Payment Fields (shown when type = রেগুলার or empty) -->
+                    <div x-show="$wire.paymentType === 'রেগুলার' || $wire.paymentType === ''" x-cloak>
+                        <div class="grid grid-cols-3 gap-3">
+                            <!-- Qty -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পরিমাণ</label>
+                                <input type="number" wire:model.live.debounce.300ms="quantity"
+                                    class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
+                                    placeholder="0">
+                            </div>
+                            <!-- Rate -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">রেট</label>
+                                <input type="number" wire:model.live.debounce.300ms="rate"
+                                    class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
+                                    placeholder="0">
+                            </div>
+                            <!-- Total Bill -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">মোট বিল</label>
+                                <input type="number" step="0.01" wire:model.live.debounce.300ms="totalBill"
+                                    class="w-full px-3 py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-700/60 bg-emerald-50/40 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs font-black font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                    placeholder="0">
+                            </div>
                         </div>
-                        <!-- Payment -->
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট</label>
-                            <input type="number" wire:model.live.debounce.300ms="paymentAmount"
-                                class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
-                                placeholder="0">
-                            @error('paymentAmount')
-                                <p class="text-red-500 text-xs mt-1.5 font-semibold font-sans">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <!-- Purchase/Receive -> Payment Kom/Beshi -->
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট
-                                কম/বেশি</label>
-                            <input type="number" wire:model="purchaseReceive"
-                                class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
-                                placeholder="0">
+
+                        <div class="grid grid-cols-3 gap-3 mt-3">
+                            <!-- Deduction -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">কর্তন</label>
+                                <input type="number" wire:model.live.debounce.300ms="deduction"
+                                    class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
+                                    placeholder="0">
+                            </div>
+                            <!-- Payment -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট</label>
+                                <input type="number" wire:model.live.debounce.300ms="paymentAmount"
+                                    class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
+                                    placeholder="0">
+                                @error('paymentAmount')
+                                    <p class="text-red-500 text-xs mt-1.5 font-semibold font-sans">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <!-- Purchase/Receive -> Payment Kom/Beshi -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট কম/বেশি</label>
+                                <input type="number" wire:model="purchaseReceive"
+                                    class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
+                                    placeholder="0">
+                            </div>
                         </div>
                     </div>
 
@@ -630,13 +651,18 @@
                         <div
                             class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[420px] overflow-y-auto pr-1">
                             @forelse($groupedLedgers as $groupName => $groupLedgers)
-                                @php $hasItems = count($groupLedgers) > 0; @endphp
+                                @php
+                                    // Exclude the group-name fallback item from count & hasItems check
+                                    $realLedgers = array_values(array_filter($groupLedgers, fn($l) => empty($l['is_group_fallback'])));
+                                    $hasItems = count($realLedgers) > 0;
+                                    $displayCount = count($realLedgers);
+                                @endphp
                                 <div @mouseenter="if ({{ $hasItems ? 'true' : 'false' }}) { hoverGroup = {{ json_encode($groupName) }}; dropRect = $el.getBoundingClientRect(); }"
                                     @mouseleave="setTimeout(() => { if (hoverGroup === {{ json_encode($groupName) }} && !staying) hoverGroup = null; }, 150)"
                                     class="relative">
 
                                     <!-- Group Box Card -->
-                                    <div @click="if ({{ $hasItems ? 'true' : 'false' }}) { hoverGroup = (hoverGroup === {{ json_encode($groupName) }} ? null : {{ json_encode($groupName) }}); dropRect = $el.getBoundingClientRect(); } else { $wire.selectLedger({{ json_encode($groupName) }}); hoverGroup = null; showKhotiyanModal = false; }"
+                                    <div @click="if ({{ $hasItems ? 'true' : 'false' }}) { hoverGroup = (hoverGroup === {{ json_encode($groupName) }} ? null : {{ json_encode($groupName) }}); dropRect = $el.getBoundingClientRect(); } else { $wire.selectLedger({{ json_encode($groupName) }}); $wire.set('showKhotiyanModal', false); hoverGroup = null; }"
                                         class="w-full p-3 bg-slate-50 dark:bg-slate-800/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-gray-200 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-2xl cursor-pointer transition-all group/box flex items-center justify-between shadow-2xs relative">
 
                                         <!-- Group Name & Count Badge -->
@@ -646,7 +672,7 @@
                                         </span>
                                         <span
                                             class="shrink-0 text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 rounded-full px-2 py-0.5 font-black font-mono leading-none ml-1.5">
-                                            {{ count($groupLedgers) }}
+                                            {{ $displayCount }}
                                         </span>
                                     </div>
                                 </div>
@@ -674,13 +700,20 @@
                                     <div x-show="hoverGroup === {{ json_encode($gName) }}"
                                         class="max-h-56 overflow-y-auto py-1">
                                         @forelse($gLedgers as $gLedg)
-                                            <button type="button" wire:click="selectLedger({{ json_encode($gLedg['name']) }})"
-                                                @click="hoverGroup = null; staying = false; showKhotiyanModal = false"
+                                            <button type="button"
+                                                wire:click="selectLedger({{ json_encode($gLedg['name']) }})"
+                                                @click="hoverGroup = null; staying = false; $wire.set('showKhotiyanModal', false)"
                                                 class="w-full flex items-center justify-between px-3.5 py-2 hover:bg-emerald-700/20 transition-colors text-left cursor-pointer group/item">
-                                                <span
-                                                    class="text-xs font-semibold text-slate-200 group-hover/item:text-emerald-300 font-sans truncate">
-                                                    {{ $gLedg['name'] }}
-                                                </span>
+                                                @if(!empty($gLedg['is_group_fallback']))
+                                                    <span class="text-xs font-black text-emerald-400 group-hover/item:text-emerald-300 font-sans truncate">
+                                                        📁 {{ $gLedg['name'] }}
+                                                        <span class="text-[9px] text-slate-500 font-normal ml-1">(গ্রুপ ডিফল্ট)</span>
+                                                    </span>
+                                                @else
+                                                    <span class="text-xs font-semibold text-slate-200 group-hover/item:text-emerald-300 font-sans truncate">
+                                                        {{ $gLedg['name'] }}
+                                                    </span>
+                                                @endif
                                             </button>
                                         @empty
                                             <div class="px-3 py-3 text-center text-[10px] text-slate-500 italic">কোনো খতিয়ান
@@ -793,34 +826,6 @@
                                 </div>
                             </div>
                         </template>
-                    </div>
-
-                    <!-- Rate & Divisor side by side -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-600 dark:text-slate-350 mb-1.5 font-sans">খতিয়ানের
-                                রেট</label>
-                            <input type="number" step="0.01" wire:model="newLedgerRate" placeholder="0"
-                                class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-sm font-semibold font-sans focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20">
-                        </div>
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-600 dark:text-slate-350 mb-1.5 font-sans">পরিমাণ
-                                ভাজক (যদি থাকে)</label>
-                            <input type="number" min="1" wire:model="newLedgerDivisor" placeholder="1"
-                                class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-sm font-semibold font-sans focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20">
-                        </div>
-                    </div>
-
-                    <!-- Notes section inside New Khotiyan Modal -->
-                    <div
-                        class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-600 dark:text-amber-400 font-medium font-sans leading-relaxed space-y-1.5">
-                        <p><strong>নোট ১:</strong> কত পরিমাণ কাজের জন্য এই রেট দেওয়া হবে, তা 'পরিমাণ ভাজক' ঘরে উল্লেখ
-                            করুন। উদাহরণস্বরূপ: প্রোডাকশন রেট যদি ৮০০ টাকা হয় এবং তা ১০০০ ইট কাটার জন্য হয়, তবে পরিমাণ
-                            ভাজক হবে ১০০০।</p>
-                        <p><strong>নোট ২:</strong> যদি কাজ পিস (Piece) বা একক অনুযায়ী হয়, তবে পরিমাণ ভাজকের ঘরে ১ দিন।
-                            এক্ষেত্রে সিস্টেম স্বয়ংক্রিয়ভাবে প্রতি পিসের রেট অনুযায়ী মোট বিল হিসাব করবে।</p>
                     </div>
 
                     <!-- Action buttons -->

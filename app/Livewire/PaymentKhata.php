@@ -344,8 +344,8 @@ class PaymentKhata extends Component
             return;
         }
 
-        $rateVal = ($this->newLedgerRate !== '' && $this->newLedgerRate !== null) ? floatval($this->newLedgerRate) : null;
-        $divisorVal = ($this->newLedgerDivisor !== '' && $this->newLedgerDivisor !== null) ? floatval($this->newLedgerDivisor) : null;
+        $rateVal = ($this->newLedgerRate !== '' && $this->newLedgerRate !== null) ? floatval($this->newLedgerRate) : 0;
+        $divisorVal = ($this->newLedgerDivisor !== '' && $this->newLedgerDivisor !== null && floatval($this->newLedgerDivisor) > 0) ? floatval($this->newLedgerDivisor) : 1;
 
         $groupsJson = Setting::get('ledger_groups');
         $existingGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
@@ -382,7 +382,7 @@ class PaymentKhata extends Component
 
             if ($this->selectedLedger === $oldName) {
                 $this->selectedLedger = $name;
-                $this->rate = $rateVal !== null ? $rateVal : '';
+                $this->rate = $rateVal !== 0 ? $rateVal : '';
                 $this->divisor = ($divisorVal !== null && $divisorVal > 0) ? $divisorVal : 1;
                 $this->calculateTotalBill();
             }
@@ -401,7 +401,7 @@ class PaymentKhata extends Component
                 'divisor' => $divisorVal,
             ]);
             $this->selectedLedger = $name;
-            $this->rate = $rateVal !== null ? $rateVal : '';
+            $this->rate = $rateVal !== 0 ? $rateVal : '';
             $this->divisor = ($divisorVal !== null && $divisorVal > 0) ? $divisorVal : 1;
             $this->calculateTotalBill();
 
@@ -454,7 +454,14 @@ class PaymentKhata extends Component
             $this->deduction = floatval($payment['deduction']) > 0 ? floatval($payment['deduction']) : '';
             $this->paymentAmount = floatval($payment['payment']) > 0 ? floatval($payment['payment']) : '';
             $this->purchaseReceive = floatval($payment['purchase_receive']) > 0 ? floatval($payment['purchase_receive']) : '';
-            $this->paymentType = 'রেগুলার';
+            
+            if (floatval($payment['advance']) > 0 && floatval($payment['payment']) == 0 && floatval($payment['qty']) == 0) {
+                $this->paymentType = 'অগ্রিম';
+            } elseif (floatval($payment['purchase_receive']) > 0 && floatval($payment['payment']) == 0 && floatval($payment['qty']) == 0) {
+                $this->paymentType = 'বাকি';
+            } else {
+                $this->paymentType = 'রেগুলার';
+            }
 
             if (!empty($payment['date'])) {
                 $parts = explode('/', $payment['date']);
@@ -473,15 +480,37 @@ class PaymentKhata extends Component
 
     public function submitPayment()
     {
-        $this->validate([
-            'selectedLedger' => 'required',
-            'paymentType' => 'required',
-            'paymentAmount' => 'required|numeric'
-        ], [
-            'selectedLedger.required' => 'খতিয়ান নির্বাচন করুন',
-            'paymentType.required' => 'পেমেন্টের ধরণ সিলেক্ট করুন',
-            'paymentAmount.required' => 'পেমেন্ট পরিমাণ লিখুন'
-        ]);
+        if (str_contains($this->paymentType, 'অগ্ৰিম') || str_contains($this->paymentType, 'অগ্রিম')) {
+            $this->validate([
+                'selectedLedger' => 'required',
+                'paymentType' => 'required',
+                'advance' => 'required|numeric'
+            ], [
+                'selectedLedger.required' => 'খতিয়ান নির্বাচন করুন',
+                'paymentType.required' => 'পেমেন্টের ধরণ সিলেক্ট করুন',
+                'advance.required' => 'অগ্রিম টাকা লিখুন'
+            ]);
+        } elseif (str_contains($this->paymentType, 'বাকি')) {
+            $this->validate([
+                'selectedLedger' => 'required',
+                'paymentType' => 'required',
+                'purchaseReceive' => 'required|numeric'
+            ], [
+                'selectedLedger.required' => 'খতিয়ান নির্বাচন করুন',
+                'paymentType.required' => 'পেমেন্টের ধরণ সিলেক্ট করুন',
+                'purchaseReceive.required' => 'বাকি টাকা লিখুন'
+            ]);
+        } else {
+            $this->validate([
+                'selectedLedger' => 'required',
+                'paymentType' => 'required',
+                'paymentAmount' => 'required|numeric'
+            ], [
+                'selectedLedger.required' => 'খতিয়ান নির্বাচন করুন',
+                'paymentType.required' => 'পেমেন্টের ধরণ সিলেক্ট করুন',
+                'paymentAmount.required' => 'পেমেন্ট পরিমাণ লিখুন'
+            ]);
+        }
 
         $docUrl = '#';
         $hasDoc = false;
@@ -704,13 +733,18 @@ class PaymentKhata extends Component
 
         $groupedLedgers = [];
         foreach ($this->ledgerGroups as $grp) {
-            $groupedLedgers[$grp] = [];
+            // Always seed each group with the group name itself as the first (fallback) item
+            $groupedLedgers[$grp] = [
+                ['id' => null, 'name' => $grp, 'group' => $grp, 'rate' => 0, 'serial' => 0, 'is_group_fallback' => true],
+            ];
         }
 
         foreach ($dbLedgers as $ledger) {
             $g = trim($ledger->group) ?: 'অন্যান্য';
             if (!isset($groupedLedgers[$g])) {
-                $groupedLedgers[$g] = [];
+                $groupedLedgers[$g] = [
+                    ['id' => null, 'name' => $g, 'group' => $g, 'rate' => 0, 'serial' => 0, 'is_group_fallback' => true],
+                ];
             }
             $groupedLedgers[$g][] = [
                 'id' => $ledger->id,
@@ -718,6 +752,7 @@ class PaymentKhata extends Component
                 'group' => $ledger->group,
                 'rate' => $ledger->rate,
                 'serial' => $ledger->serial,
+                'is_group_fallback' => false,
             ];
         }
 

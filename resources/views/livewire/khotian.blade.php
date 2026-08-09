@@ -96,26 +96,94 @@ if (!function_exists('toKhotianDateTimeParts')) {
             </div>
         </div>
 
-        {{-- Ledger Groups Grid --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            @forelse($ledgersData as $data)
-                <div wire:click="selectLedger('{{ $data->ledger }}')"
-                     class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-5 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center gap-4">
-                    <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/20 text-[#034C3C] dark:text-emerald-400 rounded-2xl flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                        </svg>
+        {{-- Ledger Groups Grid with Hover Dropdown (Matching Screenshot 4) --}}
+        <div x-data="{ hoverGroup: null, dropRect: null, staying: false }" class="relative">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @forelse($groupedData as $groupName => $gData)
+                    @php 
+                        $subKhotiyansCount = max(0, count($gData['khotiyans']) - 1); // Exclude group-name fallback item
+                        $hasSubs = $subKhotiyansCount > 0;
+                    @endphp
+
+                    <div @mouseenter="if ({{ $hasSubs ? 'true' : 'false' }}) { hoverGroup = {{ json_encode($groupName) }}; dropRect = $el.getBoundingClientRect(); }"
+                         @mouseleave="setTimeout(() => { if (hoverGroup === {{ json_encode($groupName) }} && !staying) hoverGroup = null; }, 150)"
+                         class="relative">
+                        
+                        <!-- Group Box Card -->
+                        <div wire:click="selectLedger('{{ $groupName }}')"
+                             class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-5 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between gap-4 group">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/20 text-[#034C3C] dark:text-emerald-400 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="text-sm font-black text-gray-808 dark:text-white font-sans truncate" title="{{ $groupName }}">{{ $groupName }}</h4>
+                                    <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
+                                        ৳ {{ toBanglaNum(number_format($gData['total_payment'])) }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if($hasSubs)
+                                <span class="text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 rounded-full px-2.5 py-1 font-black font-mono whitespace-nowrap">
+                                    {{ toBanglaNum($subKhotiyansCount) }} টি
+                                </span>
+                            @endif
+                        </div>
                     </div>
-                    <div>
-                        <h4 class="text-sm font-black text-gray-808 dark:text-white font-sans">{{ $data->ledger }}</h4>
-                        <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">৳ {{ toBanglaNum(number_format($data->total_payment)) }}</p>
+                @empty
+                    <div class="col-span-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-12 text-center text-gray-400 font-semibold text-sm">
+                        কোনো খতিয়ান রেকর্ড পাওয়া যায়নি।
                     </div>
+                @endforelse
+            </div>
+
+            <!-- Floating Hover Dropdown for Sub-Khotiyans (Matching Screenshot 4!) -->
+            <template x-teleport="body">
+                <div x-show="hoverGroup !== null"
+                     @mouseenter="staying = true"
+                     @mouseleave="staying = false; hoverGroup = null"
+                     class="fixed z-[999999] w-72 bg-white dark:bg-slate-900 border border-emerald-500/40 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden font-sans p-2 space-y-1"
+                     :style="dropRect ? ('left: ' + Math.max(8, Math.min(dropRect.left + dropRect.width/2 - 144, window.innerWidth - 296)) + 'px; top: ' + (dropRect.bottom + 6) + 'px;') : ''"
+                     x-cloak>
+                    @foreach($groupedData as $gName => $gData)
+                        <div x-show="hoverGroup === {{ json_encode($gName) }}" class="space-y-1">
+                            <div class="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl flex items-center justify-between mb-1">
+                                <span class="text-xs font-black text-[#034C3C] dark:text-emerald-400 truncate" x-text="hoverGroup"></span>
+                                <span class="text-[10px] text-gray-500 dark:text-slate-400 font-semibold">খতিয়ান সমূহ</span>
+                            </div>
+                            <div class="max-h-60 overflow-y-auto space-y-1 custom-scrollbar pr-1">
+                                @forelse($gData['khotiyans'] as $kName => $kSum)
+                                    <button type="button"
+                                            wire:click="selectLedger('{{ $kName }}')"
+                                            @click="hoverGroup = null; staying = false"
+                                            class="w-full flex items-center justify-between p-2 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-xl transition-all text-left cursor-pointer group/item">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            @if($kName === $gName)
+                                                <span class="text-xs">📁</span>
+                                                <span class="text-xs font-black text-emerald-600 dark:text-emerald-400 group-hover/item:text-emerald-700 dark:group-hover/item:text-emerald-300 truncate">
+                                                    {{ $kName }}
+                                                    <span class="text-[9px] text-gray-400 font-normal ml-1">(সব)</span>
+                                                </span>
+                                            @else
+                                                <span class="text-xs">📖</span>
+                                                <span class="text-xs font-bold text-gray-808 dark:text-slate-200 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 truncate">{{ $kName }}</span>
+                                            @endif
+                                        </div>
+                                        <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap ml-2">
+                                            ৳ {{ toBanglaNum(number_format($kSum)) }}
+                                        </span>
+                                    </button>
+                                @empty
+                                    <div class="px-3 py-2 text-center text-xs text-gray-400 font-sans italic">কোনো খতিয়ান যুক্ত নেই</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-            @empty
-                <div class="col-span-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-12 text-center text-gray-400 font-semibold text-sm">
-                    কোনো খতিয়ান রেকর্ড পাওয়া যায়নি।
-                </div>
-            @endforelse
+            </template>
         </div>
 
     <!-- View 2: Ledger Detail Page -->
