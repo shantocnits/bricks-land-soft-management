@@ -152,6 +152,9 @@ class Khotian extends Component
             }
 
             // 2. Map payments to Group and Sub-Khotiyans with Dynamic Fallback
+            // Track every ledger name that appears in a payment record (even if amounts are 0)
+            $paymentKhotiyans = []; // ledger_name => group_name
+
             foreach ($payments as $p) {
                 $name = trim($p->ledger);
                 $lowerName = mb_strtolower($name);
@@ -165,12 +168,20 @@ class Khotian extends Component
                     $groupedData[$group] = $initGroup($group);
                 }
 
+                // Record that this ledger name appeared in a payment
+                $paymentKhotiyans[$name] = $group;
+
                 $groupedData[$group]['has_payments'] = true;
                 $groupedData[$group]['total_payment'] += $payAmount;
                 $groupedData[$group]['total_advance'] += $advanceAmount;
                 $groupedData[$group]['total_bill'] += $billAmount;
 
-                // Match with sub-khotiyans
+                // Ensure this khotiyan name is seeded in the group
+                if (!isset($groupedData[$group]['khotiyans'][$name])) {
+                    $groupedData[$group]['khotiyans'][$name] = $initKhotiyan();
+                }
+
+                // Match with sub-khotiyans (case-insensitive)
                 $matchedKey = null;
                 foreach (array_keys($groupedData[$group]['khotiyans']) as $kKey) {
                     if (mb_strtolower($kKey) === $lowerName) {
@@ -185,16 +196,12 @@ class Khotian extends Component
                     $groupedData[$group]['khotiyans'][$matchedKey]['bill'] += $billAmount;
                 } else {
                     $groupedData[$group]['direct_payment'] += $payAmount;
-                    if (!empty($groupedData[$group]['khotiyans'])) {
-                        if (!isset($groupedData[$group]['khotiyans'][$name])) {
-                            $groupedData[$group]['khotiyans'][$name] = $initKhotiyan();
-                        }
-                        $groupedData[$group]['khotiyans'][$name]['payment'] += $payAmount;
-                        $groupedData[$group]['khotiyans'][$name]['advance'] += $advanceAmount;
-                        $groupedData[$group]['khotiyans'][$name]['bill'] += $billAmount;
-                    } else {
-                        $groupedData[$group]['khotiyans'][$name] = ['payment' => $payAmount, 'advance' => $advanceAmount, 'bill' => $billAmount, 'net' => 0];
+                    if (!isset($groupedData[$group]['khotiyans'][$name])) {
+                        $groupedData[$group]['khotiyans'][$name] = $initKhotiyan();
                     }
+                    $groupedData[$group]['khotiyans'][$name]['payment'] += $payAmount;
+                    $groupedData[$group]['khotiyans'][$name]['advance'] += $advanceAmount;
+                    $groupedData[$group]['khotiyans'][$name]['bill'] += $billAmount;
                 }
             }
 
@@ -206,11 +213,11 @@ class Khotian extends Component
 
                 foreach ($gData['khotiyans'] as $kName => &$kData) {
                     $paymentSum = $kData['payment'] + $kData['advance'];
+                    // A khotiyan shows if: it has ANY payment record (even amounts=0), or has financial activity
+                    $hasPaymentRecord = array_key_exists($kName, $paymentKhotiyans);
                     $hasActivity = ($paymentSum != 0 || $kData['bill'] != 0);
-                    $isDbLedger = Ledger::active()->where('name', $kName)->where('group', $gData['group_name'])->exists();
 
-                    // Keep khotiyan item if registered in DB OR has any payment/bill activity
-                    if ($isDbLedger || $hasActivity) {
+                    if ($hasPaymentRecord || $hasActivity) {
                         $kData['net'] = ($kData['payment'] + $kData['advance']) - $kData['bill'];
                         $kData['payment_sum'] = $paymentSum;
                         $groupNet += $kData['net'];
@@ -224,7 +231,7 @@ class Khotian extends Component
                 $gData['total_net_balance'] = $groupNet;
                 $gData['total_payment_sum'] = $groupTotalPayment;
 
-                // Determine primary click ledger
+                // Determine primary click ledger (prefer non-group-name item)
                 $primaryName = null;
                 foreach (array_keys($gData['khotiyans']) as $kName) {
                     if ($kName !== $gData['group_name']) {

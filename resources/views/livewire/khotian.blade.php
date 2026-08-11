@@ -144,8 +144,15 @@ if (!function_exists('toKhotianDateTimeParts')) {
                             $primaryClick = $hasSubs ? ($gData['primary_name'] ?? $groupName) : $firstOptionKey;
                             $isGroupInactive = \App\Support\LedgerGroups::isInactive($groupName);
                         @endphp
-                        <div wire:click="selectLedger('{{ $primaryClick }}')"
-                             class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-5 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between gap-4 group {{ $isGroupInactive ? 'opacity-80' : '' }}">
+                        @if($hasSubs)
+                            {{-- Multiple khotiyans: card click opens dropdown, NOT navigate --}}
+                            <div @click="openDropdown({{ json_encode($groupName) }}, $el)"
+                                 class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-5 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between gap-4 group {{ $isGroupInactive ? 'opacity-80' : '' }}">
+                        @else
+                            {{-- Single khotiyan: card click navigates directly --}}
+                            <div wire:click="selectLedger('{{ $primaryClick }}')"
+                                 class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-5 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between gap-4 group {{ $isGroupInactive ? 'opacity-80' : '' }}">
+                        @endif
                             <div class="flex items-center gap-4 min-w-0">
                                 <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/20 text-[#034C3C] dark:text-emerald-400 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

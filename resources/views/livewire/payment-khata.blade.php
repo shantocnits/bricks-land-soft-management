@@ -642,7 +642,7 @@
                         খতিয়ান নির্বাচন করুন
                     </h2>
 
-                    <!-- Search bar -->
+                    <!-- Search bar & Add Khotiyan Button -->
                     <div class="flex items-center gap-3 mb-5">
                         <div class="relative flex-grow">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-450">
@@ -656,6 +656,13 @@
                                 class="w-full py-2.5 pl-9 pr-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-xs font-semibold text-gray-805 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250 transition-all font-sans"
                                 placeholder="গ্রুপ বা খতিয়ান নাম দিয়ে সার্চ করুন">
                         </div>
+                        <button type="button" wire:click="openQuickAddLedgerModal"
+                            class="px-3.5 py-2.5 bg-[#034C3C] hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all font-sans flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            নতুন খতিয়ান
+                        </button>
                     </div>
 
                     <!-- Professional Group Box Cards Grid -->
@@ -746,6 +753,8 @@
             </div>
         </div>
     </template>
+
+    @include('livewire.partials.quick-add-ledger-modal')
 
 
     <!-- Modal 3: "গ্রুপ অনুযায়ী পেমেন্ট রিপোর্ট" -->

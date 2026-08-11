@@ -50,6 +50,12 @@ class PaymentKhata extends Component
     public string $khotiyanSearch = '';
     public bool $showKhotiyanModal = false;
 
+    // Quick Add Ledger Modal
+    public bool $showQuickAddLedgerModal = false;
+    public string $quickLedgerSerial = '';
+    public string $quickLedgerName = '';
+    public string $quickLedgerGroup = '';
+
     // Report tab state
     public string $reportTab = 'date'; // 'date' or 'all'
 
@@ -78,6 +84,73 @@ class PaymentKhata extends Component
     public function syncLedgerGroups(): array
     {
         return LedgerGroups::all(true, false);
+    }
+
+    public function openQuickAddLedgerModal()
+    {
+        $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
+        $this->quickLedgerSerial = (string) ($maxSerial + 1);
+        $this->quickLedgerName = '';
+        $this->quickLedgerGroup = '';
+        $this->showQuickAddLedgerModal = true;
+    }
+
+    public function resetQuickAddLedgerForm()
+    {
+        $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
+        $this->quickLedgerSerial = (string) ($maxSerial + 1);
+        $this->quickLedgerName = '';
+        $this->quickLedgerGroup = '';
+    }
+
+    public function saveQuickLedger()
+    {
+        if (auth()->user()->hasRole('demo')) {
+            $this->dispatch('show-toast', message: 'ডেমো মোডে খতিয়ান যোগ করা সম্ভব নয়।', type: 'danger');
+            $this->showQuickAddLedgerModal = false;
+            return;
+        }
+
+        $this->validate([
+            'quickLedgerGroup' => 'required|string',
+            'quickLedgerName'  => 'nullable|string|max:255',
+        ], [
+            'quickLedgerGroup.required' => 'খতিয়ানের গ্রুপ নির্বাচন করুন।',
+        ]);
+
+        $group = trim($this->quickLedgerGroup);
+        $name = trim($this->quickLedgerName);
+
+        if ($name !== '') {
+            $existing = Ledger::where('name', $name)->where('group', $group)->first();
+            if ($existing) {
+                $existing->update([
+                    'serial' => $this->quickLedgerSerial ? intval($this->quickLedgerSerial) : $existing->serial,
+                    'is_active' => true,
+                ]);
+            } else {
+                $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
+                $newSerial = $this->quickLedgerSerial ? intval($this->quickLedgerSerial) : ($maxSerial + 1);
+
+                Ledger::create([
+                    'serial' => $newSerial,
+                    'name' => $name,
+                    'group' => $group,
+                    'group_type' => 'other',
+                    'divisor' => 1,
+                    'is_active' => true,
+                ]);
+            }
+            $this->dispatch('show-toast', message: 'নতুন খতিয়ান তৈরি করা হয়েছে।', type: 'success');
+        } else {
+            $this->dispatch('show-toast', message: 'খতিয়ান গ্রুপ নির্বাচন করা হয়েছে।', type: 'success');
+        }
+
+        $this->showQuickAddLedgerModal = false;
+        $this->resetQuickAddLedgerForm();
+
+        // Refresh ledger groups list
+        $this->ledgerGroups = $this->syncLedgerGroups();
     }
 
     public function loadPaymentsList()
