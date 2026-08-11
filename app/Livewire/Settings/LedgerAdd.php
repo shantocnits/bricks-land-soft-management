@@ -4,8 +4,8 @@ namespace App\Livewire\Settings;
 
 use Livewire\Component;
 use App\Models\Ledger;
-use App\Models\Setting;
 use App\Models\Payment;
+use App\Support\LedgerGroups;
 
 class LedgerAdd extends Component
 {
@@ -13,6 +13,7 @@ class LedgerAdd extends Component
     public $serial = '';
     public $name = '';
     public $group = '';
+    public $group_type = 'other'; // production, expense, income, other
     public $rate = '';
     public $divisor = 1;
 
@@ -28,22 +29,26 @@ class LedgerAdd extends Component
     // Dynamic dropdown options management
     public $groupOptions = [];
     public $newGroupInput = '';
+    public $newGroupType = 'other';
+
+    // Locally added groups (not yet saved to DB — saved when ledger form is submitted)
+    public $pendingGroups = [];
 
     public function rules()
     {
         return [
             'serial' => 'nullable',
-            'name' => 'required|string|max:255',
+            'name' => 'nullable|string|max:255',
             'group' => 'required|string|max:255',
+            'group_type' => 'nullable|string|in:production,expense,income,other',
             'rate' => 'nullable|numeric|min:0',
             'divisor' => 'nullable|numeric|min:1',
         ];
     }
 
     protected $messages = [
-        'name.required' => 'খতিয়ানের নাম আবশ্যক।',
         'group.required' => 'গ্রুপ আবশ্যক।',
-        'group.in' => 'গ্রুপ নির্বাচন সঠিক নয়।',
+        'group.in' => 'গ্রুপ নির্বাচন সঠিক নয়।',
     ];
 
     public $perPage = 10;
@@ -60,34 +65,49 @@ class LedgerAdd extends Component
         $this->page = max(1, (int) $page);
     }
 
-    public function syncGroupOptions()
+    public function syncGroupOptions(bool $includeInactive = false)
     {
-        $groupsJson = Setting::get('ledger_groups');
-        $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
-        
-        $dbGroups = Ledger::whereNotNull('group')
-            ->pluck('group')
-            ->map(fn($g) => trim($g))
-            ->filter(fn($g) => $g !== '')
-            ->unique()
-            ->values()
-            ->toArray();
-
-        $merged = array_merge($savedGroups, $dbGroups);
-        
-        $seen = [];
-        $unique = [];
-        foreach ($merged as $g) {
-            $trimmed = trim($g);
-            if ($trimmed === '') continue;
-            $lower = mb_strtolower($trimmed, 'UTF-8');
-            if (!isset($seen[$lower])) {
-                $seen[$lower] = true;
-                $unique[] = $trimmed;
+        $base = LedgerGroups::all(false, $includeInactive || $this->showGroupManager);
+        // Bring pending groups to the top of dropdown list
+        if (!$this->showGroupManager && !empty($this->pendingGroups)) {
+            foreach (array_reverse($this->pendingGroups) as $pg) {
+                $base = array_values(array_filter($base, fn($opt) => mb_strtolower($opt) !== mb_strtolower($pg)));
+                array_unshift($base, $pg);
             }
         }
+        $this->groupOptions = array_values($base);
+    }
 
-        $this->groupOptions = array_values($unique);
+    /**
+     * Add a new group to the local dropdown only (no DB save).
+     * DB save happens when the ledger form is submitted.
+     */
+    public function addGroup(string $name): void
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return;
+        }
+
+        // Filter out if already in pendingGroups or groupOptions
+        $this->pendingGroups = array_values(array_filter($this->pendingGroups, fn($opt) => mb_strtolower($opt) !== mb_strtolower($name)));
+        $this->groupOptions = array_values(array_filter($this->groupOptions, fn($opt) => mb_strtolower($opt) !== mb_strtolower($name)));
+
+        // Unshift to absolute top (front of array)
+        array_unshift($this->pendingGroups, $name);
+        array_unshift($this->groupOptions, $name);
+        $this->groupOptions = array_values($this->groupOptions);
+        $this->group = $name;
+        $this->newGroupInput = '';
+    }
+
+    /**
+     * Save the group_type for a group in settings.
+     */
+    protected function saveGroupType(string $group, string $groupType): void
+    {
+        // group_type is stored on the ledger record itself, no separate setting needed
+        // This method exists to satisfy legacy calls and is intentionally a no-op here.
     }
 
     public function mount()
@@ -95,46 +115,9 @@ class LedgerAdd extends Component
         $this->syncGroupOptions();
     }
 
-    public function addGroup($name = null)
-    {
-        $newGroup = trim($name !== null ? $name : $this->newGroupInput);
-        if ($newGroup !== '') {
-            $this->syncGroupOptions();
-
-            // Check case-insensitively if group exists
-            $existingGroup = null;
-            foreach ($this->groupOptions as $opt) {
-                if (mb_strtolower(trim($opt), 'UTF-8') === mb_strtolower($newGroup, 'UTF-8')) {
-                    $existingGroup = $opt;
-                    break;
-                }
-            }
-
-            if ($existingGroup) {
-                $this->group = $existingGroup;
-                $this->newGroupInput = '';
-                $this->dispatch('show-toast', message: '"' . $existingGroup . '" গ্রুপটি ইতিমধ্যেই বিদ্যমান।', type: 'warning');
-                return;
-            }
-
-            $groupsJson = Setting::get('ledger_groups');
-            $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
-
-            $savedGroups = array_values(array_filter($savedGroups, fn($g) => mb_strtolower(trim($g), 'UTF-8') !== mb_strtolower($newGroup, 'UTF-8')));
-            array_unshift($savedGroups, $newGroup);
-            Setting::set('ledger_groups', json_encode($savedGroups));
-
-            $this->syncGroupOptions();
-
-            $this->group = $newGroup;
-            $this->newGroupInput = '';
-            $this->dispatch('show-toast', message: 'নতুন গ্রুপ যুক্ত করা হয়েছে।', type: 'success');
-        }
-    }
-
     public function openGroupManager()
     {
-        $this->syncGroupOptions();
+        $this->syncGroupOptions(true);
         $this->confirmingDeleteGroup = null;
         $this->showGroupManager = true;
     }
@@ -143,6 +126,7 @@ class LedgerAdd extends Component
     {
         $this->showGroupManager = false;
         $this->confirmingDeleteGroup = null;
+        $this->syncGroupOptions(false);
     }
 
     public function askDeleteGroup($groupName)
@@ -155,6 +139,11 @@ class LedgerAdd extends Component
         $this->confirmingDeleteGroup = null;
     }
 
+    /**
+     * Soft / Hard Delete Logic for Group:
+     * - Has payments → soft delete (mark group as inactive, mark ledgers inactive, hide from dropdowns)
+     * - No payments → hard delete
+     */
     public function deleteGroupConfirmed()
     {
         $groupToDelete = $this->confirmingDeleteGroup;
@@ -166,15 +155,53 @@ class LedgerAdd extends Component
             return;
         }
 
-        $this->groupOptions = array_values(array_diff($this->groupOptions, [$groupToDelete]));
-        Setting::set('ledger_groups', json_encode($this->groupOptions));
+        // Check if any payment exists for this group's ledgers
+        $groupLedgerNames = Ledger::where('group', $groupToDelete)->pluck('name')->toArray();
+        $groupLedgerNames[] = $groupToDelete; // include group name itself as a ledger
+
+        $hasPayments = Payment::whereIn('ledger', $groupLedgerNames)->exists();
+
+        if ($hasPayments) {
+            // Soft Delete — mark group inactive & mark all ledgers in this group as inactive
+            Ledger::where('group', $groupToDelete)->update(['is_active' => false]);
+            LedgerGroups::markInactive($groupToDelete);
+            LedgerGroups::remove($groupToDelete);
+            $this->dispatch('show-toast', message: '"' . $groupToDelete . '" গ্রুপে পেমেন্ট থাকায় নিষ্ক্রিয় করা হয়েছে। পেমেন্ট ইতিহাস সুরক্ষিত আছে।', type: 'warning');
+        } else {
+            // Hard Delete — remove from settings and DB completely
+            LedgerGroups::remove($groupToDelete);
+            LedgerGroups::markActive($groupToDelete);
+            Ledger::where('group', $groupToDelete)->delete();
+            $this->dispatch('show-toast', message: '"' . $groupToDelete . '" গ্রুপ সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
+        }
 
         if ($this->group === $groupToDelete) {
             $this->group = '';
         }
 
         $this->confirmingDeleteGroup = null;
-        $this->dispatch('show-toast', message: '"' . $groupToDelete . '" গ্রুপ মুছে ফেলা হয়েছে।', type: 'success');
+        $this->syncGroupOptions(true);
+    }
+
+    /**
+     * Reactivate an inactive group:
+     * - Soft-deleted ledgers (is_active=false, has payments) → restore to active
+     * - Hard-deleted ledgers (no DB record) → never restored
+     */
+    public function reactivateGroup($groupName)
+    {
+        if (auth()->user()->hasRole('demo')) {
+            $this->dispatch('show-toast', message: 'ডেমো মোডে এই কাজ সম্ভব নয়।', type: 'danger');
+            return;
+        }
+
+        // Restore only soft-deleted (is_active=false) ledgers — hard-deleted ones have no DB record
+        Ledger::where('group', $groupName)->where('is_active', false)->update(['is_active' => true]);
+
+        LedgerGroups::markActive($groupName);
+        LedgerGroups::add($groupName);
+        $this->syncGroupOptions(true);
+        $this->dispatch('show-toast', message: '"' . $groupName . '" গ্রুপ পুনরায় সক্রিয় করা হয়েছে।', type: 'success');
     }
 
     public function deleteGroup($groupToDelete)
@@ -185,12 +212,12 @@ class LedgerAdd extends Component
         }
 
         $this->groupOptions = array_values(array_diff($this->groupOptions, [$groupToDelete]));
-        Setting::set('ledger_groups', json_encode($this->groupOptions));
+        LedgerGroups::save($this->groupOptions);
 
         if ($this->group === $groupToDelete) {
             $this->group = '';
         }
-        $this->dispatch('show-toast', message: 'গ্রুপ মুছে ফেলা হয়েছে।', type: 'success');
+        $this->dispatch('show-toast', message: 'গ্রুপ মুছে ফেলা হয়েছে।', type: 'success');
     }
 
     public function openAddModal()
@@ -200,6 +227,7 @@ class LedgerAdd extends Component
         $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
         $this->serial = sprintf('%02d', $maxSerial + 1);
         $this->group = '';
+        $this->group_type = 'other';
         $this->showModal = true;
     }
 
@@ -212,7 +240,7 @@ class LedgerAdd extends Component
     {
         // Block action if logged in as Demo
         if (auth()->user()->hasRole('demo')) {
-            $this->dispatch('show-toast', message: 'ডেমো মোডে খতিয়ান পরিবর্তন করা সম্ভব নয়।', type: 'danger');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে খতিয়ান পরিবর্তন করা সম্ভব নয়।', type: 'danger');
             $this->showModal = false;
             return;
         }
@@ -221,18 +249,16 @@ class LedgerAdd extends Component
 
         $group = trim($this->group ?? '');
         $name = trim($this->name ?? '');
+        $groupType = $this->group_type ?: 'other';
 
         if ($group !== '') {
-            $groupsJson = Setting::get('ledger_groups');
-            $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
-
-            $savedGroups = array_values(array_diff($savedGroups, [$group]));
-            array_unshift($savedGroups, $group);
-            Setting::set('ledger_groups', json_encode($savedGroups));
+            // Now persist to DB (including any pending/newly-created group)
+            LedgerGroups::add($group);
+            $this->pendingGroups = []; // clear pending since it's now saved
             $this->syncGroupOptions();
         }
 
-        if ($this->editingLedgerId) {
+        if ($this->editingLedgerId && $name !== '') {
             $ledger = Ledger::find($this->editingLedgerId);
             if ($ledger) {
                 $oldName = $ledger->name;
@@ -240,8 +266,10 @@ class LedgerAdd extends Component
                     'serial' => $this->serial ? intval($this->serial) : $ledger->serial,
                     'name' => $name,
                     'group' => $group,
+                    'group_type' => $groupType,
                     'rate' => $this->rate !== null && $this->rate !== '' ? floatval($this->rate) : null,
                     'divisor' => $this->divisor ? intval($this->divisor) : 1,
+                    'is_active' => true,
                 ]);
 
                 if ($oldName && $oldName !== $name) {
@@ -249,23 +277,40 @@ class LedgerAdd extends Component
                 }
 
                 $this->dispatch('ledger-updated');
-                $this->dispatch('show-toast', message: 'খতিয়ান তথ্য আপডেট করা হয়েছে।', type: 'success');
+                $this->dispatch('show-toast', message: 'খতিয়ান তথ্য আপডেট করা হয়েছে।', type: 'success');
             }
-        } else {
-            $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
-            $newSerial = $this->serial ? intval($this->serial) : ($maxSerial + 1);
+        } elseif ($name !== '') {
+            // Check if existing record with same name and group exists
+            $existing = Ledger::where('name', $name)->where('group', $group)->first();
+            if ($existing) {
+                $existing->update([
+                    'serial' => $this->serial ? intval($this->serial) : $existing->serial,
+                    'group_type' => $groupType,
+                    'rate' => $this->rate !== null && $this->rate !== '' ? floatval($this->rate) : null,
+                    'divisor' => $this->divisor ? intval($this->divisor) : 1,
+                    'is_active' => true,
+                ]);
+            } else {
+                $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
+                $newSerial = $this->serial ? intval($this->serial) : ($maxSerial + 1);
 
-            Ledger::create([
-                'serial' => $newSerial,
-                'name' => $name,
-                'group' => $group,
-                'rate' => $this->rate !== null && $this->rate !== '' ? floatval($this->rate) : null,
-                'divisor' => $this->divisor ? intval($this->divisor) : 1,
-            ]);
+                Ledger::create([
+                    'serial' => $newSerial,
+                    'name' => $name,
+                    'group' => $group,
+                    'group_type' => $groupType,
+                    'rate' => $this->rate !== null && $this->rate !== '' ? floatval($this->rate) : null,
+                    'divisor' => $this->divisor ? intval($this->divisor) : 1,
+                    'is_active' => true,
+                ]);
+            }
 
             $this->page = 1;
             $this->dispatch('ledger-added');
-            $this->dispatch('show-toast', message: 'নতুন খতিয়ান তৈরি করা হয়েছে।', type: 'success');
+            $this->dispatch('show-toast', message: 'নতুন খতিয়ান তৈরি করা হয়েছে।', type: 'success');
+        } else {
+            // Only group added
+            $this->dispatch('show-toast', message: 'নতুন গ্রুপ সফলভাবে যুক্ত করা হয়েছে।', type: 'success');
         }
 
         $this->showModal = false;
@@ -276,7 +321,7 @@ class LedgerAdd extends Component
     {
         // Block action if logged in as Demo
         if (auth()->user()->hasRole('demo')) {
-            $this->dispatch('show-toast', message: 'ডেমো মোডে খতিয়ান সংশোধন করা সম্ভব নয়।', type: 'danger');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে খতিয়ান সংশোধন করা সম্ভব নয়।', type: 'danger');
             return;
         }
 
@@ -287,6 +332,7 @@ class LedgerAdd extends Component
             $this->serial = $ledger->serial ? sprintf('%02d', $ledger->serial) : '';
             $this->name = $ledger->name;
             $this->group = $ledger->group;
+            $this->group_type = $ledger->group_type ?: $this->getGroupType($ledger->group);
             $this->rate = $ledger->rate;
             $this->divisor = $ledger->divisor;
             $this->showModal = true;
@@ -296,7 +342,7 @@ class LedgerAdd extends Component
     public function confirmDelete($id)
     {
         if (auth()->user()->hasRole('demo')) {
-            $this->dispatch('show-toast', message: 'ডেমো মোডে খতিয়ান মুছে ফেলা সম্ভব নয়।', type: 'danger');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে খতিয়ান মুছে ফেলা সম্ভব নয়।', type: 'danger');
             return;
         }
         $this->confirmingDeleteId = $id;
@@ -307,20 +353,55 @@ class LedgerAdd extends Component
         $this->confirmingDeleteId = null;
     }
 
+    /**
+     * Soft Delete Logic for Ledger:
+     * - Has payments → soft delete (is_active = false)
+     * - No payments → hard delete
+     */
     public function deleteLedgerConfirmed()
     {
         if (auth()->user()->hasRole('demo')) {
-            $this->dispatch('show-toast', message: 'ডেমো মোডে খতিয়ান মুছে ফেলা সম্ভব নয়।', type: 'danger');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে খতিয়ান মুছে ফেলা সম্ভব নয়।', type: 'danger');
             $this->confirmingDeleteId = null;
             return;
         }
 
         if ($this->confirmingDeleteId) {
-            Ledger::destroy($this->confirmingDeleteId);
-            $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
+            $ledger = Ledger::find($this->confirmingDeleteId);
+            if ($ledger) {
+                $hasPayments = Payment::where('ledger', $ledger->name)->exists();
+                if ($hasPayments) {
+                    // Soft Delete — keep payment history intact
+                    $ledger->update(['is_active' => false]);
+                    $this->dispatch('show-toast', message: '"' . $ledger->name . '" খতিয়ানে পেমেন্ট থাকায় নিষ্ক্রিয় করা হয়েছে। পেমেন্ট ইতিহাস সুরক্ষিত আছে।', type: 'warning');
+                } else {
+                    // Hard Delete — no payment records
+                    $ledger->delete();
+                    $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
+                }
+                // NOTE: Do NOT markInactive the group here.
+                // Group dropdown visibility is controlled ONLY via "গ্রুপ বাদ দিন" modal actions.
+                // Deleting a single ledger must not remove the group from the dropdown.
+            }
             $this->confirmingDeleteId = null;
         }
         $this->resetForm();
+    }
+
+    /**
+     * Reactivate a soft-deleted ledger.
+     */
+    public function reactivateLedger($id)
+    {
+        if (auth()->user()->hasRole('demo')) {
+            $this->dispatch('show-toast', message: 'ডেমো মোডে এই কাজ সম্ভব নয়।', type: 'danger');
+            return;
+        }
+        $ledger = Ledger::find($id);
+        if ($ledger) {
+            $ledger->update(['is_active' => true]);
+            $this->dispatch('show-toast', message: '"' . $ledger->name . '" খতিয়ান পুনরায় সক্রিয় করা হয়েছে।', type: 'success');
+        }
     }
 
     public function cancelEdit()
@@ -331,8 +412,10 @@ class LedgerAdd extends Component
 
     public function resetForm()
     {
-        $this->reset(['serial', 'name', 'rate', 'editingLedgerId', 'group']);
+        $this->reset(['serial', 'name', 'rate', 'editingLedgerId', 'group', 'newGroupInput']);
+        $this->pendingGroups = [];
         $this->divisor = 1;
+        $this->group_type = 'other';
     }
 
     protected $listeners = [
@@ -342,7 +425,7 @@ class LedgerAdd extends Component
 
     public function render()
     {
-        $query = Ledger::query();
+        $query = Ledger::active();
 
         if (!empty($this->search)) {
             $query->where(function ($q) {
@@ -368,7 +451,7 @@ class LedgerAdd extends Component
             $ledgers = $allLedgers->slice($offset, $perPageInt);
         }
 
-        $this->syncGroupOptions();
+        $this->syncGroupOptions($this->showGroupManager);
 
         return view('livewire.settings.ledger-add', [
             'ledgers' => $ledgers,

@@ -128,8 +128,9 @@ if (!function_exists('toKhotianDateTimeParts')) {
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse($groupedData as $groupName => $gData)
                     @php 
-                        $subKhotiyansCount = max(0, count($gData['khotiyans']) - 1); // Exclude group-name fallback item
-                        $hasSubs = $subKhotiyansCount > 0;
+                        $khotiyanOptionsCount = count($gData['khotiyans']);
+                        $subKhotiyansCount = max(0, $khotiyanOptionsCount - 1);
+                        $hasSubs = $khotiyanOptionsCount > 1;
                     @endphp
 
                     <div @mouseenter="if ({{ $hasSubs ? 'true' : 'false' }}) { openDropdown({{ json_encode($groupName) }}, $el); }"
@@ -139,10 +140,12 @@ if (!function_exists('toKhotianDateTimeParts')) {
                         <!-- Group Box Card -->
                         @php
                             $groupNet = $gData['total_net_balance'];
-                            $primaryClick = $gData['primary_name'] ?? $groupName;
+                            $firstOptionKey = array_key_first($gData['khotiyans']) ?? $groupName;
+                            $primaryClick = $hasSubs ? ($gData['primary_name'] ?? $groupName) : $firstOptionKey;
+                            $isGroupInactive = \App\Support\LedgerGroups::isInactive($groupName);
                         @endphp
                         <div wire:click="selectLedger('{{ $primaryClick }}')"
-                             class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-5 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between gap-4 group">
+                             class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-5 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between gap-4 group {{ $isGroupInactive ? 'opacity-80' : '' }}">
                             <div class="flex items-center gap-4 min-w-0">
                                 <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/20 text-[#034C3C] dark:text-emerald-400 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -150,16 +153,24 @@ if (!function_exists('toKhotianDateTimeParts')) {
                                     </svg>
                                 </div>
                                 <div class="min-w-0">
-                                    <h4 class="text-sm font-black text-gray-808 dark:text-white font-sans truncate" title="{{ $groupName }}">{{ $groupName }}</h4>
-                                    <p class="text-xs font-semibold {{ $groupNet < 0 ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} mt-1 font-mono">
-                                        ৳ {{ $groupNet < 0 ? '-' : '' }}{{ toBanglaNum(number_format(abs($groupNet))) }}
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="text-sm font-black text-gray-808 dark:text-white font-sans truncate" title="{{ $groupName }}">{{ $groupName }}</h4>
+                                        @if($isGroupInactive)
+                                            <span class="px-1.5 py-0.5 text-[9px] font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 rounded-full border border-amber-200 dark:border-amber-900/50">নিষ্ক্রিয়</span>
+                                        @endif
+                                    </div>
+                                    @php
+                                        $groupTotalPay = $gData['total_payment_sum'] ?? ($gData['total_payment'] + $gData['total_advance']);
+                                    @endphp
+                                    <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
+                                        ৳ {{ toBanglaNum(number_format(abs($groupTotalPay))) }}
                                     </p>
                                 </div>
                             </div>
 
                             @if($hasSubs)
                                 <span class="text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 rounded-full px-2.5 py-1 font-black font-mono whitespace-nowrap">
-                                    {{ toBanglaNum($subKhotiyansCount) }} টি
+                                    {{ toBanglaNum($khotiyanOptionsCount) }} টি
                                 </span>
                             @endif
                         </div>
@@ -189,8 +200,7 @@ if (!function_exists('toKhotianDateTimeParts')) {
                             <div class="max-h-60 overflow-y-auto space-y-1 custom-scrollbar pr-1">
                                 @forelse($gData['khotiyans'] as $kName => $kData)
                                     @php
-                                        $displayNet = $kName === $gName ? $gData['total_net_balance'] : $kData['net'];
-                                        $isNeg = $displayNet < 0;
+                                        $displayPayment = $kData['payment_sum'] ?? ($kData['payment'] + $kData['advance']);
                                     @endphp
                                     <button type="button"
                                             wire:click="selectLedger({{ json_encode($kName) }})"
@@ -200,8 +210,8 @@ if (!function_exists('toKhotianDateTimeParts')) {
                                             <span class="text-xs">📖</span>
                                             <span class="text-xs font-bold text-gray-808 dark:text-slate-200 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 truncate">{{ $kName }}</span>
                                         </div>
-                                        <span class="text-xs font-mono font-bold {{ $isNeg ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} whitespace-nowrap ml-2">
-                                            ৳ {{ $isNeg ? '-' : '' }}{{ toBanglaNum(number_format(abs($displayNet))) }}
+                                        <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap ml-2">
+                                            ৳ {{ toBanglaNum(number_format(abs($displayPayment))) }}
                                         </span>
                                     </button>
                                 @empty

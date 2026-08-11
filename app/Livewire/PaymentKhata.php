@@ -7,6 +7,8 @@ use Livewire\WithFileUploads;
 use App\Models\Ledger;
 use App\Models\Setting;
 use App\Models\Payment;
+use App\Models\StockAdjustment;
+use App\Support\LedgerGroups;
 use Illuminate\Support\Facades\File;
 
 class PaymentKhata extends Component
@@ -20,14 +22,10 @@ class PaymentKhata extends Component
 
     // Modal Visibility
     public bool $showPaymentModal = false;
-    public bool $showKhotiyanModal = false;
-    public bool $showNewKhotiyanModal = false;
     public bool $showReportModal = false;
 
     // Delete confirmation
     public ?int $confirmingDeleteId = null;
-    public $groupToDelete = null;
-    public bool $showDeleteConfirmModal = false;
 
     // Form inputs (New Payment / Edit Payment)
     public ?int $editingId = null;
@@ -48,16 +46,9 @@ class PaymentKhata extends Component
     // Custom List variables
     public array $ledgerGroups = [];
 
-    // Khotiyan Modal Search and Creation
+    // Khotiyan Modal Search
     public string $khotiyanSearch = '';
-
-    // New Khotiyan Form
-    public string $newLedgerSerial = '';
-    public string $newLedgerName = '';
-    public string $newLedgerGroup = 'অন্যান্য';
-    public $newLedgerRate = '';
-    public $newLedgerDivisor = 1;
-    public ?string $editingLedgerOldName = null;
+    public bool $showKhotiyanModal = false;
 
     // Report tab state
     public string $reportTab = 'date'; // 'date' or 'all'
@@ -65,37 +56,71 @@ class PaymentKhata extends Component
     // Payment History List
     public array $paymentsList = [];
 
+    // Active Season
+    public string $activeSeason = '';
+
     public function mount()
     {
+        $this->activeSeason = Setting::get('season', '২৫-২৬');
         $this->dateFilter = now()->format('Y-m-d');
         $this->paymentDate = now()->format('Y-m-d');
 
-        // Load ledger groups dynamically from Setting state and DB ledgers table
+        // Load ledger groups — only active groups
         $this->ledgerGroups = $this->syncLedgerGroups();
-
-        // Default first group
-        $this->newLedgerGroup = count($this->ledgerGroups) > 0 ? $this->ledgerGroups[0] : '';
 
         // Load payments list from database filtered by active season
         $this->loadPaymentsList();
     }
 
+    /**
+     * Return only active groups for the payment form dropdown and khotiyan modal.
+     */
     public function syncLedgerGroups(): array
     {
-        $groupsJson = Setting::get('ledger_groups');
-        $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
-        $dbGroups = Ledger::pluck('group')->filter()->unique()->toArray();
-
-        return array_values(array_filter(array_unique(array_merge($savedGroups, $dbGroups)), fn($g) => trim($g) !== ''));
+        return LedgerGroups::all(true, false);
     }
 
     public function loadPaymentsList()
     {
-        $activeSeason = Setting::get('season', '২৫-২৬');
-        $this->paymentsList = Payment::where(function ($query) use ($activeSeason) {
-            $query->where('season', $activeSeason)
+        $this->activeSeason = Setting::get('season', '২৫-২৬');
+        $payments = Payment::where(function ($query) {
+            $query->where('season', $this->activeSeason)
                   ->orWhereNull('season');
-        })->get()->toArray();
+        })->orderBy('id', 'desc')->get()->toArray();
+
+        // Build ledger → group map from DB for fast lookup
+        $ledgerGroupMap = Ledger::whereNotNull('name')
+            ->whereNotNull('group')
+            ->pluck('group', 'name')
+            ->toArray();
+
+        $allKnownGroups = LedgerGroups::all(true, true);
+        $groupLowerMap = [];
+        foreach ($allKnownGroups as $g) {
+            $groupLowerMap[mb_strtolower(trim($g))] = trim($g);
+        }
+
+        // Inject group field into each payment
+        $this->paymentsList = array_map(function ($pay) use ($ledgerGroupMap, $groupLowerMap) {
+            $ledgerName = trim($pay['ledger'] ?? '');
+            $lowerLedger = mb_strtolower($ledgerName);
+
+            if (!empty($ledgerGroupMap[$ledgerName])) {
+                $pay['group'] = $ledgerGroupMap[$ledgerName];
+            } elseif (isset($groupLowerMap[$lowerLedger])) {
+                // If payment was made directly to a group name, display the group name
+                $pay['group'] = $groupLowerMap[$lowerLedger];
+            } else {
+                $pay['group'] = '';
+            }
+            return $pay;
+        }, $payments);
+    }
+
+    // Listen for season changes from topbar
+    public function updatedActiveSeason()
+    {
+        $this->loadPaymentsList();
     }
 
     public function updatedQuantity()
@@ -176,205 +201,6 @@ class PaymentKhata extends Component
         }
     }
 
-    public function addGroup(string $name)
-    {
-        $name = trim($name);
-        if ($name === '') {
-            return;
-        }
-
-        // Check for duplicate group name case-insensitively
-        $exists = false;
-        foreach ($this->ledgerGroups as $g) {
-            if (mb_strtolower(trim($g), 'UTF-8') === mb_strtolower($name, 'UTF-8')) {
-                $exists = true;
-                $name = $g;
-                break;
-            }
-        }
-
-        if (!$exists) {
-            // Add to memory list ONLY (do NOT save to DB Setting yet)
-            array_unshift($this->ledgerGroups, $name);
-        }
-
-        // Automatically set as selected group in modal
-        $this->newLedgerGroup = $name;
-        $this->dispatch('show-toast', message: "'{$name}' গ্রুপ সিলেক্ট করা হয়েছে।", type: 'success');
-    }
-
-    public function confirmDeleteGroup($groupName)
-    {
-        $this->groupToDelete = $groupName;
-        $this->showDeleteConfirmModal = true;
-    }
-
-    public function deleteGroupConfirmed()
-    {
-        if ($this->groupToDelete) {
-            $name = $this->groupToDelete;
-            $groupsJson = Setting::get('ledger_groups');
-            $allGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
-            $allGroups = array_values(array_filter($allGroups, fn($g) => $g !== $name));
-            Setting::set('ledger_groups', json_encode($allGroups));
-
-            Ledger::where('group', $name)->update(['group' => 'অন্যান্য']);
-
-            $this->dispatch('show-toast', message: "'{$name}' গ্রুপটি সফলভাবে মুছে ফেলা হয়েছে।", type: 'success');
-            $this->groupToDelete = null;
-            $this->showDeleteConfirmModal = false;
-        }
-    }
-
-    public function cancelDeleteGroup()
-    {
-        $this->groupToDelete = null;
-        $this->showDeleteConfirmModal = false;
-    }
-
-    public function deleteGroup(string $name)
-    {
-        $this->ledgerGroups = array_values(array_filter($this->ledgerGroups, fn($g) => $g !== $name));
-        Setting::set('ledger_groups', json_encode($this->ledgerGroups));
-        if ($this->newLedgerGroup === $name) {
-            $this->newLedgerGroup = count($this->ledgerGroups) > 0 ? $this->ledgerGroups[0] : '';
-        }
-        $this->dispatch('show-toast', message: 'গ্রুপ মুছে ফেলা হয়েছে।', type: 'success');
-    }
-
-    public function openNewKhotiyanModal(string $preselectedGroup = '')
-    {
-        $this->ledgerGroups = $this->syncLedgerGroups();
-
-        $this->editingLedgerOldName = null;
-        $this->newLedgerName = '';
-        $this->newLedgerGroup = $preselectedGroup ?: '';
-        $this->newLedgerSerial = sprintf('%02d', Ledger::count() + 1);
-        $this->newLedgerRate = '';
-        $this->newLedgerDivisor = 1;
-        $this->showNewKhotiyanModal = true;
-    }
-
-    public function addLedger()
-    {
-        $group = trim($this->newLedgerGroup);
-        $name = trim($this->newLedgerName);
-
-        if ($group === '') {
-            $this->dispatch('show-toast', message: 'খতিয়ানের গ্রুপ আবশ্যক।', type: 'danger');
-            return;
-        }
-
-        // Rule: Khotiyan Name is optional. If empty, default to Group Name.
-        if ($name === '') {
-            $name = $group;
-        }
-
-        $rateVal = ($this->newLedgerRate !== '' && $this->newLedgerRate !== null) ? floatval($this->newLedgerRate) : 0;
-        $divisorVal = ($this->newLedgerDivisor !== '' && $this->newLedgerDivisor !== null && floatval($this->newLedgerDivisor) > 0) ? floatval($this->newLedgerDivisor) : 1;
-
-        // Save group into DB settings upon main button submit
-        $groupsJson = Setting::get('ledger_groups');
-        $existingGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
-
-        $matchedExistingGroup = null;
-        foreach ($existingGroups as $eg) {
-            if (mb_strtolower(trim($eg), 'UTF-8') === mb_strtolower($group, 'UTF-8')) {
-                $matchedExistingGroup = $eg;
-                break;
-            }
-        }
-
-        if ($matchedExistingGroup) {
-            $group = $matchedExistingGroup;
-        } else {
-            array_unshift($existingGroups, $group);
-            Setting::set('ledger_groups', json_encode($existingGroups));
-        }
-        $this->ledgerGroups = $this->syncLedgerGroups();
-
-        if ($this->editingLedgerOldName) {
-            $oldName = $this->editingLedgerOldName;
-            Ledger::where('name', $oldName)->update([
-                'name' => $name,
-                'group' => $group,
-                'serial' => intval($this->newLedgerSerial),
-                'rate' => $rateVal,
-                'divisor' => $divisorVal,
-            ]);
-
-            Payment::where('ledger', $oldName)->update(['ledger' => $name]);
-            $this->loadPaymentsList();
-
-            if ($this->selectedLedger === $oldName) {
-                $this->selectedLedger = $name;
-                $this->rate = $rateVal !== 0 ? $rateVal : '';
-                $this->divisor = ($divisorVal !== null && $divisorVal > 0) ? $divisorVal : 1;
-                $this->calculateTotalBill();
-            }
-            $this->showNewKhotiyanModal = false;
-            $this->dispatch('ledger-added');
-            $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে আপডেট করা হয়েছে।', type: 'success');
-        } else {
-            // Rule: Default Khotiyan Creation
-            // If adding a sub-khotiyan (name != group), ensure a default group khotiyan (name == group) exists in DB
-            if (mb_strtolower($name, 'UTF-8') !== mb_strtolower($group, 'UTF-8')) {
-                $defaultGroupLedger = Ledger::where('group', $group)
-                    ->whereRaw('LOWER(name) = ?', [mb_strtolower($group, 'UTF-8')])
-                    ->first();
-                if (!$defaultGroupLedger) {
-                    $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
-                    Ledger::create([
-                        'serial' => $maxSerial + 1,
-                        'name' => $group,
-                        'group' => $group,
-                        'rate' => 0,
-                        'divisor' => 1,
-                    ]);
-                }
-            }
-
-            $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
-            $newSerial = $this->newLedgerSerial ? intval($this->newLedgerSerial) : ($maxSerial + 1);
-
-            Ledger::create([
-                'serial' => $newSerial,
-                'name' => $name,
-                'group' => $group,
-                'rate' => $rateVal,
-                'divisor' => $divisorVal,
-            ]);
-            $this->selectedLedger = $name;
-            $this->rate = $rateVal !== 0 ? $rateVal : '';
-            $this->divisor = ($divisorVal !== null && $divisorVal > 0) ? $divisorVal : 1;
-            $this->calculateTotalBill();
-
-            $this->dispatch('ledger-added');
-            $this->dispatch('show-toast', message: 'খতিয়ান সফলভাবে যোগ করা হয়েছে।', type: 'success');
-
-            $this->showNewKhotiyanModal = false;
-            $this->showKhotiyanModal = false;
-        }
-
-        $this->newLedgerName = '';
-        $this->newLedgerGroup = '';
-        $this->newLedgerRate = '';
-        $this->newLedgerDivisor = 1;
-        $this->editingLedgerOldName = null;
-    }
-
-    public function deleteLedger($id)
-    {
-        $ledger = is_numeric($id) ? Ledger::find($id) : Ledger::where('name', $id)->first();
-        if ($ledger) {
-            if ($this->selectedLedger === $ledger->name) {
-                $this->selectedLedger = '';
-            }
-            $ledger->delete();
-        }
-        $this->dispatch('show-toast', message: 'খতিয়ান মুছে ফেলা হয়েছে।', type: 'success');
-    }
-
     public function openAddModal()
     {
         $this->resetForm();
@@ -384,6 +210,20 @@ class PaymentKhata extends Component
 
     public function editPayment(int $id)
     {
+        // Permission Check: Staff can only edit today's payments
+        if (auth()->check() && !auth()->user()->hasRole('admin') && !auth()->user()->hasRole('demo')) {
+            $payment = collect($this->paymentsList)->firstWhere('id', $id);
+            if ($payment) {
+                $payDateStr = $payment['date'] ?? '';
+                $today = now()->format('d/m/Y');
+                $todayDash = now()->format('Y-m-d');
+                if ($payDateStr !== $today && $payDateStr !== $todayDash) {
+                    $this->dispatch('show-toast', message: 'আপনি শুধুমাত্র আজকের পেমেন্ট সম্পাদনা করতে পারবেন।', type: 'danger');
+                    return;
+                }
+            }
+        }
+
         $this->resetForm();
         $payment = collect($this->paymentsList)->firstWhere('id', $id);
 
@@ -412,14 +252,41 @@ class PaymentKhata extends Component
                 if (count($parts) === 3) {
                     $this->paymentDate = $parts[2] . '-' . $parts[1] . '-' . $parts[0];
                 } else {
-                    $this->paymentDate = '2026-07-18';
+                    $this->paymentDate = now()->format('Y-m-d');
                 }
             } else {
-                $this->paymentDate = '2026-07-18';
+                $this->paymentDate = now()->format('Y-m-d');
             }
 
             $this->showPaymentModal = true;
         }
+    }
+
+    /**
+     * Get ledger's group_type by ledger name.
+     */
+    protected function getLedgerGroupType(string $ledgerName): string
+    {
+        $ledger = Ledger::where('name', $ledgerName)->first();
+        return $ledger ? ($ledger->group_type ?: 'other') : 'other';
+    }
+
+    /**
+     * Get net balance (advance - due) for a ledger across all active season payments.
+     * Positive = has advance; Negative = has due (baki).
+     */
+    protected function getLedgerNetBalance(string $ledgerName): float
+    {
+        $season = $this->activeSeason;
+        $allPayments = Payment::where('ledger', $ledgerName)
+            ->where(function ($q) use ($season) {
+                $q->where('season', $season)->orWhereNull('season');
+            })
+            ->get();
+
+        $totalPaid = $allPayments->sum('payment') + $allPayments->sum('advance');
+        $totalBill = $allPayments->sum('total');
+        return $totalPaid - $totalBill; // Positive = advance, Negative = due
     }
 
     public function submitPayment()
@@ -476,7 +343,7 @@ class PaymentKhata extends Component
             }
         }
 
-        $formattedDate = '18/07/2026';
+        $formattedDate = now()->format('d/m/Y');
         if ($this->paymentDate) {
             $parts = explode('-', $this->paymentDate);
             if (count($parts) === 3) {
@@ -487,14 +354,83 @@ class PaymentKhata extends Component
         $qty = floatval($this->quantity ?: 0);
         $rate = floatval($this->rate ?: 0);
         $total = floatval($this->totalBill ?: ($qty * $rate));
-        $advance = floatval($this->advance ?: 0);
         $deduction = floatval($this->deduction ?: 0);
         $payment = floatval($this->paymentAmount ?: 0);
+        $advance = floatval($this->advance ?: 0);
         $purchaseReceive = floatval($this->purchaseReceive ?: 0);
+
+        // =====================================================================
+        // Smart Payment Hisab Logic (3.3 - 3.5)
+        // =====================================================================
+        // Get the existing net balance for this ledger (excluding the current editing entry)
+        $existingNetBalance = $this->getLedgerNetBalance($this->selectedLedger);
+        if ($this->editingId) {
+            // Exclude current payment from net balance calculation
+            $currentPayment = Payment::find($this->editingId);
+            if ($currentPayment) {
+                $existingNetBalance -= (floatval($currentPayment->payment) + floatval($currentPayment->advance) - floatval($currentPayment->total));
+            }
+        }
+
+        // Calculate the "net effect" of this entry
+        // effective_payment = payment - total - deduction
+        // If total=0 and advance>0, it's a pure advance entry.
+        // If total>0:
+        //   payment+advance >= total => surplus = (payment+advance) - total
+        //   payment+advance < total  => deficit = total - (payment+advance)
+
+        $finalAdvance = $advance;
+        $finalPurchaseReceive = $purchaseReceive;
+
+        if ($total > 0 || $payment > 0) {
+            $netEntry = ($payment + $advance) - ($total - $deduction);
+
+            if ($netEntry > 0) {
+                // Surplus payment
+                if ($existingNetBalance < 0) {
+                    // There's existing due (baki) — auto-settle (3.4)
+                    $settleAmount = min($netEntry, abs($existingNetBalance));
+                    // The surplus settles old due, remainder becomes advance
+                    $remainingAdvance = $netEntry - $settleAmount;
+                    $finalAdvance = $advance + ($remainingAdvance > 0 ? $remainingAdvance : 0);
+                    $finalPurchaseReceive = 0;
+                } else {
+                    // No existing due — surplus is advance (3.3)
+                    $finalAdvance = $advance + $netEntry;
+                    $finalPurchaseReceive = 0;
+                }
+            } elseif ($netEntry < 0) {
+                // Deficit (baki/due)
+                $deficit = abs($netEntry);
+                if ($existingNetBalance > 0) {
+                    // There's existing advance — auto-deduct (3.5)
+                    $deductAmount = min($deficit, $existingNetBalance);
+                    $remainingDue = $deficit - $deductAmount;
+                    $finalPurchaseReceive = $remainingDue > 0 ? $remainingDue : 0;
+                    $finalAdvance = $advance; // no new advance added
+                } else {
+                    // No advance — mark as baki (3.3)
+                    $finalPurchaseReceive = $deficit;
+                    $finalAdvance = $advance;
+                }
+            } else {
+                // Exact match — regular (3.3)
+                $finalAdvance = $advance;
+                $finalPurchaseReceive = 0;
+            }
+        }
+
+        $season = Setting::get('season', '২৫-২৬');
 
         if ($this->editingId) {
             $paymentModel = Payment::find($this->editingId);
             if ($paymentModel) {
+                // Reverse old production stock if applicable
+                $oldGroupType = $this->getLedgerGroupType($paymentModel->ledger);
+                if ($oldGroupType === 'production' && floatval($paymentModel->qty) > 0) {
+                    $this->reverseProductionStock($paymentModel);
+                }
+
                 $paymentModel->update([
                     'date' => $formattedDate,
                     'ledger' => $this->selectedLedger,
@@ -502,37 +438,91 @@ class PaymentKhata extends Component
                     'qty' => $qty,
                     'rate' => $rate,
                     'total' => $total,
-                    'advance' => $advance,
+                    'advance' => $finalAdvance,
                     'deduction' => $deduction,
                     'payment' => $payment,
-                    'purchase_receive' => $purchaseReceive,
+                    'purchase_receive' => $finalPurchaseReceive,
                     'has_doc' => $this->documentFile ? $hasDoc : $paymentModel->has_doc,
                     'doc_url' => $this->documentFile ? $docUrl : $paymentModel->doc_url,
                 ]);
+
+                // Add new production stock if applicable
+                $newGroupType = $this->getLedgerGroupType($this->selectedLedger);
+                if ($newGroupType === 'production' && $qty > 0) {
+                    $this->addProductionStock($this->selectedLedger, $qty, $formattedDate, $paymentModel->id);
+                }
             }
             $this->dispatch('show-toast', message: 'পেমেন্ট সফলভাবে আপডেট করা হয়েছে।', type: 'success');
         } else {
-            Payment::create([
+            $newPayment = Payment::create([
                 'date' => $formattedDate,
                 'ledger' => $this->selectedLedger,
                 'desc' => $this->paymentDesc,
                 'qty' => $qty,
                 'rate' => $rate,
                 'total' => $total,
-                'advance' => $advance,
+                'advance' => $finalAdvance,
                 'deduction' => $deduction,
                 'payment' => $payment,
-                'purchase_receive' => $purchaseReceive,
+                'purchase_receive' => $finalPurchaseReceive,
                 'doc_url' => $docUrl,
                 'has_doc' => $hasDoc,
-                'season' => Setting::get('season', '২৫-২৬')
+                'season' => $season,
             ]);
+
+            // Production Stock Integration (4.1, 4.2)
+            $groupType = $this->getLedgerGroupType($this->selectedLedger);
+            if ($groupType === 'production' && $qty > 0) {
+                $this->addProductionStock($this->selectedLedger, $qty, $formattedDate, $newPayment->id);
+            }
+
             $this->dispatch('show-toast', message: 'পেমেন্ট সফলভাবে সংরক্ষণ করা হয়েছে।', type: 'success');
         }
 
         $this->loadPaymentsList();
         $this->resetForm();
         $this->showPaymentModal = false;
+    }
+
+    /**
+     * Add production stock when payment with production group is saved.
+     */
+    protected function addProductionStock(string $ledgerName, float $qty, string $date, int $paymentId): void
+    {
+        try {
+            // Convert date from dd/mm/yyyy to yyyy-mm-dd for StockAdjustment
+            $dateForStock = now()->format('Y-m-d');
+            if (str_contains($date, '/')) {
+                $parts = explode('/', $date);
+                if (count($parts) === 3) {
+                    $dateForStock = $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+                }
+            }
+
+            StockAdjustment::create([
+                'date' => $dateForStock,
+                'description' => 'পেমেন্ট খাতা থেকে: ' . $ledgerName . ' (ID:' . $paymentId . ')',
+                'category_name' => $ledgerName,
+                'stock_plus' => (int) round($qty),
+                'stock_minus' => 0,
+                'user_id' => auth()->id(),
+            ]);
+        } catch (\Throwable $e) {
+            // Silently fail — don't block payment save
+        }
+    }
+
+    /**
+     * Reverse production stock when payment is deleted or edited.
+     */
+    protected function reverseProductionStock(Payment $payment): void
+    {
+        try {
+            // Find matching StockAdjustment by description containing payment ID
+            StockAdjustment::where('description', 'like', '%(ID:' . $payment->id . ')%')->delete();
+        } catch (\Throwable $e) {
+            // Silently fail
+        }
     }
 
     public function resetForm()
@@ -549,9 +539,11 @@ class PaymentKhata extends Component
             'paymentAmount',
             'purchaseReceive',
             'documentFile',
-            'editingId'
+            'editingId',
+            'khotiyanSearch',
         ]);
         $this->paymentDate = now()->format('Y-m-d');
+        $this->divisor = 1;
     }
 
     public function confirmDelete(int $id)
@@ -560,6 +552,21 @@ class PaymentKhata extends Component
             $this->dispatch('show-toast', message: 'ডেমো মোডে পেমেন্ট মুছে ফেলা সম্ভব নয়।', type: 'danger');
             return;
         }
+
+        // Permission Check: Staff can only delete today's payments
+        if (auth()->check() && !auth()->user()->hasRole('admin')) {
+            $payment = collect($this->paymentsList)->firstWhere('id', $id);
+            if ($payment) {
+                $payDateStr = $payment['date'] ?? '';
+                $today = now()->format('d/m/Y');
+                $todayDash = now()->format('Y-m-d');
+                if ($payDateStr !== $today && $payDateStr !== $todayDash) {
+                    $this->dispatch('show-toast', message: 'আপনি শুধুমাত্র আজকের পেমেন্ট মুছে ফেলতে পারবেন।', type: 'danger');
+                    return;
+                }
+            }
+        }
+
         $this->confirmingDeleteId = $id;
     }
 
@@ -577,7 +584,33 @@ class PaymentKhata extends Component
         }
 
         if ($this->confirmingDeleteId) {
-            Payment::destroy($this->confirmingDeleteId);
+            $paymentModel = Payment::find($this->confirmingDeleteId);
+            if ($paymentModel) {
+                $ledgerName = $paymentModel->ledger;
+                $ledgerObj = Ledger::where('name', $ledgerName)->first();
+                $groupName = $ledgerObj ? $ledgerObj->group : $ledgerName;
+
+                // Reverse production stock if applicable (3.6)
+                $groupType = $this->getLedgerGroupType($paymentModel->ledger);
+                if ($groupType === 'production' && floatval($paymentModel->qty) > 0) {
+                    $this->reverseProductionStock($paymentModel);
+                }
+                $paymentModel->delete();
+
+                // If group is inactive and now has NO active ledgers AND NO payments remaining in DB, clean it up permanently
+                if ($groupName && LedgerGroups::isInactive($groupName)) {
+                    $hasActiveLedgers = Ledger::active()->where('group', $groupName)->exists();
+                    $allGroupLedgers = Ledger::where('group', $groupName)->pluck('name')->toArray();
+                    $allGroupLedgers[] = $groupName;
+                    $hasPaymentsLeft = Payment::whereIn('ledger', $allGroupLedgers)->exists();
+
+                    if (!$hasActiveLedgers && !$hasPaymentsLeft) {
+                        LedgerGroups::remove($groupName);
+                        LedgerGroups::markActive($groupName);
+                        Ledger::where('group', $groupName)->delete();
+                    }
+                }
+            }
             $this->loadPaymentsList();
             $this->dispatch('show-toast', message: 'পেমেন্ট সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
             $this->confirmingDeleteId = null;
@@ -652,7 +685,7 @@ class PaymentKhata extends Component
             if ($this->search !== '') {
                 $term = strtolower($this->search);
                 $matchesSearch = str_contains(strtolower($payment['ledger']), $term) ||
-                    str_contains(strtolower($payment['desc']), $term);
+                    str_contains(strtolower($payment['desc'] ?? ''), $term);
             }
             $matchesDate = true;
             if (!empty($this->dateFilter)) {
@@ -666,17 +699,19 @@ class PaymentKhata extends Component
             return $carry + (float) $item['payment'];
         }, 0);
 
-        $dbLedgers = Ledger::orderByRaw('CASE WHEN serial IS NULL THEN 1 ELSE 0 END, serial ASC, id ASC')->get();
+        // Only active ledgers for the selection modal
+        $dbLedgers = Ledger::active()
+            ->orderByRaw('CASE WHEN serial IS NULL THEN 1 ELSE 0 END, serial ASC, id ASC')
+            ->get();
 
         $this->ledgerGroups = $this->syncLedgerGroups();
 
         // Compute per-ledger net balance from all payments (active season)
-        $activeSeason = Setting::get('season', '২৫-২৬');
-        $allSeasonPayments = Payment::where(function ($q) use ($activeSeason) {
-            $q->where('season', $activeSeason)->orWhereNull('season');
+        $allSeasonPayments = Payment::where(function ($q) {
+            $q->where('season', $this->activeSeason)->orWhereNull('season');
         })->get();
 
-        $ledgerBalances = []; // ledger name => ['payment' => 0, 'advance' => 0, 'bill' => 0, 'net' => 0]
+        $ledgerBalances = [];
         foreach ($allSeasonPayments as $p) {
             $name = trim($p->ledger);
             if (!isset($ledgerBalances[$name])) {
@@ -693,7 +728,6 @@ class PaymentKhata extends Component
 
         $groupedLedgers = [];
         foreach ($this->ledgerGroups as $grp) {
-            // Always seed each group with the group name itself as the first (fallback) item
             $grpBal = $ledgerBalances[$grp] ?? ['payment' => 0, 'advance' => 0, 'bill' => 0, 'net' => 0];
             $groupedLedgers[$grp] = [
                 ['id' => null, 'name' => $grp, 'group' => $grp, 'rate' => 0, 'serial' => 0, 'is_group_fallback' => true, 'balance' => $grpBal['net']],
@@ -718,6 +752,13 @@ class PaymentKhata extends Component
                 'is_group_fallback' => false,
                 'balance'         => $lBal['net'],
             ];
+        }
+
+        // Remove inactive groups completely from groupedLedgers
+        foreach (array_keys($groupedLedgers) as $gName) {
+            if (LedgerGroups::isInactive($gName)) {
+                unset($groupedLedgers[$gName]);
+            }
         }
 
         if (!empty($this->khotiyanSearch)) {

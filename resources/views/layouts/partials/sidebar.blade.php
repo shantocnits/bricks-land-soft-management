@@ -136,19 +136,45 @@
         </div>
         @endif
 
-        <!-- 3. পেমেন্ট খাতা -->
+        <!-- 3. পেমেন্ট খাতা (Dropdown) -->
         @if($hasAccess('payment'))
-        <div class="mx-2">
-            <a href="{{ route('payment-khata') }}" wire:navigate
-               @mouseenter="showTooltip('পেমেন্ট খাতা', $el)"
-               @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('payment-khata') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        @php
+            $paymentKhataActive = request()->routeIs('payment-khata') || request()->routeIs('khotian');
+        @endphp
+        <div class="mx-2" x-data="{ open: {{ $paymentKhataActive ? 'true' : 'false' }} }">
+            <button @click="open = !open"
+                    @mouseenter="showTooltip('পেমেন্ট খাতা', $el)"
+                    @mouseleave="hideTooltip()"
+                    class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg {{ $paymentKhataActive ? 'bg-primary-800/50 text-white' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block"
+                          :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">পেমেন্ট খাতা</span>
+                </div>
+                <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open, 'opacity-0 hidden': !sidebarOpen }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                 </svg>
-                <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
-                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">পেমেন্ট খাতা</span>
-            </a>
+            </button>
+            <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 -translate-y-2" x-transition:enter-end="transform opacity-100 translate-y-0" class="mt-1 ml-6 space-y-0.5" :class="{ 'hidden': !sidebarOpen }">
+                <a href="{{ route('payment-khata') }}" wire:navigate
+                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('payment-khata') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    পেমেন্ট
+                </a>
+                @if($hasAccess('ledger'))
+                <a href="{{ route('khotian') }}" wire:navigate
+                   class="flex items-center gap-2 px-4 py-2 text-xs rounded-lg transition-all font-sans {{ request()->routeIs('khotian') ? 'bg-secondary text-white font-bold shadow-sm' : 'text-primary-200 hover:text-white hover:bg-primary-800/40' }}">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    খতিয়ান
+                </a>
+                @endif
+            </div>
         </div>
         @endif
 
@@ -281,21 +307,7 @@
         </div>
         @endif
 
-        <!-- 10. খতিয়ান -->
-        @if($hasAccess('ledger'))
-        <div class="mx-2">
-            <a href="{{ route('khotian') }}" wire:navigate
-               @mouseenter="showTooltip('খতিয়ান', $el)"
-               @mouseleave="hideTooltip()"
-               class="flex items-center px-4 py-2.5 rounded-lg {{ request()->routeIs('khotian') ? 'bg-secondary text-white shadow-sm' : 'text-primary-100 hover:bg-primary-800/50 hover:text-white' }} transition-all duration-200">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                </svg>
-                <span class="ml-3 font-medium text-sm transition-all duration-300 whitespace-nowrap inline-block" 
-                      :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">খতিয়ান</span>
-            </a>
-        </div>
-        @endif
+
 
         <!-- 11. কাস্টমার -->
         @if($hasAccess('customer'))

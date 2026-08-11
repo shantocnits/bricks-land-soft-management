@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Models\Payment;
 use App\Models\Ledger;
 use App\Models\Setting;
+use App\Support\LedgerGroups;
 use Illuminate\Support\Facades\DB;
 
 class Khotian extends Component
@@ -51,24 +52,8 @@ class Khotian extends Component
         $activeSeason = Setting::get('season', '২৫-২৬');
 
         if ($this->selectedLedger) {
-            // View 2: Ledger / Group Detail List
-            $groupsJson = Setting::get('ledger_groups');
-            $savedGroups = $groupsJson ? (json_decode($groupsJson, true) ?: []) : [];
-            $dbGroups = Ledger::pluck('group')->filter()->unique()->toArray();
-            $defaultGroups = ['কাস্টমার', 'সরবরাহকারী', 'লেবার', 'মাটি', 'স্টাফ', 'খরচ', 'আয়', 'অন্যান্য'];
-            $allGroups = array_values(array_filter(array_unique(array_merge($savedGroups, $dbGroups, $defaultGroups)), fn($g) => trim($g) !== ''));
-
-            $isGroup = in_array($this->selectedLedger, $allGroups);
+            // View 2: Ledger / Group Detail List - STRICT filter by exact selected ledger name
             $targetNames = [$this->selectedLedger];
-
-            if ($isGroup) {
-                // Viewing Group fallback item: show ALL payments under this group (group name + all sub-khotiyans)
-                $subNames = Ledger::where('group', $this->selectedLedger)->pluck('name')->toArray();
-                $targetNames = array_values(array_unique(array_merge([$this->selectedLedger], $subNames)));
-            } else {
-                // Viewing a specific sub-khotiyan: STRICT filter — only exact ledger name matches
-                $targetNames = [$this->selectedLedger];
-            }
 
             $query = Payment::whereIn('ledger', $targetNames)
                 ->where(function ($q) use ($activeSeason) {
@@ -213,20 +198,41 @@ class Khotian extends Component
                 }
             }
 
-            // 3. Compute net balance for each khotiyan and group: net = (payment + advance) - bill
+            // 3. Compute net balance and total payment sum for each khotiyan and group
             foreach ($groupedData as &$gData) {
                 $groupNet = 0;
-                $primaryName = null;
+                $groupTotalPayment = 0;
+                $filteredKhotiyans = [];
+
                 foreach ($gData['khotiyans'] as $kName => &$kData) {
-                    $kData['net'] = ($kData['payment'] + $kData['advance']) - $kData['bill'];
-                    $groupNet += $kData['net'];
-                    if ($primaryName === null && $kName !== $gData['group_name']) {
-                        $primaryName = $kName;
+                    $paymentSum = $kData['payment'] + $kData['advance'];
+                    $hasActivity = ($paymentSum != 0 || $kData['bill'] != 0);
+                    $isDbLedger = Ledger::active()->where('name', $kName)->where('group', $gData['group_name'])->exists();
+
+                    // Keep khotiyan item if registered in DB OR has any payment/bill activity
+                    if ($isDbLedger || $hasActivity) {
+                        $kData['net'] = ($kData['payment'] + $kData['advance']) - $kData['bill'];
+                        $kData['payment_sum'] = $paymentSum;
+                        $groupNet += $kData['net'];
+                        $groupTotalPayment += $paymentSum;
+                        $filteredKhotiyans[$kName] = $kData;
                     }
                 }
                 unset($kData);
+
+                $gData['khotiyans'] = $filteredKhotiyans;
                 $gData['total_net_balance'] = $groupNet;
-                $gData['primary_name'] = $primaryName;
+                $gData['total_payment_sum'] = $groupTotalPayment;
+
+                // Determine primary click ledger
+                $primaryName = null;
+                foreach (array_keys($gData['khotiyans']) as $kName) {
+                    if ($kName !== $gData['group_name']) {
+                        $primaryName = $kName;
+                        break;
+                    }
+                }
+                $gData['primary_name'] = $primaryName ?? $gData['group_name'];
             }
             unset($gData);
 

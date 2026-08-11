@@ -90,12 +90,13 @@
             <!-- Desktop View: Responsive Table -->
             <div class="hidden lg:block overflow-x-auto">
                 <table class="w-full text-left border-collapse border border-gray-200 dark:border-slate-800"
-                    style="min-width: 1050px">
+                    style="min-width: 1160px">
                     <thead>
                         <tr class="bg-emerald-600 text-white text-[11px] font-bold uppercase font-sans">
                             <th class="px-3 py-3 text-center w-10 border-r border-white/20 last:border-r-0">#</th>
                             <th class="px-3 py-3 border-r border-white/20 last:border-r-0 text-center">তারিখ</th>
                             <th class="px-3 py-3 border-r border-white/20 last:border-r-0 text-center">খতিয়ান</th>
+                            <th class="px-3 py-3 border-r border-white/20 last:border-r-0 text-center">গ্রুপ</th>
                             <th class="px-3 py-3 border-r border-white/20 last:border-r-0 text-center">লেজারের বিবরণ
                             </th>
                             <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">পরিমাণ</th>
@@ -121,6 +122,15 @@
                                 <td
                                     class="px-3 py-3.5 text-center font-bold text-[#034C3C] dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                     {{ $pay['ledger'] }}</td>
+                                <td class="px-3 py-3.5 text-center border-r border-gray-150 dark:border-slate-800 last:border-r-0">
+                                    @if(!empty($pay['group']))
+                                        <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 whitespace-nowrap">
+                                            {{ $pay['group'] }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-350 dark:text-slate-600 text-[10px]">—</span>
+                                    @endif
+                                </td>
                                 <td class="px-3 py-3.5 text-center text-gray-600 dark:text-slate-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 max-w-[220px] truncate"
                                     title="{{ $pay['desc'] }}">{{ $pay['desc'] }}</td>
 
@@ -632,9 +642,8 @@
                         খতিয়ান নির্বাচন করুন
                     </h2>
 
-                    <!-- Search and Add ledger header line -->
+                    <!-- Search bar -->
                     <div class="flex items-center gap-3 mb-5">
-                        <!-- Search bar -->
                         <div class="relative flex-grow">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-450">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -647,12 +656,6 @@
                                 class="w-full py-2.5 pl-9 pr-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-xs font-semibold text-gray-805 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250 transition-all font-sans"
                                 placeholder="গ্রুপ বা খতিয়ান নাম দিয়ে সার্চ করুন">
                         </div>
-
-                        <!-- Add Ledger button -->
-                        <button type="button" wire:click="openNewKhotiyanModal"
-                            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black font-sans cursor-pointer transition-colors shrink-0">
-                            + নতুন খতিয়ান
-                        </button>
                     </div>
 
                     <!-- Professional Group Box Cards Grid -->
@@ -692,10 +695,12 @@
                                             class="text-xs font-extrabold text-gray-800 dark:text-slate-100 group-hover/box:text-emerald-700 dark:group-hover/box:text-emerald-400 font-sans leading-tight line-clamp-2">
                                             {{ $groupName }}
                                         </span>
-                                        <span
-                                            class="shrink-0 text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 rounded-full px-2 py-0.5 font-black font-mono leading-none ml-1.5">
-                                            {{ $displayCount }}
-                                        </span>
+                                        @if($displayCount > 0)
+                                            <span
+                                                class="shrink-0 text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 rounded-full px-2 py-0.5 font-black font-mono leading-none ml-1.5">
+                                                {{ $displayCount }}
+                                            </span>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
@@ -719,13 +724,6 @@
                                     <div x-show="hoverGroup === {{ json_encode($gName) }}"
                                         class="max-h-56 overflow-y-auto py-1">
                                         @forelse($gLedgers as $gLedg)
-                                            @if(!($gLedg['is_group_fallback'] ?? false))
-                                            @php
-                                                $bal = $gLedg['balance'] ?? 0;
-                                                $balColor = $bal >= 0 ? 'text-emerald-400' : 'text-rose-400';
-                                                $balText = '৳' . number_format(abs($bal));
-                                                if ($bal < 0) $balText = '-' . $balText;
-                                            @endphp
                                             <button type="button"
                                                 wire:click="selectLedger({{ json_encode($gLedg['name']) }})"
                                                 @click="hoverGroup = null; staying = false; $wire.set('showKhotiyanModal', false)"
@@ -733,11 +731,7 @@
                                                 <span class="text-xs font-semibold text-slate-200 group-hover/item:text-emerald-300 font-sans truncate">
                                                     {{ $gLedg['name'] }}
                                                 </span>
-                                                <span class="text-[10px] font-bold font-mono {{ $balColor }} ml-2 shrink-0">
-                                                    {{ $balText }}
-                                                </span>
                                             </button>
-                                            @endif
                                         @empty
                                             <div class="px-3 py-3 text-center text-[10px] text-slate-500 italic">কোনো খতিয়ান
                                                 যুক্ত নেই</div>
@@ -753,128 +747,7 @@
         </div>
     </template>
 
-        <!-- Modal 4: "নতুন খতিয়ান / সম্পাদনা খতিয়ান" modal form -->
-    <template x-teleport="body">
-        <div x-data="{ show: @entangle('showNewKhotiyanModal') }" x-show="show" @click.self="show = false"
-            class="fixed inset-0 z-[999999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
 
-            <div x-show="show"
-                class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-150 dark:border-slate-800 p-6 md:p-8 max-w-md w-full relative overflow-y-auto max-h-[90vh]">
-
-                <!-- Close Button -->
-                <button @click="show = false"
-                    class="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-250 cursor-pointer focus:outline-none">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-
-                <!-- Modal Title dynamically switches -->
-                <h2 class="text-lg md:text-xl font-extrabold text-gray-855 dark:text-white font-sans tracking-wide border-b border-gray-100 dark:border-slate-800 pb-3 mb-5"
-                    x-text="$wire.editingLedgerOldName ? 'সম্পাদনা খতিয়ান' : 'নতুন খতিয়ান'">
-                </h2>
-
-                <!-- Form Content -->
-                <div class="space-y-4 text-left">
-                    <!-- Serial Number field -->
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">সিরিয়াল</label>
-                        <input type="text" readonly wire:model="newLedgerSerial"
-                            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 text-sm font-semibold font-mono focus:outline-none">
-                    </div>
-
-                    <!-- Name field -->
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-gray-600 dark:text-slate-350 mb-1.5 font-sans">খতিয়ানের
-                            নাম</label>
-                        <input type="text" wire:model="newLedgerName" placeholder="খতিয়ানের নাম লিখুন"
-                            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-sm font-semibold font-sans focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20">
-                        @error('newLedgerName')
-                            <p class="text-red-500 text-xs mt-1.5 font-semibold font-sans">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Group Dropdown: Dynamic with filter/add -->
-                    <div class="relative" x-data="{
-                        openGroup: false,
-                        search: '',
-                        dropRect: null,
-                        groupStyle() {
-                            if (!this.dropRect) return '';
-                            const gap = 6;
-                            const estH = 300;
-                            const top = (window.innerHeight - this.dropRect.bottom - gap) >= estH
-                                ? (this.dropRect.bottom + gap)
-                                : Math.max(8, this.dropRect.top - gap - estH);
-                            return 'left: ' + this.dropRect.left + 'px; top: ' + top + 'px; width: ' + this.dropRect.width + 'px; position: fixed;';
-                        }
-                    }">
-                        <label
-                            class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">খতিয়ানের
-                            গ্রুপ</label>
-                        <button type="button" @click="openGroup = !openGroup; dropRect = $el.getBoundingClientRect()"
-                            class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none cursor-pointer text-left transition-all">
-                            <span x-text="$wire.newLedgerGroup || 'গ্রুপ বাছুন বা টাইপ করুন'" class="truncate"></span>
-                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
-                                :class="{ 'rotate-180': openGroup }" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-
-                        <template x-teleport="body">
-                            <div x-show="openGroup" @click.outside="openGroup = false" x-transition
-                                class="fixed z-[99999999] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden font-sans"
-                                :style="groupStyle()"
-                                x-cloak>
-                                <!-- Single Filter + Add Input -->
-                                <div
-                                    class="p-2 border-b border-gray-100 dark:border-slate-800 flex items-center gap-1.5">
-                                    <input type="text" x-model="search"
-                                        placeholder="ফিল্টার বা নতুন গ্রুপ..."
-                                        class="flex-1 min-w-0 py-1.5 px-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 transition-all font-sans font-medium"
-                                        @keydown.enter.prevent="$wire.addGroup(search); search = ''">
-                                    <button type="button" @click="$wire.addGroup(search); search = ''"
-                                        class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex-shrink-0 whitespace-nowrap">
-                                        + অ্যাড
-                                    </button>
-                                </div>
-
-                                <!-- Options List in classical style without folder icon -->
-                                <div class="max-h-60 overflow-y-auto py-1">
-                                    @foreach($ledgerGroups as $group)
-                                        <div class="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all cursor-pointer flex items-center gap-2"
-                                            x-show="search === '' || {{ json_encode($group) }}.toLowerCase().includes(search.toLowerCase())"
-                                            @click="$wire.set('newLedgerGroup', {{ json_encode($group) }}); openGroup = false; search = ''">
-                                            <span
-                                                class="text-xs font-semibold text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-sans block truncate">
-                                                {{ $group }}
-                                            </span>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-
-                    <!-- Action buttons -->
-                    <div class="flex items-center gap-3.5 pt-4 border-t border-gray-100 dark:border-slate-800/60">
-                        <button type="button" @click="show = false"
-                            class="flex-grow py-3 border border-gray-200 dark:border-slate-700 hover:bg-gray-55 dark:hover:bg-slate-800/60 text-gray-650 dark:text-slate-205 font-bold rounded-xl text-xs font-sans transition-all cursor-pointer">
-                            ক্লিয়ার
-                        </button>
-                        <button type="button" wire:click="addLedger"
-                            class="flex-grow py-3 bg-[#034C3C] hover:bg-emerald-700 text-white font-bold rounded-xl text-xs font-sans transition-all cursor-pointer">
-                            <span x-text="$wire.editingLedgerOldName ? 'আপডেট করুন' : 'অ্যাড করুন'"></span>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </template>
     <!-- Modal 3: "গ্রুপ অনুযায়ী পেমেন্ট রিপোর্ট" -->
     <template x-teleport="body">
         <div x-data="{ open: @entangle('showReportModal') }" x-show="open" @click.self="open = false"
@@ -1038,42 +911,6 @@
         </div>
     </template>
 
-    <!-- Group Delete Confirmation Modal (হ্যাঁ / না) -->
-    @if($showDeleteConfirmModal)
-        <template x-teleport="body">
-            <div
-                class="fixed inset-0 z-[99999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs font-sans">
-                <div
-                    class="bg-white dark:bg-slate-900 rounded-3xl max-w-xs w-full p-6 border border-gray-100 dark:border-slate-800 shadow-2xl text-center space-y-4">
-                    <div
-                        class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-extrabold text-gray-800 dark:text-white">গ্রুপ মুছে ফেলার নিশ্চিতকরণ</h3>
-                        <p class="text-xs text-gray-500 dark:text-slate-400 mt-1 font-medium">
-                            আপনি কি নিশ্চিতভাবে <span
-                                class="font-bold text-rose-600 dark:text-rose-400">'{{ $groupToDelete }}'</span> গ্রুপটি
-                            মুছে ফেলতে চান?
-                        </p>
-                    </div>
-                    <div class="flex items-center justify-center gap-3 pt-1">
-                        <button type="button" wire:click="cancelDeleteGroup"
-                            class="flex-1 py-2 px-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer">
-                            না (No)
-                        </button>
-                        <button type="button" wire:click="deleteGroupConfirmed"
-                            class="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl transition-all shadow-md cursor-pointer">
-                            হ্যাঁ (Yes)
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </template>
-    @endif
 
     <!-- ========================================== -->
     <!-- PAYMENT KHATA PRINT LAYOUT START          -->
