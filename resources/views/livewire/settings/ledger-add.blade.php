@@ -53,6 +53,7 @@
                         <th class="px-4 py-3 text-center w-14">সিরিয়াল</th>
                         <th class="px-4 py-3">খতিয়ানের নাম</th>
                         <th class="px-4 py-3 text-center">গ্রুপ</th>
+                        <th class="px-4 py-3 text-center">টাইপ</th>
                         <th class="px-4 py-3 text-right">রেট</th>
                         <th class="px-4 py-3 text-center">ভাজক</th>
                         <th class="px-4 py-3 text-right">অ্যাকশন</th>
@@ -77,6 +78,23 @@
                                         @else bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300 border border-gray-200 dark:border-slate-700 @endif">
                                     {{ $ledger->group }}
                                 </span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                @if($ledger->group_type)
+                                    @php
+                                        $ptColor = match($ledger->group_type) {
+                                            'production' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50',
+                                            'expense'    => 'bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50',
+                                            'income'     => 'bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50',
+                                            default      => 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300 border border-gray-200 dark:border-slate-700',
+                                        };
+                                    @endphp
+                                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold {{ $ptColor }}">
+                                        {{ $ptLabels[$ledger->group_type] ?? $ledger->group_type }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 dark:text-slate-600">—</span>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
                                 {{ $ledger->rate ? '৳ ' . number_format((float)($ledger->rate), (float)($ledger->rate) == (int)($ledger->rate) ? 0 : 2) : '—' }}
@@ -109,7 +127,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500 italic">
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500 italic">
                                 কোনো খতিয়ান যুক্ত করা হয়নি।
                             </td>
                         </tr>
@@ -130,15 +148,30 @@
                             </span>
                             <span class="font-bold text-gray-800 dark:text-white text-xs">{{ $ledger->name }}</span>
                         </div>
-                        <span
-                            class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold
-                                @if($ledger->group === 'কাস্টমার') bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50
-                                @elseif($ledger->group === 'সরবরাহকারী') bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50
-                                @elseif($ledger->group === 'খরচ') bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50
-                                @elseif($ledger->group === 'আয়') bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50
-                                @else bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300 border border-gray-200 dark:border-slate-700 @endif">
-                            {{ $ledger->group }}
-                        </span>
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold
+                                    @if($ledger->group === 'কাস্টমার') bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50
+                                    @elseif($ledger->group === 'সরবরাহকারী') bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50
+                                    @elseif($ledger->group === 'খরচ') bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50
+                                    @elseif($ledger->group === 'আয়') bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50
+                                    @else bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300 border border-gray-200 dark:border-slate-700 @endif">
+                                {{ $ledger->group }}
+                            </span>
+                            @if($ledger->group_type)
+                                @php
+                                    $mptColor = match($ledger->group_type) {
+                                        'production' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50',
+                                        'expense'    => 'bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50',
+                                        'income'     => 'bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50',
+                                        default      => 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300 border border-gray-200 dark:border-slate-700',
+                                    };
+                                @endphp
+                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold {{ $mptColor }}">
+                                    {{ $ptLabels[$ledger->group_type] ?? $ledger->group_type }}
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
                     <div
@@ -367,6 +400,70 @@
                                 class="w-full py-2.5 pl-9 pr-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-semibold">
                         </div>
                         @error('name') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Payment Type Dropdown (root-style teleport) -->
+                    <div class="relative" x-data="{
+                        openPT: false,
+                        rectPT: null,
+                        ptStyle() {
+                            if (!this.rectPT) return '';
+                            const gap = 6;
+                            const estH = 220;
+                            const top = (window.innerHeight - this.rectPT.bottom - gap) >= estH
+                                ? (this.rectPT.bottom + gap)
+                                : Math.max(8, this.rectPT.top - gap - estH);
+                            return 'left: ' + this.rectPT.left + 'px; top: ' + top + 'px; width: ' + this.rectPT.width + 'px; position: fixed;';
+                        }
+                    }">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">পেমেন্ট টাইপ</label>
+                        <button type="button" @click="openPT = !openPT; rectPT = $el.getBoundingClientRect()"
+                            class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none cursor-pointer text-left transition-all">
+                            <span class="truncate flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                <span class="truncate text-gray-500 dark:text-slate-400"
+                                    :class="{ 'text-gray-800 dark:text-white font-bold': '{{ $group_type }}' !== '' }">
+                                    @php
+                                        $ptLabels = ['production' => 'উৎপাদন (কাঁচা ইট)', 'expense' => 'খরচ', 'income' => 'আয়', 'other' => 'অন্যান্য'];
+                                    @endphp
+                                    {{ $ptLabels[$group_type] ?? 'পেমেন্ট টাইপ নির্বাচন করুন' }}
+                                </span>
+                            </span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ml-1"
+                                :class="{ 'rotate-180': openPT }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <template x-teleport="body">
+                            <div x-show="openPT" @click.outside="openPT = false" x-transition
+                                class="fixed z-[99999999] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden font-sans"
+                                :style="ptStyle()"
+                                x-cloak>
+                                <div class="max-h-56 overflow-y-auto py-1">
+                                    @foreach([
+                                        ['value' => 'production', 'label' => 'উৎপাদন', 'sub' => 'কাঁচা ইট'],
+                                        ['value' => 'expense',    'label' => 'খরচ',    'sub' => ''],
+                                        ['value' => 'income',     'label' => 'আয়',     'sub' => ''],
+                                        ['value' => 'other',      'label' => 'অন্যান্য','sub' => ''],
+                                    ] as $pt)
+                                    <div class="px-3 py-2.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all cursor-pointer flex items-center gap-2
+                                            {{ $group_type === $pt['value'] ? 'bg-emerald-50 dark:bg-emerald-950/20' : '' }}"
+                                        @click="$wire.set('group_type', '{{ $pt['value'] }}'); openPT = false">
+                                        <svg class="w-4 h-4 shrink-0 {{ $group_type === $pt['value'] ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400' }}"
+                                            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        <span class="text-xs font-semibold font-sans block truncate
+                                                {{ $group_type === $pt['value'] ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-800 dark:text-white' }}">
+                                            {{ $pt['label'] }}@if($pt['sub']) <span class="font-normal text-gray-400 dark:text-slate-500">({{ $pt['sub'] }})</span>@endif
+                                        </span>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Row 3: Rate & Divisor side by side -->

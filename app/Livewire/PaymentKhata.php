@@ -55,6 +55,7 @@ class PaymentKhata extends Component
     public string $quickLedgerSerial = '';
     public string $quickLedgerName = '';
     public string $quickLedgerGroup = '';
+    public string $quickLedgerPaymentType = 'production';
 
     // Report tab state
     public string $reportTab = 'date'; // 'date' or 'all'
@@ -92,6 +93,7 @@ class PaymentKhata extends Component
         $this->quickLedgerSerial = (string) ($maxSerial + 1);
         $this->quickLedgerName = '';
         $this->quickLedgerGroup = '';
+        $this->quickLedgerPaymentType = 'production';
         $this->showQuickAddLedgerModal = true;
     }
 
@@ -101,6 +103,7 @@ class PaymentKhata extends Component
         $this->quickLedgerSerial = (string) ($maxSerial + 1);
         $this->quickLedgerName = '';
         $this->quickLedgerGroup = '';
+        $this->quickLedgerPaymentType = 'production';
     }
 
     public function saveQuickLedger()
@@ -136,7 +139,9 @@ class PaymentKhata extends Component
                     'serial' => $newSerial,
                     'name' => $name,
                     'group' => $group,
-                    'group_type' => 'other',
+                    'group_type' => in_array($this->quickLedgerPaymentType, ['production', 'expense', 'income', 'other'])
+                        ? $this->quickLedgerPaymentType
+                        : 'other',
                     'divisor' => 1,
                     'is_active' => true,
                 ]);
@@ -173,7 +178,7 @@ class PaymentKhata extends Component
             $groupLowerMap[mb_strtolower(trim($g))] = trim($g);
         }
 
-        // Inject group field into each payment
+        // Inject group field and fix payment column mapping for advance/baki payments
         $this->paymentsList = array_map(function ($pay) use ($ledgerGroupMap, $groupLowerMap) {
             $ledgerName = trim($pay['ledger'] ?? '');
             $lowerLedger = mb_strtolower($ledgerName);
@@ -186,6 +191,20 @@ class PaymentKhata extends Component
             } else {
                 $pay['group'] = '';
             }
+
+            // Fix for baki paid entries: If total == 0, purchase_receive > 0, transfer to payment column and zero out purchase_receive
+            if (floatval($pay['total'] ?? 0) == 0 && floatval($pay['purchase_receive'] ?? 0) > 0 && floatval($pay['qty'] ?? 0) == 0) {
+                if (floatval($pay['payment'] ?? 0) == 0) {
+                    $pay['payment'] = floatval($pay['purchase_receive']);
+                }
+                $pay['purchase_receive'] = 0;
+            }
+
+            // Fix for advance entries: Ensure payment column includes advance paid amount if payment is 0
+            if (floatval($pay['payment'] ?? 0) == 0 && floatval($pay['advance'] ?? 0) > 0) {
+                $pay['payment'] = floatval($pay['advance']);
+            }
+
             return $pay;
         }, $payments);
     }
@@ -242,6 +261,15 @@ class PaymentKhata extends Component
     {
         $total = floatval($this->totalBill ?: 0);
         $ded = floatval($this->deduction ?: 0);
+        $payAmount = floatval($this->paymentAmount ?: 0);
+
+        if ($total <= 0 && $ded <= 0 && $payAmount <= 0) {
+            if ($autoPayment) {
+                $this->paymentAmount = '';
+            }
+            $this->purchaseReceive = '';
+            return;
+        }
 
         if ($autoPayment) {
             $pay = $total - $ded;
@@ -281,17 +309,32 @@ class PaymentKhata extends Component
         $this->showPaymentModal = true;
     }
 
+    public function isAdminUser(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+        $user = auth()->user();
+        if ($user->hasRole('admin') || $user->hasRole('owner') || $user->hasRole('super-admin')) {
+            return true;
+        }
+        if (isset($user->role) && in_array($user->role, ['admin', 'owner', 'super-admin'])) {
+            return true;
+        }
+        return false;
+    }
+
     public function editPayment(int $id)
     {
         // Permission Check: Staff can only edit today's payments
-        if (auth()->check() && !auth()->user()->hasRole('admin') && !auth()->user()->hasRole('demo')) {
+        if (!$this->isAdminUser()) {
             $payment = collect($this->paymentsList)->firstWhere('id', $id);
             if ($payment) {
                 $payDateStr = $payment['date'] ?? '';
                 $today = now()->format('d/m/Y');
                 $todayDash = now()->format('Y-m-d');
                 if ($payDateStr !== $today && $payDateStr !== $todayDash) {
-                    $this->dispatch('show-toast', message: 'আপনি শুধুমাত্র আজকের পেমেন্ট সম্পাদনা করতে পারবেন।', type: 'danger');
+                    $this->dispatch('show-toast', message: 'আপনি শুধুমাত্র আজকের দিনে করা পেমেন্টগুলোই সম্পাদনা করতে পারবেন।', type: 'danger');
                     return;
                 }
             }
@@ -362,6 +405,73 @@ class PaymentKhata extends Component
         return $totalPaid - $totalBill; // Positive = advance, Negative = due
     }
 
+    /**
+     * Computed property: Get net due amount (পেমেন্ট বাকি) for the currently selected ledger.
+     * Formula: মোট বিল - (মোট নগদ পেমেন্ট + মোট কর্তন)
+     */
+    public function getSelectedLedgerDueProperty(): float
+    {
+        if (empty($this->selectedLedger)) {
+            return 0;
+        }
+        $season = $this->activeSeason ?: Setting::get('season', '২৫-২৬');
+        $query = Payment::where('ledger', $this->selectedLedger)
+            ->where(function ($q) use ($season) {
+                $q->where('season', $season)->orWhereNull('season');
+            });
+
+        if ($this->editingId) {
+            $query->where('id', '!=', $this->editingId);
+        }
+
+        $allPayments = $query->get();
+
+        $regBill = 0;
+        $regDeduction = 0;
+        $regCashPayment = 0;
+        $bakiPaidTotal = 0;
+
+        foreach ($allPayments as $p) {
+            $pType = trim($p->payment_type ?? '');
+            $qty = floatval($p->qty);
+            $total = floatval($p->total);
+            $advance = floatval($p->advance);
+            $deduction = floatval($p->deduction);
+            $payment = floatval($p->payment);
+            $rec = floatval($p->purchase_receive);
+
+            $isBakiType = str_contains($pType, 'বাকি') || ($total == 0 && $advance == 0 && ($rec > 0 || ($payment > 0 && $qty == 0)));
+
+            if ($isBakiType) {
+                $bakiPaidTotal += max($payment, $rec);
+            } else {
+                $regBill += $total;
+                $regDeduction += $deduction;
+                $regCashPayment += $payment;
+            }
+        }
+
+        $regDue = $regBill - ($regDeduction + $regCashPayment);
+        $pastNetDue = $regDue - $bakiPaidTotal;
+
+        // Real-time deduction from current modal form inputs as user types
+        $currPay = floatval($this->paymentAmount ?: 0);
+        $currAdv = floatval($this->advance ?: 0);
+        $currRec = floatval($this->purchaseReceive ?: 0);
+        $currDed = floatval($this->deduction ?: 0);
+        $currBill = floatval($this->totalBill ?: 0);
+
+        if (str_contains($this->paymentType, 'বাকি')) {
+            $currBakiEffect = max($currRec, $currPay);
+            $netDue = $pastNetDue - $currBakiEffect;
+        } else {
+            $currPaidEffect = max($currPay, $currAdv) + $currDed;
+            $netDue = ($pastNetDue + $currBill) - $currPaidEffect;
+        }
+
+        return $netDue > 0 ? $netDue : 0;
+    }
+
     public function submitPayment()
     {
         if (str_contains($this->paymentType, 'অগ্ৰিম') || str_contains($this->paymentType, 'অগ্রিম')) {
@@ -418,9 +528,22 @@ class PaymentKhata extends Component
 
         $formattedDate = now()->format('d/m/Y');
         if ($this->paymentDate) {
-            $parts = explode('-', $this->paymentDate);
-            if (count($parts) === 3) {
-                $formattedDate = $parts[2] . '/' . $parts[1] . '/' . $parts[0];
+            if (str_contains($this->paymentDate, '-')) {
+                $parts = explode('-', $this->paymentDate);
+                if (count($parts) === 3) {
+                    $formattedDate = sprintf('%02d/%02d/%04d', $parts[2], $parts[1], $parts[0]);
+                }
+            } elseif (str_contains($this->paymentDate, '/')) {
+                $formattedDate = $this->paymentDate;
+            }
+        }
+
+        // Permission Check 1.1: Staff can ONLY enter payments for TODAY'S date
+        if (!$this->isAdminUser()) {
+            $todaySlash = now()->format('d/m/Y');
+            if (!$this->editingId && $formattedDate !== $todaySlash) {
+                $this->dispatch('show-toast', message: 'সাধারণ ইউজার বা স্টাফ শুধুমাত্র আজকের তারিখে পেমেন্ট এন্ট্রি করতে পারবেন। পেছনের তারিখ নির্বাচন করার অধিকার নেই।', type: 'danger');
+                return;
             }
         }
 
@@ -431,6 +554,22 @@ class PaymentKhata extends Component
         $payment = floatval($this->paymentAmount ?: 0);
         $advance = floatval($this->advance ?: 0);
         $purchaseReceive = floatval($this->purchaseReceive ?: 0);
+
+        // Advance payment logic: Advance means money paid out, so populate payment column if 0
+        if ((str_contains($this->paymentType, 'অগ্ৰিম') || str_contains($this->paymentType, 'অগ্রিম') || $advance > 0) && $payment == 0) {
+            $payment = $advance;
+        }
+
+        // Baki payment logic: Paying off due means money paid out, so populate payment column if 0
+        if ((str_contains($this->paymentType, 'বাকি') || $purchaseReceive > 0) && $payment == 0) {
+            $payment = $purchaseReceive;
+        }
+
+        // Validation 2.1: Block saving entries with no financial transaction (all amounts 0)
+        if ($total == 0 && $payment == 0 && $advance == 0 && $deduction == 0 && $purchaseReceive == 0 && $qty == 0) {
+            $this->dispatch('show-toast', message: 'পেমেন্ট মোডালে কোনো লেনদেন ছাড়া (বিল, পেমেন্ট, অগ্রিম বা কর্তন সব ফিল্ড ০ থাকলে) এন্ট্রি সেভ করা সম্ভব নয়।', type: 'danger');
+            return;
+        }
 
         // =====================================================================
         // Smart Payment Hisab Logic (3.3 - 3.5)
@@ -455,7 +594,14 @@ class PaymentKhata extends Component
         $finalAdvance = $advance;
         $finalPurchaseReceive = $purchaseReceive;
 
-        if ($total > 0 || $payment > 0) {
+        if (str_contains($this->paymentType, 'বাকি') || ($purchaseReceive > 0 && $total == 0)) {
+            // Pure Baki settlement payment: strictly goes into payment column, NOT into kom/beshi column
+            $finalPurchaseReceive = 0;
+            $finalAdvance = 0;
+        } elseif (str_contains($this->paymentType, 'অগ্ৰিম') || str_contains($this->paymentType, 'অগ্রিম')) {
+            $finalAdvance = $advance;
+            $finalPurchaseReceive = 0;
+        } elseif ($total > 0 || $payment > 0) {
             $netEntry = ($payment + $advance) - ($total - $deduction);
 
             if ($netEntry > 0) {
@@ -508,6 +654,7 @@ class PaymentKhata extends Component
                     'date' => $formattedDate,
                     'ledger' => $this->selectedLedger,
                     'desc' => $this->paymentDesc,
+                    'payment_type' => $this->paymentType ?: 'রেগুলার',
                     'qty' => $qty,
                     'rate' => $rate,
                     'total' => $total,
@@ -531,6 +678,7 @@ class PaymentKhata extends Component
                 'date' => $formattedDate,
                 'ledger' => $this->selectedLedger,
                 'desc' => $this->paymentDesc,
+                'payment_type' => $this->paymentType ?: 'রেগুলার',
                 'qty' => $qty,
                 'rate' => $rate,
                 'total' => $total,
@@ -627,7 +775,7 @@ class PaymentKhata extends Component
         }
 
         // Permission Check: Staff can only delete today's payments
-        if (auth()->check() && !auth()->user()->hasRole('admin')) {
+        if (!$this->isAdminUser()) {
             $payment = collect($this->paymentsList)->firstWhere('id', $id);
             if ($payment) {
                 $payDateStr = $payment['date'] ?? '';
@@ -699,16 +847,22 @@ class PaymentKhata extends Component
     {
         $payments = $this->paymentsList;
         if ($this->reportTab === 'date') {
-            $todayFormatted = now()->format('d/m/Y');
-            $todayDash = now()->format('Y-m-d');
-            $payments = array_values(array_filter($payments, function ($pay) use ($todayFormatted, $todayDash) {
+            if (!empty($this->dateFilter)) {
+                $targetSlash = date('d/m/Y', strtotime($this->dateFilter));
+                $targetDash = date('Y-m-d', strtotime($this->dateFilter));
+            } else {
+                $targetSlash = now()->format('d/m/Y');
+                $targetDash = now()->format('Y-m-d');
+            }
+
+            $payments = array_values(array_filter($payments, function ($pay) use ($targetSlash, $targetDash) {
                 if (!empty($pay['date'])) {
-                    if ($pay['date'] === $todayFormatted || $pay['date'] === $todayDash) {
+                    if ($pay['date'] === $targetSlash || $pay['date'] === $targetDash) {
                         return true;
                     }
                 }
                 if (!empty($pay['created_at'])) {
-                    return date('Y-m-d', strtotime($pay['created_at'])) === $todayDash;
+                    return date('Y-m-d', strtotime($pay['created_at'])) === $targetDash;
                 }
                 return false;
             }));

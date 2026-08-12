@@ -13,7 +13,7 @@ class LedgerAdd extends Component
     public $serial = '';
     public $name = '';
     public $group = '';
-    public $group_type = 'other'; // production, expense, income, other
+    public $group_type = 'production'; // production, expense, income, other
     public $rate = '';
     public $divisor = 1;
 
@@ -227,7 +227,7 @@ class LedgerAdd extends Component
         $maxSerial = (int) (Ledger::max('serial') ?: Ledger::count());
         $this->serial = sprintf('%02d', $maxSerial + 1);
         $this->group = '';
-        $this->group_type = 'other';
+        $this->group_type = 'production';
         $this->showModal = true;
     }
 
@@ -415,7 +415,7 @@ class LedgerAdd extends Component
         $this->reset(['serial', 'name', 'rate', 'editingLedgerId', 'group', 'newGroupInput']);
         $this->pendingGroups = [];
         $this->divisor = 1;
-        $this->group_type = 'other';
+        $this->group_type = 'production';
     }
 
     protected $listeners = [
@@ -453,11 +453,19 @@ class LedgerAdd extends Component
 
         $this->syncGroupOptions($this->showGroupManager);
 
+        $ptLabels = [
+            'production' => 'উৎপাদন',
+            'expense'    => 'খরচ',
+            'income'     => 'আয়',
+            'other'      => 'অন্যান্য',
+        ];
+
         return view('livewire.settings.ledger-add', [
-            'ledgers' => $ledgers,
-            'totalCount' => $totalCount,
-            'totalPages' => $totalPages,
+            'ledgers'     => $ledgers,
+            'totalCount'  => $totalCount,
+            'totalPages'  => $totalPages,
             'currentPage' => $this->page,
+            'ptLabels'    => $ptLabels,
         ]);
     }
 }

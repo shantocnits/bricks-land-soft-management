@@ -43,6 +43,72 @@
                         @enderror
                     </div>
 
+                    <!-- Payment Type Dropdown (root-style teleport) -->
+                    <div class="relative" x-data="{
+                        openPT: false,
+                        rectPT: null,
+                        ptStyle() {
+                            if (!this.rectPT) return '';
+                            const gap = 6;
+                            const estH = 220;
+                            const spaceBelow = window.innerHeight - this.rectPT.bottom;
+                            const showAbove = spaceBelow < estH && this.rectPT.top > estH;
+                            const top = showAbove
+                                ? Math.max(8, this.rectPT.top - estH - gap)
+                                : Math.min(window.innerHeight - estH - gap, this.rectPT.bottom + gap);
+                            return 'left: ' + this.rectPT.left + 'px; top: ' + top + 'px; width: ' + this.rectPT.width + 'px; position: fixed;';
+                        }
+                    }">
+                        <label class="block text-xs font-bold text-gray-600 dark:text-slate-350 mb-1.5 font-sans">পেমেন্ট টাইপ</label>
+                        <button type="button" @click="openPT = !openPT; rectPT = $el.getBoundingClientRect()"
+                            class="w-full flex items-center justify-between py-3 px-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-sm font-semibold text-gray-808 dark:text-white focus:outline-none cursor-pointer text-left transition-all font-sans">
+                            <span class="truncate flex items-center gap-2">
+                                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                <span class="truncate text-gray-500 dark:text-slate-400 font-sans"
+                                    :class="{ 'text-gray-808 dark:text-white font-bold': '{{ $quickLedgerPaymentType }}' !== '' }">
+                                    @php
+                                        $ptLabels2 = ['production' => 'উৎপাদন (কাঁচা ইট)', 'expense' => 'খরচ', 'income' => 'আয়', 'other' => 'অন্যান্য'];
+                                    @endphp
+                                    {{ $ptLabels2[$quickLedgerPaymentType] ?? 'পেমেন্ট টাইপ নির্বাচন করুন' }}
+                                </span>
+                            </span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ml-1"
+                                :class="{ 'rotate-180': openPT }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <template x-teleport="body">
+                            <div x-show="openPT" @click.outside="openPT = false" x-transition
+                                class="fixed z-[99999999] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden font-sans"
+                                :style="ptStyle()"
+                                x-cloak>
+                                <div class="max-h-56 overflow-y-auto py-1">
+                                    @foreach([
+                                        ['value' => 'production', 'label' => 'উৎপাদন', 'sub' => 'কাঁচা ইট'],
+                                        ['value' => 'expense',    'label' => 'খরচ',    'sub' => ''],
+                                        ['value' => 'income',     'label' => 'আয়',     'sub' => ''],
+                                        ['value' => 'other',      'label' => 'অন্যান্য','sub' => ''],
+                                    ] as $pt)
+                                    <div class="px-3.5 py-2.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all cursor-pointer flex items-center gap-2
+                                            {{ $quickLedgerPaymentType === $pt['value'] ? 'bg-emerald-50 dark:bg-emerald-950/20' : '' }}"
+                                        @click="$wire.set('quickLedgerPaymentType', '{{ $pt['value'] }}'); openPT = false">
+                                        <svg class="w-4 h-4 shrink-0 {{ $quickLedgerPaymentType === $pt['value'] ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400' }}"
+                                            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        <span class="text-xs font-semibold font-sans block truncate
+                                                {{ $quickLedgerPaymentType === $pt['value'] ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-808 dark:text-white' }}">
+                                            {{ $pt['label'] }}@if($pt['sub']) <span class="font-normal text-gray-400 dark:text-slate-500">({{ $pt['sub'] }})</span>@endif
+                                        </span>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
                     <!-- Khotiyan Group Dropdown matching Settings Root Design -->
                     <div x-data="{
                         openGrp: false,

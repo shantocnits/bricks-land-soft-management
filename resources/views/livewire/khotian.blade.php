@@ -253,16 +253,20 @@ if (!function_exists('toKhotianDateTimeParts')) {
                     <span class="px-3.5 py-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-black">
                         অগ্রিম: {{ toBanglaNum(number_format($totalAdvance)) }}
                     </span>
-                    <span class="px-3.5 py-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 rounded-xl text-xs font-black">
-                        পরিশোধ: {{ toBanglaNum(number_format($totalDeduction)) }}
+                    <span class="px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-black">
+                        পরিশোধ: {{ toBanglaNum(number_format($totalPorishodh ?? 0)) }}
                     </span>
-                    @php $advanceRemaining = $totalAdvance - $totalDeduction; @endphp
-                    <span class="px-3.5 py-2 {{ $advanceRemaining < 0 ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' }} border rounded-xl text-xs font-black">
-                        অগ্রিম বাকি: {{ toBanglaNum(number_format($advanceRemaining)) }}
+                    @php 
+                        $advRem = $advanceRemaining ?? ($totalAdvance - ($totalPorishodh ?? 0));
+                    @endphp
+                    <span class="px-3.5 py-2 {{ $advRem < 0 ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' }} border rounded-xl text-xs font-black">
+                        অগ্রিম বাকি: {{ toBanglaNum(number_format($advRem)) }}
                     </span>
-                    @php $netBalance = ($totalAdvance + $totalPayment) - $totalBill; @endphp
-                    <span class="px-3.5 py-2 {{ $netBalance < 0 ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' }} border rounded-xl text-xs font-black">
-                        {{ $netBalance >= 0 ? 'বেশি পেমেন্ট' : 'পেমেন্ট বাকি' }}: {{ $netBalance < 0 ? '-' : '' }}{{ toBanglaNum(number_format(abs($netBalance))) }}
+                    @php 
+                        $payBaki = $paymentBaki ?? ($totalBill - ($totalPayment + $totalDeduction));
+                    @endphp
+                    <span class="px-3.5 py-2 {{ $payBaki != 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' }} border rounded-xl text-xs font-black">
+                        পেমেন্ট বাকি: {{ toBanglaNum(number_format($payBaki)) }}
                     </span>
                 </div>
             </div>
@@ -330,8 +334,21 @@ if (!function_exists('toKhotianDateTimeParts')) {
                                 </td>
                                 <td class="py-3 px-4 font-semibold text-gray-800 dark:text-slate-200 border-r border-gray-150 dark:border-slate-800 whitespace-pre-wrap max-w-xs">{{ $pay->desc }}</td>
                                 <td class="py-3 px-4 text-center border-r border-gray-150 dark:border-slate-800">
-                                    <span class="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-bold rounded-lg text-[10px]">
-                                        রেগুলার পেমেন্ট
+                                    @php
+                                        $payTypeStr = trim($pay->payment_type ?? '');
+                                        if (str_contains($payTypeStr, 'অগ্ৰিম') || str_contains($payTypeStr, 'অগ্রিম') || ($pay->total == 0 && $pay->advance > 0)) {
+                                            $displayType = 'অগ্রিম পেমেন্ট';
+                                            $typeClass = 'text-rose-500 dark:text-rose-400 font-bold';
+                                        } elseif (str_contains($payTypeStr, 'বাকি') || ($pay->total == 0 && ($pay->purchase_receive > 0 || ($pay->payment > 0 && $pay->qty == 0)))) {
+                                            $displayType = 'বাকি পেমেন্ট';
+                                            $typeClass = 'text-rose-500 dark:text-rose-400 font-bold';
+                                        } else {
+                                            $displayType = 'রেগুলার পেমেন্ট';
+                                            $typeClass = 'text-gray-500 dark:text-slate-400 font-medium';
+                                        }
+                                    @endphp
+                                    <span class="{{ $typeClass }} text-xs font-sans">
+                                        {{ $displayType }}
                                     </span>
                                 </td>
                                 <td class="py-3 px-4 text-right font-mono font-semibold text-gray-500 border-r border-gray-150 dark:border-slate-800">
@@ -349,11 +366,28 @@ if (!function_exists('toKhotianDateTimeParts')) {
                                 <td class="py-3 px-4 text-right font-mono font-semibold text-rose-500 border-r border-gray-150 dark:border-slate-800">
                                     {{ $pay->deduction > 0 ? '৳' . toBanglaNum(number_format($pay->deduction)) : '৳০' }}
                                 </td>
+                                @php
+                                    $effPayment = floatval($pay->payment);
+                                    if ($effPayment == 0) {
+                                        if (floatval($pay->total) == 0 && floatval($pay->advance) > 0) {
+                                            $effPayment = floatval($pay->advance);
+                                        } elseif (floatval($pay->total) == 0 && floatval($pay->purchase_receive) > 0) {
+                                            $effPayment = floatval($pay->purchase_receive);
+                                        }
+                                    }
+
+                                    $displayKomBeshi = '—';
+                                    if (floatval($pay->total) > 0 || floatval($pay->qty) > 0) {
+                                        if (floatval($pay->purchase_receive) > 0) {
+                                            $displayKomBeshi = '৳' . toBanglaNum(number_format($pay->purchase_receive));
+                                        }
+                                    }
+                                @endphp
                                 <td class="py-3 px-4 text-right font-mono font-black text-emerald-600 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800">
-                                    {{ $pay->payment > 0 ? '৳' . toBanglaNum(number_format($pay->payment)) : '৳০' }}
+                                    {{ $effPayment > 0 ? '৳' . toBanglaNum(number_format($effPayment)) : '৳০' }}
                                 </td>
                                 <td class="py-3 px-4 text-right font-mono font-semibold text-gray-500 border-r border-gray-150 dark:border-slate-800">
-                                    {{ $pay->purchase_receive > 0 ? '৳' . toBanglaNum(number_format($pay->purchase_receive)) : '৳০' }}
+                                    {{ $displayKomBeshi }}
                                 </td>
                                  <td class="py-3 px-4 text-center">
                                      @if($pay->has_doc && $pay->doc_url)
@@ -386,12 +420,8 @@ if (!function_exists('toKhotianDateTimeParts')) {
                     @if($payments->count() > 0)
                         <tfoot>
                             <tr class="bg-gray-50 dark:bg-slate-800 font-sans text-xs border-t-2 border-gray-200 dark:border-slate-700">
-                                <td colspan="8" class="py-3 px-4 font-bold border-r border-gray-150 dark:border-slate-800 text-gray-700 dark:text-slate-300">
+                                <td colspan="12" class="py-3 px-4 font-bold text-gray-700 dark:text-slate-300">
                                     মোট পেমেন্ট {{ toBanglaNum($count) }} টি | পরিমাণ {{ toBanglaNum(number_format($totalQty)) }} | মোট বিল ৳{{ toBanglaNum(number_format($totalBill)) }} | পেমেন্ট ৳{{ toBanglaNum(number_format($totalPayment)) }}
-                                </td>
-                                @php $tfootNet = ($totalAdvance + $totalPayment) - $totalBill; @endphp
-                                <td colspan="4" class="py-3 px-4 text-right font-bold {{ $tfootNet < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                                    নিট ব্যালেন্স: ৳{{ $tfootNet < 0 ? '-' : '' }}{{ toBanglaNum(number_format(abs($tfootNet))) }}
                                 </td>
                             </tr>
                         </tfoot>

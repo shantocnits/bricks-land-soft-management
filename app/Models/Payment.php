@@ -10,6 +10,7 @@ class Payment extends Model
         'date',
         'ledger',
         'desc',
+        'payment_type',
         'qty',
         'rate',
         'total',

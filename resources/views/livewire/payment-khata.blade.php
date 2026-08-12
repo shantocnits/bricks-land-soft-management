@@ -155,7 +155,7 @@
                                     ৳ {{ number_format($pay['payment']) }}</td>
                                 <td
                                     class="px-3 py-3.5 text-right font-bold text-gray-900 dark:text-white border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">
-                                    ৳ {{ number_format($pay['purchase_receive']) }}</td>
+                                    {{ $pay['purchase_receive'] > 0 ? '৳ ' . number_format($pay['purchase_receive']) : '—' }}</td>
                                 <td
                                     class="px-3 py-3.5 text-center border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                     @if ($pay['has_doc'])
@@ -172,17 +172,35 @@
                                         <span class="text-gray-350 dark:text-slate-850 text-[10px]">-</span>
                                     @endif
                                 </td>
+                                @php
+                                    $isAdmin = auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('owner') || auth()->user()->hasRole('super-admin') || in_array(auth()->user()->role ?? '', ['admin', 'owner', 'super-admin']));
+                                    $payDateStr = $pay['date'] ?? '';
+                                    $todaySlash = now()->format('d/m/Y');
+                                    $todayDash = now()->format('Y-m-d');
+                                    $canModify = $isAdmin || ($payDateStr === $todaySlash || $payDateStr === $todayDash);
+                                @endphp
                                 <td class="px-3 py-3.5 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button wire:click="editPayment({{ $pay['id'] }})"
-                                            class="inline-flex text-indigo-600 hover:text-indigo-850 hover:scale-110 transition-all cursor-pointer focus:outline-none"
-                                            title="সম্পাদনা">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                                            </svg>
-                                        </button>
+                                        @if($canModify)
+                                            <button wire:click="editPayment({{ $pay['id'] }})"
+                                                class="inline-flex text-indigo-600 hover:text-indigo-850 hover:scale-110 transition-all cursor-pointer focus:outline-none"
+                                                title="সম্পাদনা">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                                </svg>
+                                            </button>
+                                        @else
+                                            <button disabled class="inline-flex text-gray-300 dark:text-slate-700 opacity-40 cursor-not-allowed"
+                                                title="পেছনের তারিখের পেমেন্ট এডিট করার অনুমতি নেই">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                                </svg>
+                                            </button>
+                                        @endif
 
                                         <a href="/khotian?selectedLedger={{ urlencode($pay['ledger']) }}" wire:navigate
                                             class="inline-flex text-emerald-600 hover:text-emerald-800 hover:scale-110 transition-all cursor-pointer focus:outline-none"
@@ -194,15 +212,26 @@
                                             </svg>
                                         </a>
 
-                                        <button wire:click="confirmDelete({{ $pay['id'] }})"
-                                            class="inline-flex text-red-500 hover:text-red-755 hover:scale-110 transition-all cursor-pointer focus:outline-none"
-                                            title="ডিলিট করুন">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                            </svg>
-                                        </button>
+                                        @if($canModify)
+                                            <button wire:click="confirmDelete({{ $pay['id'] }})"
+                                                class="inline-flex text-red-500 hover:text-red-755 hover:scale-110 transition-all cursor-pointer focus:outline-none"
+                                                title="ডিলিট করুন">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                </svg>
+                                            </button>
+                                        @else
+                                            <button disabled class="inline-flex text-gray-300 dark:text-slate-700 opacity-40 cursor-not-allowed"
+                                                title="পেছনের তারিখের পেমেন্ট ডিলিট করার অনুমতি নেই">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                </svg>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -254,8 +283,7 @@
                             </div>
                             <div class="mt-1">
                                 <span class="text-gray-455 block uppercase text-[9px] font-sans font-bold">ক্রয়/রেশি</span>
-                                <span class="text-gray-655 dark:text-slate-400 font-semibold">৳
-                                    {{ number_format($pay['purchase_receive']) }}</span>
+                                <span class="text-gray-655 dark:text-slate-400 font-semibold">{{ $pay['purchase_receive'] > 0 ? '৳ ' . number_format($pay['purchase_receive']) : '—' }}</span>
                             </div>
                         </div>
 
@@ -272,15 +300,26 @@
                                 @endif
                             </div>
 
+                            @php
+                                $mIsAdmin = auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('owner') || auth()->user()->hasRole('super-admin') || in_array(auth()->user()->role ?? '', ['admin', 'owner', 'super-admin']));
+                                $mPayDateStr = $pay['date'] ?? '';
+                                $mTodaySlash = now()->format('d/m/Y');
+                                $mTodayDash = now()->format('Y-m-d');
+                                $mCanModify = $mIsAdmin || ($mPayDateStr === $mTodaySlash || $mPayDateStr === $mTodayDash);
+                            @endphp
                             <div class="flex items-center gap-3">
-                                <button wire:click="editPayment({{ $pay['id'] }})"
-                                    class="text-indigo-600 hover:text-indigo-850 font-bold flex items-center gap-0.5 cursor-pointer focus:outline-none">
-                                    📝 এডিট
-                                </button>
-                                <button wire:click="confirmDelete({{ $pay['id'] }})"
-                                    class="text-red-500 hover:text-red-755 font-bold flex items-center gap-0.5 cursor-pointer focus:outline-none">
-                                    🗑️ মুছুন
-                                </button>
+                                @if($mCanModify)
+                                    <button wire:click="editPayment({{ $pay['id'] }})"
+                                        class="text-indigo-600 hover:text-indigo-850 font-bold flex items-center gap-0.5 cursor-pointer focus:outline-none">
+                                        📝 এডিট
+                                    </button>
+                                    <button wire:click="confirmDelete({{ $pay['id'] }})"
+                                        class="text-red-500 hover:text-red-755 font-bold flex items-center gap-0.5 cursor-pointer focus:outline-none">
+                                        🗑️ মুছুন
+                                    </button>
+                                @else
+                                    <span class="text-[11px] text-gray-400 dark:text-slate-600 font-semibold font-sans">🔒 পেছনের তারিখ (লকড)</span>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -373,6 +412,22 @@
                     {{ $editingId ? 'পেমেন্ট সংশোধন' : 'নতুন পেমেন্ট' }}
                 </h2>
 
+                <!-- Dynamic Red Banner for Payment Baki / Due -->
+                @if($selectedLedger && $this->selectedLedgerDue > 0)
+                    <div class="mb-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 px-4 py-3 rounded-2xl flex items-center justify-between shadow-sm animate-fade-in font-sans">
+                        <div class="flex items-center gap-2.5">
+                            <span class="p-1.5 bg-rose-100 dark:bg-rose-900/60 rounded-xl text-rose-600 dark:text-rose-400 shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                </svg>
+                            </span>
+                            <span class="text-xs font-bold font-sans">
+                                পেমেন্ট বাকি আছে : <strong class="font-mono text-sm">৳ {{ number_format($this->selectedLedgerDue) }}</strong>
+                            </span>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Form Content -->
                 <div class="space-y-4">
 
@@ -462,7 +517,7 @@
                         <label class="block text-xs font-bold text-rose-500 dark:text-rose-400 mb-1.5 font-sans">
                             অগ্রিম টাকা <span class="text-red-500">*</span>
                         </label>
-                        <input type="number" step="0.01" wire:model="advance"
+                        <input type="number" step="0.01" wire:model.live.debounce.300ms="advance"
                             class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-808 dark:text-white text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                             placeholder="0">
                         @error('advance')
@@ -475,7 +530,7 @@
                         <label class="block text-xs font-bold text-rose-500 dark:text-rose-400 mb-1.5 font-sans">
                             বাকি টাকা <span class="text-red-500">*</span>
                         </label>
-                        <input type="number" step="0.01" wire:model="purchaseReceive"
+                        <input type="number" step="0.01" wire:model.live.debounce.300ms="purchaseReceive"
                             class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-808 dark:text-white text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                             placeholder="0">
                         @error('purchaseReceive')
@@ -577,12 +632,16 @@
                         </div>
                     </div>
 
-                    @if($editingId)
-                        <!-- Payment Date (Shown only in Payment Edit Modal) -->
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">পেমেন্টের
-                                তারিখ <span class="text-red-500">*</span></label>
+                    <!-- Payment Date (Role Controlled) -->
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-gray-655 dark:text-slate-350 mb-1.5 font-sans">পেমেন্টের
+                            তারিখ <span class="text-red-500">*</span></label>
+                        @php
+                            $formIsAdmin = auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('owner') || auth()->user()->hasRole('super-admin') || in_array(auth()->user()->role ?? '', ['admin', 'owner', 'super-admin']));
+                        @endphp
+
+                        @if($formIsAdmin)
                             <div class="relative flex items-center">
                                 <input type="text" data-flatpickr data-wire-prop="paymentDate"
                                     data-default="{{ $paymentDate }}" wire:model="paymentDate" placeholder="তারিখ" readonly
@@ -597,8 +656,20 @@
                                     </svg>
                                 </span>
                             </div>
-                        </div>
-                    @endif
+                        @else
+                            <div class="relative flex items-center">
+                                <input type="text" readonly value="{{ now()->format('d/m/Y') }}"
+                                    class="w-full pl-3 pr-8 py-3 text-sm rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800/60 text-gray-500 dark:text-slate-400 font-sans font-semibold cursor-not-allowed"
+                                    title="স্টাফদের জন্য শুধুমাত্র আজকের তারিখ">
+                                <span class="absolute right-3.5 top-3 text-gray-400 pointer-events-none text-xs">
+                                    🔒
+                                </span>
+                            </div>
+                            <p class="text-[10px] text-gray-400 dark:text-slate-500 mt-1 font-sans">
+                                * সাধারণ ইউজার বা স্টাফ শুধুমাত্র আজকের তারিখে পেমেন্ট করতে পারবেন।
+                            </p>
+                        @endif
+                    </div>
 
                     <!-- Footer Buttons -->
                     <div class="flex items-center gap-3.5 pt-4 border-t border-gray-100 dark:border-slate-800/60">
@@ -790,7 +861,7 @@
                         class="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl mb-4 text-xs font-sans font-semibold">
                         <button type="button" wire:click="$set('reportTab', 'date')"
                             class="flex-1 py-1.5 rounded-lg text-center transition-colors focus:outline-none {{ $reportTab === 'date' ? 'bg-emerald-600 text-white' : 'text-gray-650 dark:text-slate-400 hover:text-gray-805' }}">
-                            আজকের পেমেন্ট
+                            {{ !empty($dateFilter) ? date('d/m/Y', strtotime($dateFilter)) . ' পেমেন্ট' : 'আজকের পেমেন্ট' }}
                         </button>
                         <button type="button" wire:click="$set('reportTab', 'all')"
                             class="flex-1 py-1.5 rounded-lg text-center transition-colors focus:outline-none {{ $reportTab === 'all' ? 'bg-emerald-600 text-white' : 'text-gray-650 dark:text-slate-400 hover:text-gray-805' }}">
