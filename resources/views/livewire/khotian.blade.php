@@ -254,20 +254,23 @@ if (!function_exists('toKhotianDateTimeParts')) {
                         অগ্রিম: {{ toBanglaNum(number_format($totalAdvance)) }}
                     </span>
                     <span class="px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-black">
-                        পরিশোধ: {{ toBanglaNum(number_format($totalPorishodh ?? 0)) }}
+                        পরিশোধ: {{ toBanglaNum(number_format($totalDeduction)) }}
                     </span>
-                    @php 
-                        $advRem = $advanceRemaining ?? ($totalAdvance - ($totalPorishodh ?? 0));
+                    <span class="px-3.5 py-2 {{ $advanceRemaining < 0 ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400' : ($advanceRemaining == 0 ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400') }} border rounded-xl text-xs font-black">
+                        অগ্রিম বাকি: {{ toBanglaNum(number_format($advanceRemaining)) }}
+                    </span>
+                    @php
+                        $bakiNet = $rawPaymentBaki ?? $paymentBaki;
                     @endphp
-                    <span class="px-3.5 py-2 {{ $advRem < 0 ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' }} border rounded-xl text-xs font-black">
-                        অগ্রিম বাকি: {{ toBanglaNum(number_format($advRem)) }}
-                    </span>
-                    @php 
-                        $payBaki = $paymentBaki ?? ($totalBill - ($totalPayment + $totalDeduction));
-                    @endphp
-                    <span class="px-3.5 py-2 {{ $payBaki != 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400' }} border rounded-xl text-xs font-black">
-                        পেমেন্ট বাকি: {{ toBanglaNum(number_format($payBaki)) }}
-                    </span>
+                    @if($bakiNet < 0)
+                        <span class="px-3.5 py-2 bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/60 dark:text-rose-400 border rounded-xl text-xs font-black">
+                            বেশি পেমেন্ট: {{ toBanglaNum(number_format(abs($bakiNet))) }}
+                        </span>
+                    @else
+                        <span class="px-3.5 py-2 bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-900/60 dark:text-emerald-400 border rounded-xl text-xs font-black">
+                            পেমেন্ট বাকি: {{ toBanglaNum(number_format($bakiNet)) }}
+                        </span>
+                    @endif
                 </div>
             </div>
 
@@ -376,17 +379,36 @@ if (!function_exists('toKhotianDateTimeParts')) {
                                         }
                                     }
 
+                                    $pTypeStr = trim($pay->payment_type ?? '');
+                                    $totVal = floatval($pay->total);
+                                    $qtyVal = floatval($pay->qty);
+                                    $payVal = floatval($pay->payment);
+                                    $dedVal = floatval($pay->deduction);
+                                    $advVal = floatval($pay->advance);
+                                    $recVal = floatval($pay->purchase_receive);
+
+                                    $isAdvEntry = str_contains($pTypeStr, 'অগ্ৰিম') || str_contains($pTypeStr, 'অগ্রিম') || ($totVal == 0 && $advVal > 0);
+                                    $isBakiEntry = str_contains($pTypeStr, 'বাকি') || (!$isAdvEntry && $totVal == 0 && ($recVal > 0 || ($payVal > 0 && $qtyVal == 0)));
+
                                     $displayKomBeshi = '—';
-                                    if (floatval($pay->total) > 0 || floatval($pay->qty) > 0) {
-                                        if (floatval($pay->purchase_receive) > 0) {
-                                            $displayKomBeshi = '৳' . toBanglaNum(number_format($pay->purchase_receive));
+                                    if (!$isAdvEntry && !$isBakiEntry && ($totVal > 0 || $qtyVal > 0)) {
+                                        if ($recVal != 0) {
+                                            $diffVal = $recVal;
+                                        } else {
+                                            $diffVal = ($totVal - $dedVal) - $payVal;
+                                        }
+
+                                        if ($diffVal < 0) {
+                                            $displayKomBeshi = '৳-' . toBanglaNum(number_format(abs($diffVal)));
+                                        } elseif ($diffVal > 0) {
+                                            $displayKomBeshi = '৳' . toBanglaNum(number_format($diffVal));
                                         }
                                     }
                                 @endphp
                                 <td class="py-3 px-4 text-right font-mono font-black text-emerald-600 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800">
                                     {{ $effPayment > 0 ? '৳' . toBanglaNum(number_format($effPayment)) : '৳০' }}
                                 </td>
-                                <td class="py-3 px-4 text-right font-mono font-semibold text-gray-500 border-r border-gray-150 dark:border-slate-800">
+                                <td class="py-3 px-4 text-right font-mono font-bold text-rose-500 border-r border-gray-150 dark:border-slate-800">
                                     {{ $displayKomBeshi }}
                                 </td>
                                  <td class="py-3 px-4 text-center">

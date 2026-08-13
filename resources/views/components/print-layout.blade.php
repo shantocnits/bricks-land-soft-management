@@ -815,17 +815,50 @@ Supported Layout Modes ($type):
             $companyAddressVal = \App\Models\Setting::get('address', 'হিলালীপাড়া,কাটাবাড়ি,গোবیندগঞ্জ');
             $ownerPhonesVal = \App\Models\Setting::get('invoice_phones') ?: \App\Models\Setting::get('owner_phone', '01901349901, 01901349906');
             $ownerPhonesBn = function_exists('toBanglaNum') ? toBanglaNum($ownerPhonesVal) : $ownerPhonesVal;
-            $ownerNameVal = \App\Models\Setting::get('owner_name', 'মোঃ মানিক মিয়া');
+            $ownerNameVal = \App\Models\Setting::get('owner_name', 'Khandaker Shanto');
             $formattedPrintDate = function_exists('toBanglaNum') ? toBanglaNum(now()->format('d-m-Y')) : now()->format('d-m-Y');
             $formattedPrintTime = function_exists('toBanglaNum') ? toBanglaNum(now()->format('d-m-Y h:i a')) : now()->format('d-m-Y h:i a');
 
-            $printTotalQty = $totalQty ?? 0;
+            $calcQty = collect($printKhotianPayments)->sum(fn($p) => floatval(is_object($p) ? $p->qty : ($p['qty'] ?? 0)));
+            $printTotalQty = (isset($totalQty) && floatval($totalQty) > 0) ? floatval($totalQty) : $calcQty;
+
             $printTotalBill = $totalBill ?? 0;
             $printTotalAdvance = $totalAdvance ?? 0;
             $printTotalDeduction = $totalDeduction ?? 0;
             $printTotalPayment = $totalPayment ?? 0;
             $printDueBalance = $printTotalBill - $printTotalDeduction - $printTotalPayment;
         @endphp
+
+        <style>
+            @media print {
+                #khotian-statement-print-wrapper {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                #khotian-statement-print-wrapper table {
+                    width: 100% !important;
+                    border-collapse: collapse !important;
+                    page-break-inside: auto !important;
+                }
+                #khotian-statement-print-wrapper thead {
+                    display: table-header-group !important;
+                }
+                #khotian-statement-print-wrapper tbody {
+                    display: table-row-group !important;
+                }
+                #khotian-statement-print-wrapper tr {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                }
+                #khotian-statement-print-wrapper tfoot {
+                    display: table-footer-group !important;
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                }
+            }
+        </style>
 
         <div id="khotian-statement-print-wrapper" class="bg-white text-gray-900 font-sans p-2 sm:p-4">
             <!-- Document Wrapper -->
@@ -848,6 +881,9 @@ Supported Layout Modes ($type):
                             <h1 class="text-xl font-black text-emerald-700 tracking-tight leading-none">{{ $companyNameVal }}</h1>
                             <p class="text-xs text-gray-700 font-bold leading-tight">{{ $companyAddressVal }}</p>
                             <p class="text-xs text-gray-700 font-bold leading-tight">{{ $ownerPhonesBn }}</p>
+                            @if($ownerNameVal)
+                                <p class="text-xs text-gray-800 font-bold leading-tight">প্রোপাইটরঃ {{ $ownerNameVal }}</p>
+                            @endif
                         </div>
                     </div>
 
@@ -857,8 +893,8 @@ Supported Layout Modes ($type):
                             স্টেটমেন্ট
                         </span>
                         <p class="text-xs font-bold text-gray-700">প্রিন্ট তারিখঃ {{ $formattedPrintDate }}</p>
-                        <p class="text-xs font-black text-gray-900">{{ $selectedLedger }} ({{ $ledgerGroup ?: 'অন্যান্য' }})</p>
-                        <p class="text-xs font-bold text-gray-700">সিজনঃ {{ $seasonVal }} ({{ $ledgerGroup ?: 'অন্যান্য' }})</p>
+                        <p class="text-xs font-black text-gray-900">{{ $selectedLedger }}</p>
+                        <p class="text-xs font-bold text-gray-700">সিজনঃ {{ $seasonVal }}</p>
                         <p class="text-[11px] font-bold text-gray-700">
                             পরিমাণঃ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalQty)) : number_format($printTotalQty) }}, মোট পেমেন্টঃ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($printTotalPayment)) : number_format($printTotalPayment) }} টাকা
                         </p>
@@ -1705,18 +1741,32 @@ Supported Layout Modes ($type):
                             @php
                                 $totLoadComp  = 0;
                                 $totBrickComp = 0;
+                                $totAdlaCompSum = 0;
                             @endphp
                             @forelse($compareRows ?? [] as $cRow)
                                 @php
                                     $cObj = is_array($cRow) ? (object)$cRow : $cRow;
-                                    $cLoad = $cObj->load ?? 0;
-                                    $cBrick = $cObj->brick ?? 0;
-                                    $cAdla = max(0, $cLoad - $cBrick);
-                                    $cBrickPct = $cLoad > 0 ? round(($cBrick / $cLoad) * 100, 2) : 0;
-                                    $cAdlaPct = $cLoad > 0 ? round(100 - $cBrickPct, 2) : 0;
+                                    $cLoad = floatval($cObj->load ?? 0);
+                                    $cBrick = floatval($cObj->brick ?? 0);
+                                    $cAdla = isset($cObj->adla) ? floatval($cObj->adla) : max(0, $cLoad - $cBrick);
+                                    $cUnloadedTotal = $cBrick + $cAdla;
+
+                                    if ($cLoad > 0) {
+                                        $cBrickPct = round(($cBrick / $cLoad) * 100, 2);
+                                        $cAdlaPct = round(($cAdla / $cLoad) * 100, 2);
+                                    } else {
+                                        if ($cUnloadedTotal > 0) {
+                                            $cBrickPct = round(($cBrick / $cUnloadedTotal) * 100, 2);
+                                            $cAdlaPct = round(($cAdla / $cUnloadedTotal) * 100, 2);
+                                        } else {
+                                            $cBrickPct = 0;
+                                            $cAdlaPct = 0;
+                                        }
+                                    }
 
                                     $totLoadComp += $cLoad;
                                     $totBrickComp += $cBrick;
+                                    $totAdlaCompSum += $cAdla;
                                 @endphp
                                 <tr class="hover:bg-gray-50 border-b border-gray-300 text-xs text-center">
                                     <td class="p-2 font-bold border-r border-gray-300">{{ toBnNumPrint($cObj->round ?? '-') }}</td>
@@ -1732,9 +1782,20 @@ Supported Layout Modes ($type):
                         </tbody>
                         @if(collect($compareRows ?? [])->count() > 0)
                             @php
-                                $totAdlaComp = max(0, $totLoadComp - $totBrickComp);
-                                $totBrickPctSum = $totLoadComp > 0 ? round(($totBrickComp / $totLoadComp) * 100, 2) : 0;
-                                $totAdlaPctSum = $totLoadComp > 0 ? round(100 - $totBrickPctSum, 2) : 0;
+                                $totAdlaComp = $totAdlaCompSum;
+                                $totUnloadedComp = $totBrickComp + $totAdlaCompSum;
+                                if ($totLoadComp > 0) {
+                                    $totBrickPctSum = round(($totBrickComp / $totLoadComp) * 100, 2);
+                                    $totAdlaPctSum  = round(($totAdlaCompSum / $totLoadComp) * 100, 2);
+                                } else {
+                                    if ($totUnloadedComp > 0) {
+                                        $totBrickPctSum = round(($totBrickComp / $totUnloadedComp) * 100, 2);
+                                        $totAdlaPctSum  = round(($totAdlaCompSum / $totUnloadedComp) * 100, 2);
+                                    } else {
+                                        $totBrickPctSum = 0;
+                                        $totAdlaPctSum  = 0;
+                                    }
+                                }
                             @endphp
                             <tfoot>
                                 <tr class="font-bold bg-gray-100 border-t-2 border-gray-400 text-xs text-center">

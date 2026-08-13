@@ -105,7 +105,7 @@
                             <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">অগ্রিম</th>
                             <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">কর্তন</th>
                             <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">পেমেন্ট</th>
-                            <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">ক্রয়/রেশি</th>
+                            <th class="px-3 py-3 text-right border-r border-white/20 last:border-r-0">কম/বেশি</th>
                             <th class="px-3 py-3 text-center border-r border-white/20 last:border-r-0 w-12">ডক</th>
                             <th class="px-3 py-3 text-center w-24">বাটন</th>
                         </tr>
@@ -153,9 +153,36 @@
                                 <td
                                     class="px-3 py-3.5 text-right font-black text-emerald-600 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">
                                     ৳ {{ number_format($pay['payment']) }}</td>
+                                @php
+                                    $pTypeStr = trim($pay['payment_type'] ?? '');
+                                    $totVal = floatval($pay['total'] ?? 0);
+                                    $qtyVal = floatval($pay['qty'] ?? 0);
+                                    $payVal = floatval($pay['payment'] ?? 0);
+                                    $dedVal = floatval($pay['deduction'] ?? 0);
+                                    $advVal = floatval($pay['advance'] ?? 0);
+                                    $recVal = floatval($pay['purchase_receive'] ?? 0);
+
+                                    $isAdvEntry = str_contains($pTypeStr, 'অগ্ৰিম') || str_contains($pTypeStr, 'অগ্রিম') || ($totVal == 0 && $advVal > 0);
+                                    $isBakiEntry = str_contains($pTypeStr, 'বাকি') || (!$isAdvEntry && $totVal == 0 && ($recVal > 0 || ($payVal > 0 && $qtyVal == 0)));
+
+                                    $displayKomBeshi = '—';
+                                    if (!$isAdvEntry && !$isBakiEntry && ($totVal > 0 || $qtyVal > 0)) {
+                                        if ($recVal != 0) {
+                                            $diffVal = $recVal;
+                                        } else {
+                                            $diffVal = ($totVal - $dedVal) - $payVal;
+                                        }
+
+                                        if ($diffVal < 0) {
+                                            $displayKomBeshi = '৳-' . number_format(abs($diffVal));
+                                        } elseif ($diffVal > 0) {
+                                            $displayKomBeshi = '৳ ' . number_format($diffVal);
+                                        }
+                                    }
+                                @endphp
                                 <td
-                                    class="px-3 py-3.5 text-right font-bold text-gray-900 dark:text-white border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">
-                                    {{ $pay['purchase_receive'] > 0 ? '৳ ' . number_format($pay['purchase_receive']) : '—' }}</td>
+                                    class="px-3 py-3.5 text-right font-bold text-rose-500 border-r border-gray-150 dark:border-slate-800 last:border-r-0 font-mono">
+                                    {{ $displayKomBeshi }}</td>
                                 <td
                                     class="px-3 py-3.5 text-center border-r border-gray-150 dark:border-slate-800 last:border-r-0">
                                     @if ($pay['has_doc'])
@@ -282,8 +309,34 @@
                                     @ ৳ {{ number_format($pay['rate']) }}</span>
                             </div>
                             <div class="mt-1">
-                                <span class="text-gray-455 block uppercase text-[9px] font-sans font-bold">ক্রয়/রেশি</span>
-                                <span class="text-gray-655 dark:text-slate-400 font-semibold">{{ $pay['purchase_receive'] > 0 ? '৳ ' . number_format($pay['purchase_receive']) : '—' }}</span>
+                                @php
+                                    $pTypeStr = trim($pay['payment_type'] ?? '');
+                                    $totVal = floatval($pay['total'] ?? 0);
+                                    $qtyVal = floatval($pay['qty'] ?? 0);
+                                    $payVal = floatval($pay['payment'] ?? 0);
+                                    $dedVal = floatval($pay['deduction'] ?? 0);
+                                    $advVal = floatval($pay['advance'] ?? 0);
+                                    $recVal = floatval($pay['purchase_receive'] ?? 0);
+
+                                    $isAdvEntry = str_contains($pTypeStr, 'অগ্ৰিম') || str_contains($pTypeStr, 'অগ্রিম') || ($totVal == 0 && $advVal > 0);
+                                    $isBakiEntry = str_contains($pTypeStr, 'বাকি') || (!$isAdvEntry && $totVal == 0 && ($recVal > 0 || ($payVal > 0 && $qtyVal == 0)));
+
+                                    $displayKomBeshi = '—';
+                                    if (!$isAdvEntry && !$isBakiEntry && ($totVal > 0 || $qtyVal > 0)) {
+                                        if ($recVal != 0) {
+                                            $diffVal = $recVal;
+                                        } else {
+                                            $diffVal = ($totVal - $dedVal) - $payVal;
+                                        }
+
+                                        if ($diffVal < 0) {
+                                            $displayKomBeshi = '৳-' . number_format(abs($diffVal));
+                                        } elseif ($diffVal > 0) {
+                                            $displayKomBeshi = '৳ ' . number_format($diffVal);
+                                        }
+                                    }
+                                @endphp
+                                <span class="text-rose-500 font-semibold">{{ $displayKomBeshi }}</span>
                             </div>
                         </div>
 
@@ -583,10 +636,19 @@
                                 @enderror
                             </div>
                             <!-- Purchase/Receive -> Payment Kom/Beshi -->
+                            @php
+                                $totB = floatval($totalBill ?: 0);
+                                $dedB = floatval($deduction ?: 0);
+                                $payB = floatval($paymentAmount ?: 0);
+                                $netB = ($totB - $dedB) - $payB;
+                                $isOverpayment = ($totB > 0 && $netB < 0);
+                            @endphp
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পেমেন্ট কম/বেশি</label>
+                                <label class="block text-xs font-bold {{ $isOverpayment ? 'text-rose-500 dark:text-rose-400' : 'text-gray-500 dark:text-slate-400' }} mb-1.5 font-sans">
+                                    {{ $isOverpayment ? 'বেশি পেমেন্ট' : 'পেমেন্ট কম/বেশি' }}
+                                </label>
                                 <input type="number" wire:model="purchaseReceive"
-                                    class="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white text-xs font-bold font-mono focus:outline-none"
+                                    class="w-full px-3 py-2.5 rounded-xl border {{ $isOverpayment ? 'border-rose-300 dark:border-rose-700/60 text-rose-500 dark:text-rose-400 font-black' : 'border-gray-200 dark:border-slate-700 bg-gray-55 dark:bg-slate-800 text-gray-805 dark:text-white font-bold' }} text-xs font-mono focus:outline-none"
                                     placeholder="0">
                             </div>
                         </div>
@@ -944,7 +1006,7 @@
                                 {{ number_format($report['total_payment']) }}</span>
                         </div>
                         <div class="flex justify-between items-center py-2">
-                            <span class="text-gray-650 dark:text-gray-400 font-semibold">মোট ক্রয়/রেশি</span>
+                            <span class="text-gray-650 dark:text-gray-400 font-semibold">মোট কম/বেশি</span>
                             <span class="font-bold text-gray-800 dark:text-white font-mono">৳
                                 {{ number_format($report['total_purchase_rec']) }}</span>
                         </div>

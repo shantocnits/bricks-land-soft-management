@@ -144,7 +144,11 @@
                                     ৳ {{ number_format($item->challan->due ?? 0) }}
                                 </td>
                                 <td class="px-3 py-3.5 text-[11px] text-gray-500 border-r border-gray-100 dark:border-slate-800 font-mono">
-                                    {{ $item->challan->date ? $item->challan->date->format('d-m-Y') : '' }}
+                                    @php
+                                        $delDateVal = ($item->challan && $item->challan->delivery_date) ? $item->challan->delivery_date : ($item->delivery_date ?? ($item->challan->date ?? null));
+                                        $delDateStr = $delDateVal ? \Carbon\Carbon::parse($delDateVal)->format('d-m-Y') : '—';
+                                    @endphp
+                                    {{ $delDateStr }}
                                 </td>
                                 <td class="px-3 py-3.5 text-gray-500 border-r border-gray-100 dark:border-slate-800 max-w-[150px] truncate">{{ $item->challan->notes ?? '' }}</td>
                                 <td class="px-3 py-3.5 text-center relative" x-data="{ openDropdown: false, buttonRect: null }">

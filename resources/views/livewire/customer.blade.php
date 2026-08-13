@@ -391,12 +391,18 @@ if (!function_exists('toBanglaNum')) {
                 </h3>
 
                 <form wire:submit.prevent="saveDueDate" class="space-y-4 text-xs font-sans">
+                    @if(isset($selectedCustomerTotalDue) && $selectedCustomerTotalDue <= 0)
+                        <div class="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-center">
+                            <span class="text-rose-600 dark:text-rose-400 font-extrabold text-xs block font-sans">কোনো টাকা বাকি নেই</span>
+                        </div>
+                    @endif
                     {{-- Due payment date selector with Flatpickr --}}
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 dark:text-slate-400 mb-1.5">নতুন তারিখ লিখুন</label>
                         <div class="relative" wire:ignore>
                             <input type="text" data-flatpickr data-wire-prop="newDueDate" wire:model.lazy="newDueDate" placeholder="পরিশোধের তারিখ নির্বাচন করুন"
-                                   class="w-full pl-3 pr-10 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-gray-808 dark:text-white rounded-xl focus:outline-none focus:border-emerald-500 font-sans cursor-pointer">
+                                   @if(isset($selectedCustomerTotalDue) && $selectedCustomerTotalDue <= 0) disabled @endif
+                                   class="w-full pl-3 pr-10 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-gray-808 dark:text-white rounded-xl focus:outline-none focus:border-emerald-500 font-sans cursor-pointer disabled:bg-gray-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">
                             <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -412,7 +418,8 @@ if (!function_exists('toBanglaNum')) {
                             বাতিল
                         </button>
                         <button type="submit"
-                                class="px-5 py-2.5 bg-primary hover:bg-emerald-600 text-white font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1 active:scale-95 border-0">
+                                @if(isset($selectedCustomerTotalDue) && $selectedCustomerTotalDue <= 0) disabled @endif
+                                class="px-5 py-2.5 bg-primary hover:bg-emerald-600 text-white font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1 active:scale-95 border-0 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-50">
                             পরিবর্তন
                         </button>
                     </div>

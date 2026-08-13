@@ -26,12 +26,14 @@ class Challan extends Model
         'due',
         'send_sms',
         'due_payment_date',
+        'delivery_date',
         'season'
     ];
 
     protected $casts = [
         'send_sms' => 'boolean',
         'date' => 'date',
+        'delivery_date' => 'date',
     ];
 
     public function items()

@@ -290,6 +290,7 @@
          $this->grand_total = 0;
          $this->due = 0;
          $this->due_payment_date = '';
+        $this->deliveryDate = now()->toDateString();
          $this->editingId = null;
          $this->resetValidation();
      }
@@ -456,6 +457,7 @@
              'due' => $this->due,
              'send_sms' => $this->send_sms,
              'due_payment_date' => $this->due_payment_date ?: null,
+             'delivery_date' => $this->deliveryDate ?: null,
          ];
  
          if ($this->editingId) {
@@ -469,6 +471,9 @@
                  );
              }
              $challan->update($challanData);
+             if ($this->deliveryDate) {
+                 \App\Models\Delivery::where('challan_id', $challan->id)->update(['delivery_date' => $this->deliveryDate]);
+             }
              $challan->items()->delete();
          } else {
              $challan = Challan::create($challanData);
@@ -525,6 +530,7 @@
              'items.*.quantity.required' => 'পরিমাণ আবশ্যক।',
          ]);
 
+ 
          $challanData = [
              'customer_type' => $this->customer_type,
              'customer_phone' => $this->customer_phone,
@@ -544,19 +550,12 @@
              'due' => $this->due,
              'send_sms' => $this->send_sms,
              'due_payment_date' => $this->due_payment_date ?: null,
+             'delivery_date' => $this->deliveryDate ?: null,
              'season' => Setting::get('season', '২৫-২৬'),
          ];
 
          if ($this->editingId) {
              $challan = Challan::findOrFail($this->editingId);
-             $oldCash = intval($challan->cash);
-             $newCash = intval($this->cash ?: 0);
-             if ($oldCash != $newCash) {
-                 \App\Models\ActivityLog::log(
-                     'পেমেন্ট আপডেট',
-                     "পেমেন্ট আপডেট (আইডি: {$challan->id}) • রেট: {$oldCash} -> {$newCash}"
-                 );
-             }
              $challan->update($challanData);
              $challan->items()->delete();
          } else {
@@ -619,6 +618,7 @@
          $this->cash = $challan->cash;
          $this->send_sms = $challan->send_sms;
          $this->due_payment_date = $challan->due_payment_date ?? '';
+         $this->deliveryDate = $challan->delivery_date ? $challan->delivery_date->toDateString() : ($challan->date ? $challan->date->toDateString() : now()->toDateString());
  
          $this->items = [];
          foreach ($challan->items as $item) {
@@ -824,7 +824,10 @@
                 $q->where('season', $activeSeason)->orWhereNull('season');
             })
             ->where('grand_total', '>', 0)
-            ->whereDate('date', $this->date ?: now()->toDateString());
+            ->where(function($q) {
+                $q->whereDate('date', $this->date ?: now()->toDateString())
+                  ->orWhereDate('created_at', now()->toDateString());
+            });
 
         if ($this->search) {
             $query->where(function($q) {

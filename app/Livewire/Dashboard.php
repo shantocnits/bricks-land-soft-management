@@ -20,10 +20,34 @@ class Dashboard extends Component
     public string $filterPeriod = 'today'; // 'today', '7days', '15days', 'season', 'profit_loss'
     public string $dateFilter = '';
 
+    public bool $showProfitLossModal = false;
+    public string $modalSeason = '';
+
     public function setPeriod(string $period): void
     {
         $this->filterPeriod = $period;
         $this->dateFilter = '';
+        if ($period === 'profit_loss') {
+            $this->openProfitLossModal();
+        }
+    }
+
+    public function openProfitLossModal(): void
+    {
+        if (empty($this->modalSeason)) {
+            $this->modalSeason = \App\Models\Setting::get('season', '২৫-২৬');
+        }
+        $this->showProfitLossModal = true;
+    }
+
+    public function closeProfitLossModal(): void
+    {
+        $this->showProfitLossModal = false;
+    }
+
+    public function setModalSeason(string $season): void
+    {
+        $this->modalSeason = $season;
     }
 
     public function updatedDateFilter(): void
@@ -166,6 +190,47 @@ class Dashboard extends Component
         }
         $unloadSummary = $unloadQuery->get();
 
+        // 11. Profit & Loss Modal Dataset for selected $modalSeason
+        $mSeason = $this->modalSeason ?: $activeSeason;
+
+        $mSales = Challan::where(function($q) use ($mSeason) {
+            $q->where('season', $mSeason)->orWhereNull('season');
+        })->sum('grand_total');
+
+        $expenseLedgers = \App\Models\Ledger::where('group_type', 'expense')
+            ->orWhere('group', 'LIKE', '%খরচ%')
+            ->orWhere('name', 'LIKE', '%খরচ%')
+            ->pluck('name')->toArray();
+
+        $mExpenses = Payment::where(function($q) use ($mSeason) {
+            $q->where('season', $mSeason)->orWhereNull('season');
+        })
+        ->where(function($q) use ($expenseLedgers) {
+            if (!empty($expenseLedgers)) {
+                $q->whereIn('ledger', $expenseLedgers);
+            } else {
+                $q->where('payment', '>', 0);
+            }
+        })
+        ->sum('payment');
+
+        $mOverpayment = Payment::where(function($q) use ($mSeason) {
+            $q->where('season', $mSeason)->orWhereNull('season');
+        })->where('purchase_receive', '<', 0)->sum('purchase_receive');
+
+        $mNetProfitLoss = $mSales - ($mExpenses + abs($mOverpayment));
+
+        $mDue = Challan::where(function($q) use ($mSeason) {
+            $q->where('season', $mSeason)->orWhereNull('season');
+        })->sum('due');
+
+        $mOverallProfitLoss = $mNetProfitLoss - $mDue;
+
+        $challanSeasons = Challan::whereNotNull('season')->select('season')->distinct()->pluck('season')->toArray();
+        $loadSeasons = LoadEntry::whereNotNull('season')->select('season')->distinct()->pluck('season')->toArray();
+        $availableSeasons = array_unique(array_merge(['২৫-২৬', '২৪-২৫', '২৩-২৪'], $challanSeasons, $loadSeasons));
+        sort($availableSeasons);
+
         return view('livewire.dashboard', [
             'totalSalesVat' => $totalSalesVat,
             'cashSales' => $cashSales,
@@ -182,6 +247,15 @@ class Dashboard extends Component
             'deliverySummary' => $deliverySummary,
             'loadSummary' => $loadSummary,
             'unloadSummary' => $unloadSummary,
+            // Modal Data
+            'modalSeason' => $mSeason,
+            'mSales' => $mSales,
+            'mExpenses' => $mExpenses,
+            'mOverpayment' => $mOverpayment,
+            'mNetProfitLoss' => $mNetProfitLoss,
+            'mDue' => $mDue,
+            'mOverallProfitLoss' => $mOverallProfitLoss,
+            'availableSeasons' => array_reverse($availableSeasons),
         ])->layout('layouts.app');
     }
 }

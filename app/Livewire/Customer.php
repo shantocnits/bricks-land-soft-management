@@ -33,6 +33,7 @@ class Customer extends Component
     // Due Payment Date form inputs
     public string $newDueDate = '';
     public string $dueDateNotes = '';
+    public float $selectedCustomerTotalDue = 0;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -82,18 +83,27 @@ class Customer extends Component
             'updateAddress' => 'nullable|string|max:255',
         ]);
 
+        $oldName = $this->selectedName;
+        $oldPhone = $this->selectedPhone;
+
         // Sync all historical challan fields under this customer identifier
-        Challan::where(function ($q) {
-            if ($this->selectedPhone) {
-                $q->where('customer_phone', $this->selectedPhone);
+        Challan::where(function ($q) use ($oldPhone, $oldName) {
+            if ($oldPhone) {
+                $q->where('customer_phone', $oldPhone);
             } else {
-                $q->where('customer_name', $this->selectedName);
+                $q->where('customer_name', $oldName);
             }
         })->update([
             'customer_name' => $this->updateName,
             'customer_phone' => $this->updatePhone,
             'customer_address' => $this->updateAddress,
         ]);
+
+        // Sync payments & ledgers if name updated
+        if ($oldName && $oldName !== $this->updateName) {
+            \App\Models\Payment::where('ledger', $oldName)->update(['ledger' => $this->updateName]);
+            \App\Models\Ledger::where('name', $oldName)->update(['name' => $this->updateName]);
+        }
 
         $this->showUpdateModal = false;
         $this->dispatch('show-toast', message: 'কাস্টমারের তথ্য সফলভাবে আপডেট করা হয়েছে।', type: 'success');
@@ -104,13 +114,17 @@ class Customer extends Component
         $this->selectedPhone = $phone;
         $this->selectedName = $name;
 
-        $latest = Challan::where(function ($q) use ($phone, $name) {
+        $challans = Challan::where(function ($q) use ($phone, $name) {
             if ($phone) {
                 $q->where('customer_phone', $phone);
             } else {
                 $q->where('customer_name', $name);
             }
-        })->latest()->first();
+        })->get();
+
+        $this->selectedCustomerTotalDue = (float) $challans->sum('due');
+
+        $latest = $challans->sortByDesc('created_at')->first();
 
         if ($latest) {
             $this->newDueDate = $latest->due_payment_date ? \Carbon\Carbon::parse($latest->due_payment_date)->toDateString() : '';
@@ -140,7 +154,7 @@ class Customer extends Component
     public function render()
     {
         // Unique customer grouping queries
-        $query = Challan::select('customer_phone', 'customer_name', 'customer_address', DB::raw('MAX(id) as latest_id'))
+        $query = Challan::select('customer_phone', 'customer_name', 'customer_address', DB::raw('MIN(id) as first_id'))
             ->groupBy('customer_phone', 'customer_name', 'customer_address');
 
         if (!empty($this->search)) {
@@ -176,12 +190,13 @@ class Customer extends Component
             $totalDue = $challans->sum('due');
 
             $latestChallan = $challans->sortByDesc('created_at')->first();
+            $firstChallan = $challans->sortBy('id')->first();
             $dueDate = $latestChallan ? $latestChallan->due_payment_date : null;
             $notes = $latestChallan ? $latestChallan->notes : null;
-            $latestId = $latestChallan ? $latestChallan->id : $raw->latest_id;
+            $primaryId = $firstChallan ? $firstChallan->id : $raw->first_id;
 
             $customersList[] = [
-                'id' => $latestId,
+                'id' => $primaryId,
                 'name' => $name,
                 'phone' => $phone,
                 'address' => $raw->customer_address,

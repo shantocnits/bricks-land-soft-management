@@ -282,6 +282,10 @@ class CustomerProfile extends Component
         $totalCollectionsCash = (float) Challan::where($customerScope)->where('grand_total', 0)->sum('cash');
         $netDue = max(0, $totalSalesDue - $totalCollectionsCash);
 
+        $latestWithDueDate = $allChallans->whereNotNull('due_payment_date')->sortByDesc('id')->first() ?: $allChallans->sortByDesc('id')->first();
+        $dueDateVal = $latestWithDueDate ? $latestWithDueDate->due_payment_date : null;
+        $notesVal = $latestWithDueDate ? $latestWithDueDate->notes : null;
+
         // Calculate Stats
         $totalBricks = $allChallans->sum(fn($c) => $c->items->sum('quantity'));
         $deliveredBricks = $allChallans->sum(fn($c) => $c->items->sum('delivered_quantity'));
@@ -292,6 +296,8 @@ class CustomerProfile extends Component
             'total_value'  => $allChallans->where('grand_total', '>', 0)->sum('grand_total'),
             'paid'         => $allChallans->where('grand_total', '>', 0)->sum('cash') + $totalCollectionsCash,
             'due'          => $netDue,
+            'due_date'     => $dueDateVal ? (function_exists('toBanglaNum') ? toBanglaNum(\Carbon\Carbon::parse($dueDateVal)->format('d-m-Y')) : \Carbon\Carbon::parse($dueDateVal)->format('d-m-Y')) : '—',
+            'notes'        => $notesVal ?: '—',
         ];
 
         // Base query for the customer's challans (name OR phone identity)

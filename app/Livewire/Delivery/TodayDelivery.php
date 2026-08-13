@@ -172,6 +172,7 @@ class TodayDelivery extends Component
                 'vehicle_rent' => floatval($this->vehicleRent),
                 'sms_sent' => $this->smsToCustomer,
             ]);
+            $challan->update(['delivery_date' => $this->deliveryDate]);
 
             // Increment delivered quantity
             $item->increment('delivered_quantity', intval($this->todayDeliveryQty));

@@ -76,15 +76,13 @@ class Khotian extends Component
                 }
             }
 
-            // Get sums for summary badges according to 2.1
+            // Get sums for summary badges according to Rules 1.1 - 1.4
             $allFilteredPayments = $query->get();
 
-            $totalAdvance = 0;
-            $totalPorishodh = 0;
             $regBill = 0;
             $regDeduction = 0;
             $regCashPayment = 0;
-            $bakiPaidTotal = 0;
+            $duePaymentEntries = 0;
 
             foreach ($allFilteredPayments as $p) {
                 $pType = trim($p->payment_type ?? '');
@@ -95,16 +93,13 @@ class Khotian extends Component
                 $payment = floatval($p->payment);
                 $rec = floatval($p->purchase_receive);
 
-                $totalAdvance += $advance;
-
-                $isBakiType = str_contains($pType, 'বাকি') || ($total == 0 && $advance == 0 && ($rec > 0 || ($payment > 0 && $qty == 0)));
                 $isAdvanceType = str_contains($pType, 'অগ্ৰিম') || str_contains($pType, 'অগ্রিম') || ($total == 0 && $advance > 0);
+                $isBakiType = str_contains($pType, 'বাকি') || (!$isAdvanceType && $total == 0 && ($rec > 0 || ($payment > 0 && $qty == 0)));
 
                 if ($isBakiType) {
-                    $bakiPaidTotal += max($payment, $rec);
-                    $totalPorishodh += max($payment, $rec);
+                    $duePaymentEntries += max($payment, $rec);
                 } elseif ($isAdvanceType) {
-                    // Pure advance entry
+                    // Advance payment entry: does not reduce payment baki
                 } else {
                     // Regular entry
                     $regBill += $total;
@@ -113,10 +108,32 @@ class Khotian extends Component
                 }
             }
 
+            // Rule 1.1: SUM(Advance_Amount) from pure advance entries only
+            $totalAdvance = 0;
+            foreach ($allFilteredPayments as $p) {
+                $pType = trim($p->payment_type ?? '');
+                $tot = floatval($p->total);
+                $adv = floatval($p->advance);
+                $isAdv = str_contains($pType, 'অগ্ৰিম') || str_contains($pType, 'অগ্রিম') || ($tot == 0 && $adv > 0);
+                if ($isAdv) {
+                    $totalAdvance += $adv;
+                }
+            }
+
+            // Rule 1.2: SUM(Deduction_Amount)
+            $totalDeduction = $allFilteredPayments->sum('deduction');
+            $totalPorishodh = $totalDeduction;
+
+            // Rule 1.3: Total_Advance - Total_Deduction
+            $advanceRemaining = $totalAdvance - $totalDeduction;
+            if ($advanceRemaining < 0) {
+                $advanceRemaining = 0;
+            }
+
+            // Rule 1.4: (SUM(Regular_Bill) - (SUM(Regular_Deduction) + SUM(Regular_Cash_Payment))) - SUM(Due_Payment_Entries)
             $regDue = $regBill - ($regDeduction + $regCashPayment);
-            $paymentBaki = $regDue - $bakiPaidTotal;
-            if ($paymentBaki < 0) $paymentBaki = 0;
-            $advanceRemaining = $totalAdvance - $totalPorishodh;
+            $rawPaymentBaki = $regDue - $duePaymentEntries;
+            $paymentBaki = $rawPaymentBaki;
 
             $totalPayment = 0;
             foreach ($allFilteredPayments as $p) {
@@ -154,6 +171,7 @@ class Khotian extends Component
                 'totalPorishodh' => $totalPorishodh,
                 'advanceRemaining' => $advanceRemaining,
                 'paymentBaki' => $paymentBaki,
+                'rawPaymentBaki' => $rawPaymentBaki,
                 'totalPayment' => $totalPayment,
                 'totalQty' => $totalQty,
                 'totalBill' => $totalBill,

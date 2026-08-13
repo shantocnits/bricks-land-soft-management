@@ -289,9 +289,10 @@ class UnloadKhata extends Component
             ->get()
             ->groupBy('round');
 
-        // Load quantities per round
+        // Load quantities per round (Excludes paka brick loads)
         $loadQuery = LoadEntry::selectRaw('round, SUM(quantity) as total_qty')
-            ->where('season', $activeSeason);
+            ->where('season', $activeSeason)
+            ->where('description', 'NOT LIKE', '%পাকা%');
 
         if ($this->dateFilter) {
             $loadQuery->whereDate('date', $this->dateFilter);

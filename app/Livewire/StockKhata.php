@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\ChallanItem;
 use App\Models\Delivery;
+use App\Models\Ledger;
 use App\Models\LoadEntry;
 use App\Models\Payment;
 use App\Models\StockAdjustment;
@@ -213,8 +214,16 @@ class StockKhata extends Component
             $adjPlus = StockAdjustment::where('category_name', $cat->name)->sum('stock_plus');
             $adjMinus = StockAdjustment::where('category_name', $cat->name)->sum('stock_minus');
 
-            // Total Stock = (Unloads + Stock ++) - Stock --
-            $totalStock = ($unloads + $adjPlus) - $adjMinus;
+            // Rule 2.3: Paka Bricks Loaded for this category from LoadKhata
+            $pakaLoaded = LoadEntry::where('category', $cat->name)
+                ->where('description', 'LIKE', '%পাকা ইট%')
+                ->where(function($q) use ($activeSeason) {
+                    $q->where('season', $activeSeason)->orWhereNull('season');
+                })
+                ->sum('quantity');
+
+            // Total Stock = (Unloads + Stock ++) - (Stock -- + Paka Loaded Bricks)
+            $totalStock = ($unloads + $adjPlus) - ($adjMinus + $pakaLoaded);
 
             // Total Sold Bricks from ChallanItems
             $sold = ChallanItem::where('category_name', $cat->name)
@@ -278,10 +287,12 @@ class StockKhata extends Component
         // Grand Total Real Stock = Total Main Stock - Grand Total Delivery Remaining
         $realStockSum = $totalStockSum - $deliveryRemainingSum;
 
-        // 3. Get Adla & Other Categories Stock Data
+        // 3. Get Adla & Other Categories Stock Data (Excludes paka brick loads)
         $totalLoadedBricks = LoadEntry::where(function($q) use ($activeSeason) {
             $q->where('season', $activeSeason)->orWhereNull('season');
-        })->sum('quantity');
+        })
+        ->where('description', 'NOT LIKE', '%পাকা%')
+        ->sum('quantity');
 
         $totalUnloadedBricks = UnloadItem::whereIn('category_name', $brickCategories->pluck('name'))
             ->where(function($q) use ($activeSeason) {
@@ -310,26 +321,64 @@ class StockKhata extends Component
         // আধলা স্টক রয়েছে = সর্বমোট আধলা - আধলা ডেলিভারি
         $adlaRemainingStock = max(0, $adlaTotalStock - $adlaDelivered);
 
-        // 4. Get Raw Brick Stock Data (কাঁচা ইট স্টক) dynamically from Payment records
-        $rawLedgerNames = ['কাঁচা ইট তৈরি', 'কাঁচা ইট', 'মাঠের ইট', '১ নং মেট', '১ নং মেল', 'মেট'];
-        $totalRawBricksMade = Payment::where(function($q) use ($activeSeason) {
+        // 4. Get Raw Brick Stock Data (কাঁচা ইট স্টক)
+        // 4.1. Production Payment Entries: Find ONLY ledgers with group_type = 'production', 'উৎপাদন (কাঁচা ইট)', or 'উৎপাদন'
+        $prodLedgerNames = Ledger::whereIn('group_type', ['production', 'উৎপাদন (কাঁচা ইট)', 'উৎপাদন'])
+            ->orWhere('group', 'LIKE', '%উৎপাদন%')
+            ->pluck('name')
+            ->toArray();
+
+        $legacyRawLedgerNames = ['কাঁচা ইট তৈরি', 'কাঁচা ইট', 'মাঠের ইট', '১ নং মেট', '১ নং মেল', 'মেট'];
+        $allProdLedgerNames = array_unique(array_merge($prodLedgerNames, $legacyRawLedgerNames));
+
+        // Rule 1.1 & 1.2: Strictly sum qty ONLY from payment entries belonging to 'উৎপাদন (কাঁচা ইট)' ledgers
+        $totalRawBricksMade = 0;
+        if (!empty($allProdLedgerNames)) {
+            $totalRawBricksMade = Payment::where(function($q) use ($activeSeason) {
+                    $q->where('season', $activeSeason)->orWhereNull('season');
+                })
+                ->where(function($q) use ($allProdLedgerNames) {
+                    $q->whereIn('ledger', $allProdLedgerNames);
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('payments', 'khotian_name')) {
+                        $q->orWhereIn('khotian_name', $allProdLedgerNames);
+                    }
+                })
+                ->sum('qty');
+        }
+
+        // 4.2. Load entries breakdown based on 'লোডের ধরণ' (description)
+        // 4.2. Load entries breakdown based on 'লোডের ধরণ' (description)
+        // Rule 1: 'মাঠ থেকে লোড হয়েছে'
+        $loadedFromField = LoadEntry::where(function($q) use ($activeSeason) {
                 $q->where('season', $activeSeason)->orWhereNull('season');
             })
-            ->where(function($q) use ($rawLedgerNames) {
-                $q->whereIn('ledger', $rawLedgerNames);
-                if (\Illuminate\Support\Facades\Schema::hasColumn('payments', 'khotian_name')) {
-                    $q->orWhereIn('khotian_name', $rawLedgerNames);
-                }
+            ->where('description', 'LIKE', '%মাঠ%')
+            ->sum('quantity');
+
+        // Rule 2: 'স্টক থেকে লোড হয়েছে'
+        $loadedFromStock = LoadEntry::where(function($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
             })
-            ->sum('qty');
+            ->where('description', 'LIKE', '%স্টক থেকে%')
+            ->sum('quantity');
 
-        $rawInBricks = $totalLoadedBricks;
-        $rawFieldBricks = max(0, (int)$totalRawBricksMade - (int)$rawInBricks);
-        $totalRawBricks = $rawFieldBricks + $rawInBricks;
+        // Rule 4: 'স্টক লোড হয়েছে' (general raw stock load)
+        $stockLoadedIn = LoadEntry::where(function($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            })
+            ->where('description', 'LIKE', '%স্টক লোড%')
+            ->where('description', 'NOT LIKE', '%থেকে%')
+            ->where('description', 'NOT LIKE', '%পাকা%')
+            ->sum('quantity');
 
-        $fieldBricksRemaining = $rawFieldBricks;
-        $kilnBricksRemaining = $rawInBricks;
-        $totalRawBricksRemaining = $totalRawBricks;
+        // Rule 1.2 & 2.1: 'মাঠে ইট রয়েছে' = মোট কাঁচা ইট উৎপাদন - মাঠ থেকে লোড হয়েছে
+        $fieldBricksRemaining = max(0, (int)$totalRawBricksMade - (int)$loadedFromField);
+
+        // Rule 2 & 4: 'স্টকে রয়েছে' = (স্টক লোড হয়েছে) - (স্টক থেকে লোড হয়েছে)
+        $kilnBricksRemaining = (int)$stockLoadedIn - (int)$loadedFromStock;
+
+        // Rule 3.1: 'মোট কাঁচা ইট রয়েছে' = 'মাঠে ইট রয়েছে' + 'স্টকে রয়েছে'
+        $totalRawBricksRemaining = $fieldBricksRemaining + $kilnBricksRemaining;
 
         // 5. Paginated Adjustments List
         $adjustments = StockAdjustment::with('user')

@@ -306,6 +306,11 @@ class PaymentKhata extends Component
     {
         $this->resetForm();
         $this->editingId = null;
+        if (!empty($this->dateFilter)) {
+            $this->paymentDate = date('Y-m-d', strtotime($this->dateFilter));
+        } else {
+            $this->paymentDate = now()->format('Y-m-d');
+        }
         $this->showPaymentModal = true;
     }
 
@@ -440,10 +445,13 @@ class PaymentKhata extends Component
             $payment = floatval($p->payment);
             $rec = floatval($p->purchase_receive);
 
-            $isBakiType = str_contains($pType, 'বাকি') || ($total == 0 && $advance == 0 && ($rec > 0 || ($payment > 0 && $qty == 0)));
+            $isAdvanceType = str_contains($pType, 'অগ্ৰিম') || str_contains($pType, 'অগ্রিম') || ($total == 0 && $advance > 0);
+            $isBakiType = str_contains($pType, 'বাকি') || (!$isAdvanceType && $total == 0 && ($rec > 0 || ($payment > 0 && $qty == 0)));
 
             if ($isBakiType) {
                 $bakiPaidTotal += max($payment, $rec);
+            } elseif ($isAdvanceType) {
+                // Advance payment entry: does not reduce due balance
             } else {
                 $regBill += $total;
                 $regDeduction += $deduction;
@@ -464,8 +472,10 @@ class PaymentKhata extends Component
         if (str_contains($this->paymentType, 'বাকি')) {
             $currBakiEffect = max($currRec, $currPay);
             $netDue = $pastNetDue - $currBakiEffect;
+        } elseif (str_contains($this->paymentType, 'অগ্ৰিম') || str_contains($this->paymentType, 'অগ্রিম')) {
+            $netDue = $pastNetDue;
         } else {
-            $currPaidEffect = max($currPay, $currAdv) + $currDed;
+            $currPaidEffect = $currPay + $currDed;
             $netDue = ($pastNetDue + $currBill) - $currPaidEffect;
         }
 
@@ -605,36 +615,16 @@ class PaymentKhata extends Component
             $netEntry = ($payment + $advance) - ($total - $deduction);
 
             if ($netEntry > 0) {
-                // Surplus payment
-                if ($existingNetBalance < 0) {
-                    // There's existing due (baki) — auto-settle (3.4)
-                    $settleAmount = min($netEntry, abs($existingNetBalance));
-                    // The surplus settles old due, remainder becomes advance
-                    $remainingAdvance = $netEntry - $settleAmount;
-                    $finalAdvance = $advance + ($remainingAdvance > 0 ? $remainingAdvance : 0);
-                    $finalPurchaseReceive = 0;
-                } else {
-                    // No existing due — surplus is advance (3.3)
-                    $finalAdvance = $advance + $netEntry;
-                    $finalPurchaseReceive = 0;
-                }
+                // Surplus (overpayment) e.g. paid 2000 for 1000 bill -> surplus = 1000, stored as -1000
+                $finalAdvance = 0;
+                $finalPurchaseReceive = -$netEntry;
             } elseif ($netEntry < 0) {
-                // Deficit (baki/due)
-                $deficit = abs($netEntry);
-                if ($existingNetBalance > 0) {
-                    // There's existing advance — auto-deduct (3.5)
-                    $deductAmount = min($deficit, $existingNetBalance);
-                    $remainingDue = $deficit - $deductAmount;
-                    $finalPurchaseReceive = $remainingDue > 0 ? $remainingDue : 0;
-                    $finalAdvance = $advance; // no new advance added
-                } else {
-                    // No advance — mark as baki (3.3)
-                    $finalPurchaseReceive = $deficit;
-                    $finalAdvance = $advance;
-                }
+                // Deficit (baki/due) e.g. paid 2000 for 5000 bill (deduction 1000) -> due = 2000, stored as 2000
+                $finalAdvance = 0;
+                $finalPurchaseReceive = abs($netEntry);
             } else {
-                // Exact match — regular (3.3)
-                $finalAdvance = $advance;
+                // Exact match
+                $finalAdvance = 0;
                 $finalPurchaseReceive = 0;
             }
         }
@@ -700,6 +690,16 @@ class PaymentKhata extends Component
             $this->dispatch('show-toast', message: 'পেমেন্ট সফলভাবে সংরক্ষণ করা হয়েছে।', type: 'success');
         }
 
+        if ($this->paymentDate) {
+            if (str_contains($this->paymentDate, '-')) {
+                $this->dateFilter = $this->paymentDate;
+            } elseif (str_contains($this->paymentDate, '/')) {
+                $parts = explode('/', $this->paymentDate);
+                if (count($parts) === 3) {
+                    $this->dateFilter = $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+                }
+            }
+        }
         $this->loadPaymentsList();
         $this->resetForm();
         $this->showPaymentModal = false;
@@ -763,7 +763,11 @@ class PaymentKhata extends Component
             'editingId',
             'khotiyanSearch',
         ]);
-        $this->paymentDate = now()->format('Y-m-d');
+        if (!empty($this->dateFilter)) {
+            $this->paymentDate = date('Y-m-d', strtotime($this->dateFilter));
+        } else {
+            $this->paymentDate = now()->format('Y-m-d');
+        }
         $this->divisor = 1;
     }
 

@@ -79,7 +79,7 @@
         <!-- Card 1: মোট বিক্রি -->
         <a href="{{ route('challan.today') }}" wire:navigate
            class="bg-[#00609C] hover:bg-[#005185] text-white p-3.5 sm:p-5 rounded-2xl shadow-md border border-blue-700/10 hover:shadow-xl transition-all duration-200 flex flex-col justify-between cursor-pointer group active:scale-98">
-            <span class="text-[11px] sm:text-xs font-bold opacity-90 group-hover:underline">মোট বিক্রি (ভাটা সহ)</span>
+            <span class="text-[11px] sm:text-xs font-bold opacity-90 group-hover:underline">মোট বিক্রি ( ভারা সহ )</span>
             <span class="text-base sm:text-2xl lg:text-3xl font-extrabold mt-2 sm:mt-3 tracking-wide font-mono">৳ {{ number_format($totalSalesVat, 0) }}</span>
         </a>
 
@@ -403,5 +403,103 @@
         </div>
 
     </div>
+
+    <!-- ========================================== -->
+    <!-- PROFIT & LOSS (লাভ লসের হিসাব) MODAL      -->
+    <!-- ========================================== -->
+    @if($showProfitLossModal)
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 transition-all duration-200" wire:keydown.escape.window="closeProfitLossModal">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 max-w-md w-full overflow-hidden font-sans transform transition-all" @click.away="$wire.closeProfitLossModal()">
+                
+                <!-- Modal Header (Matching Screenshot 2 green title bar) -->
+                <div class="bg-[#034C3C] text-white px-6 py-3.5 flex items-center justify-between">
+                    <div class="w-6"></div>
+                    <h3 class="text-base sm:text-lg font-bold tracking-tight text-white flex-1 text-center">
+                        লাভ লসের হিসাব
+                    </h3>
+                    <button 
+                        type="button" 
+                        wire:click="closeProfitLossModal"
+                        class="text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1 transition-colors cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal Content (Mint background table container) -->
+                <div class="p-5 space-y-4">
+                    <div class="bg-[#D1F2D9] dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-900/60 rounded-xl overflow-hidden divide-y divide-emerald-200 dark:divide-emerald-900/50">
+                        
+                        <!-- Row 1: সর্বমোট ইট বিক্রি -->
+                        <div class="flex items-center justify-between p-3">
+                            <span class="text-xs font-extrabold text-emerald-900 dark:text-emerald-300">সর্বমোট ইট বিক্রি</span>
+                            <span class="text-sm font-mono font-bold text-emerald-800 dark:text-emerald-300">
+                                ৳ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($mSales, 1)) : number_format($mSales, 1) }}
+                            </span>
+                        </div>
+
+                        <!-- Row 2: সর্বমোট খরচ -->
+                        <div class="flex items-center justify-between p-3">
+                            <span class="text-xs font-extrabold text-rose-700 dark:text-rose-400">সর্বমোট খরচ</span>
+                            <span class="text-sm font-mono font-bold text-rose-700 dark:text-rose-400">
+                                ৳ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($mExpenses, 1)) : number_format($mExpenses, 1) }}
+                            </span>
+                        </div>
+
+                        <!-- Row 3: বেশি পেমেন্ট -->
+                        <div class="flex items-center justify-between p-3">
+                            <span class="text-xs font-extrabold text-amber-700 dark:text-amber-400">বেশি পেমেন্ট</span>
+                            <span class="text-sm font-mono font-bold text-amber-700 dark:text-amber-400">
+                                ৳ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($mOverpayment, 1)) : number_format($mOverpayment, 1) }}
+                            </span>
+                        </div>
+
+                        <!-- Row 4: লাভ / লস -->
+                        <div class="flex items-center justify-between p-3">
+                            <span class="text-xs font-extrabold {{ $mNetProfitLoss < 0 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-800 dark:text-emerald-300' }}">
+                                {{ $mNetProfitLoss < 0 ? 'লস' : 'লাভ' }}
+                            </span>
+                            <span class="text-sm font-mono font-black {{ $mNetProfitLoss < 0 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-800 dark:text-emerald-300' }}">
+                                ৳ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($mNetProfitLoss, 1)) : number_format($mNetProfitLoss, 1) }}
+                            </span>
+                        </div>
+
+                        <!-- Row 5: বাকি রয়েছে -->
+                        <div class="flex items-center justify-between p-3">
+                            <span class="text-xs font-extrabold text-slate-700 dark:text-slate-300">বাকি রয়েছে</span>
+                            <span class="text-sm font-mono font-bold text-slate-800 dark:text-slate-200">
+                                ৳ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($mDue, 1)) : number_format($mDue, 1) }}
+                            </span>
+                        </div>
+
+                        <!-- Row 6: সর্বমোট লাভ / লস -->
+                        <div class="flex items-center justify-between p-3">
+                            <span class="text-xs font-black {{ $mOverallProfitLoss < 0 ? 'text-rose-800 dark:text-rose-400' : 'text-emerald-900 dark:text-emerald-200' }}">
+                                {{ $mOverallProfitLoss < 0 ? 'সর্বমোট লস' : 'সর্বমোট লাভ' }}
+                            </span>
+                            <span class="text-sm font-mono font-black {{ $mOverallProfitLoss < 0 ? 'text-rose-800 dark:text-rose-400' : 'text-emerald-900 dark:text-emerald-200' }}">
+                                ৳ {{ function_exists('toBanglaNum') ? toBanglaNum(number_format($mOverallProfitLoss, 1)) : number_format($mOverallProfitLoss, 1) }}
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <!-- Season Selector Buttons at Bottom (Matching Screenshot 2) -->
+                    <div class="flex items-center gap-2 pt-2">
+                        @foreach($availableSeasons as $seasonOpt)
+                            <button 
+                                type="button" 
+                                wire:click="setModalSeason('{{ $seasonOpt }}')"
+                                class="px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer font-sans shadow-xs {{ $modalSeason === $seasonOpt ? 'bg-[#034C3C] text-white ring-2 ring-emerald-500/20' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-gray-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
+                                {{ $seasonOpt }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    @endif
 
 </div>

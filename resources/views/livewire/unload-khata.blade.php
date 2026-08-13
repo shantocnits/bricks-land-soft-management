@@ -673,11 +673,23 @@ if (!function_exists('toBanglaNum')) {
                             <tbody class="divide-y divide-gray-100 dark:divide-slate-800 font-sans text-xs">
                                 @forelse($compareRows as $row)
                                     @php
-                                        $brickPct = $row['load'] > 0 ? round(($row['brick'] / $row['load']) * 100, 2) : 0;
-                                        // আধলা qty = লোড থেকে ইট বাদে বাকিটুকু
-                                        $adlaQty = max(0, $row['load'] - $row['brick']);
-                                        // আধলা% = 100 - ইট%
-                                        $adlaPct = $row['load'] > 0 ? round(100 - $brickPct, 2) : 0;
+                                        $rowLoad = floatval($row['load'] ?? 0);
+                                        $rowBrick = floatval($row['brick'] ?? 0);
+                                        $adlaQty = isset($row['adla']) ? floatval($row['adla']) : max(0, $rowLoad - $rowBrick);
+                                        $unloadedTotal = $rowBrick + $adlaQty;
+
+                                        if ($rowLoad > 0) {
+                                            $brickPct = round(($rowBrick / $rowLoad) * 100, 2);
+                                            $adlaPct = round(($adlaQty / $rowLoad) * 100, 2);
+                                        } else {
+                                            if ($unloadedTotal > 0) {
+                                                $brickPct = round(($rowBrick / $unloadedTotal) * 100, 2);
+                                                $adlaPct = round(($adlaQty / $unloadedTotal) * 100, 2);
+                                            } else {
+                                                $brickPct = 0;
+                                                $adlaPct = 0;
+                                            }
+                                        }
                                     @endphp
                                     <tr class="hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10 transition-colors">
                                         <td class="py-3 px-4 font-bold text-gray-800 dark:text-white border-r border-gray-100 dark:border-slate-800">{{ $row['round'] }}</td>
@@ -707,11 +719,21 @@ if (!function_exists('toBanglaNum')) {
                                     @php
                                         $totLoad  = $compareRows->sum('load');
                                         $totBrick = $compareRows->sum('brick');
-                                        // মোট আধলা = মোট লোড - মোট ইট
-                                        $totAdla  = max(0, $totLoad - $totBrick);
-                                        $totBrickPct = $totLoad > 0 ? round(($totBrick / $totLoad) * 100, 2) : 0;
-                                        // মোট আধলা% = 100 - ইট%
-                                        $totAdlaPct  = $totLoad > 0 ? round(100 - $totBrickPct, 2) : 0;
+                                        $totAdla  = $compareRows->contains('adla') ? $compareRows->sum('adla') : max(0, $totLoad - $totBrick);
+                                        $totUnloaded = $totBrick + $totAdla;
+
+                                        if ($totLoad > 0) {
+                                            $totBrickPct = round(($totBrick / $totLoad) * 100, 2);
+                                            $totAdlaPct  = round(($totAdla / $totLoad) * 100, 2);
+                                        } else {
+                                            if ($totUnloaded > 0) {
+                                                $totBrickPct = round(($totBrick / $totUnloaded) * 100, 2);
+                                                $totAdlaPct  = round(($totAdla / $totUnloaded) * 100, 2);
+                                            } else {
+                                                $totBrickPct = 0;
+                                                $totAdlaPct  = 0;
+                                            }
+                                        }
                                     @endphp
                                     <tr class="bg-emerald-50/60 dark:bg-emerald-950/20 border-t-2 border-emerald-200 dark:border-emerald-900">
                                         <td class="py-3 px-4 font-extrabold text-gray-900 dark:text-white border-r border-gray-200 dark:border-slate-700">মোট</td>

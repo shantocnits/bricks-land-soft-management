@@ -124,12 +124,12 @@
             <!-- Stat 7 -->
             <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
                 <span class="block text-xs font-bold text-gray-400">পরিশোধের তারিখ</span>
-                <span class="block text-sm font-black text-gray-800 dark:text-white mt-1">—</span>
+                <span class="block text-sm font-black text-gray-800 dark:text-white mt-1">{{ $stats['due_date'] }}</span>
             </div>
             <!-- Stat 8 -->
             <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
                 <span class="block text-xs font-bold text-gray-400">নোট</span>
-                <span class="block text-sm font-black text-gray-800 dark:text-white mt-1">—</span>
+                <span class="block text-sm font-black text-gray-800 dark:text-white mt-1 truncate" title="{{ $stats['notes'] }}">{{ $stats['notes'] }}</span>
             </div>
             <!-- Stat 9 -->
             <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
@@ -810,7 +810,15 @@
                     <div class="bg-gray-50/50 dark:bg-slate-950/20 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 space-y-2">
                         <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>কাস্টমার আইডি</span> <span class="font-sans font-bold text-gray-800 dark:text-white">{{ $detailsChallan->id }}</span></div>
                         <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>ধরন</span> <span class="text-gray-800 dark:text-white font-bold">{{ in_array($detailsChallan->challan_type, ['অগ্রিম', 'অগ্রিম চালান']) ? 'অগ্রিম চালান' : 'রেগুলার চালান' }}</span></div>
-                        <div class="flex justify-between"><span>ডেলিভারি তারিখ</span> <span class="font-sans text-gray-500">—</span></div>
+                        @php
+                            $delDateVal = $detailsChallan->delivery_date;
+                            if (!$delDateVal) {
+                                $latestDelRec = \App\Models\Delivery::where('challan_id', $detailsChallan->id)->latest('id')->first();
+                                $delDateVal = $latestDelRec ? $latestDelRec->delivery_date : $detailsChallan->date;
+                            }
+                            $delDateFormatted = $delDateVal ? \Carbon\Carbon::parse($delDateVal)->format('d-m-Y') : '—';
+                        @endphp
+                        <div class="flex justify-between"><span>ডেলিভারি তারিখ</span> <span class="font-sans font-bold text-gray-800 dark:text-white">{{ $delDateFormatted }}</span></div>
                     </div>
                     <!-- Column 3 -->
                     <div class="bg-gray-50/50 dark:bg-slate-950/20 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 space-y-2">

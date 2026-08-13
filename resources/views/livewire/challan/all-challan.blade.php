@@ -636,9 +636,9 @@
                             <div class="relative flex items-center">
                                 <input type="text"
                                        data-flatpickr
-                                       data-wire-prop="date"
-                                       data-default="{{ $date }}"
-                                       wire:model="date"
+                                       data-wire-prop="deliveryDate"
+                                       data-default="{{ $deliveryDate }}"
+                                       wire:model="deliveryDate"
                                        placeholder="ডেলিভারি তারিখ"
                                        readonly
                                        class="w-full py-2 pl-3 pr-10 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-808 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-505/10 transition-all font-sans font-semibold cursor-pointer text-center">
@@ -1280,7 +1280,15 @@
                     <div class="bg-gray-50/50 dark:bg-slate-950/20 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 space-y-2">
                         <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>কাস্টমার আইডি</span> <span class="font-sans font-bold text-gray-800 dark:text-white">{{ $detailsChallan->id }}</span></div>
                         <div class="flex justify-between border-b border-gray-100 dark:border-slate-800 pb-1.5"><span>ধরন</span> <span class="text-gray-800 dark:text-white font-bold">{{ in_array($detailsChallan->challan_type, ['অগ্রিম', 'অগ্রিম চালান']) ? 'অগ্রিম চালান' : 'রেগুলার চালান' }}</span></div>
-                        <div class="flex justify-between"><span>ডেলিভারি তারিখ</span> <span class="font-sans text-gray-500">—</span></div>
+                        @php
+                            $delDateVal = $detailsChallan->delivery_date;
+                            if (!$delDateVal) {
+                                $latestDelRec = \App\Models\Delivery::where('challan_id', $detailsChallan->id)->latest('id')->first();
+                                $delDateVal = $latestDelRec ? $latestDelRec->delivery_date : $detailsChallan->date;
+                            }
+                            $delDateFormatted = $delDateVal ? \Carbon\Carbon::parse($delDateVal)->format('d-m-Y') : '—';
+                        @endphp
+                        <div class="flex justify-between"><span>ডেলিভারি তারিখ</span> <span class="font-sans font-bold text-gray-800 dark:text-white">{{ $delDateFormatted }}</span></div>
                     </div>
                     <!-- Column 3 -->
                     <div class="bg-gray-50/50 dark:bg-slate-950/20 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 space-y-2">

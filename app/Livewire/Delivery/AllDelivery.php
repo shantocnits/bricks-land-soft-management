@@ -38,6 +38,7 @@ class AllDelivery extends Component
     public $deletingDeliveryId = null;
     
     // Change Date Form
+    public $selectedChallanId = null;
     public $selectedDeliveryId = null;
     public $newDeliveryDate = '';
     public $changeOption = 'all';
@@ -119,6 +120,16 @@ class AllDelivery extends Component
             $this->selectedChallanId = $challan->id;
             $this->selectedChallanNo = $challan->challan_no;
             $this->changeOption = 'all';
+
+            $delDateVal = $challan->delivery_date;
+            if (!$delDateVal) {
+                $firstDel = Delivery::where('challan_id', $challan->id)->latest('id')->first();
+                $delDateVal = $firstDel ? $firstDel->delivery_date : $challan->date;
+            }
+
+            $dateObj = $delDateVal ? \Carbon\Carbon::parse($delDateVal) : now();
+            $this->currentDeliveryDate = $dateObj->format('d-m-Y');
+            $this->newDeliveryDate = $dateObj->toDateString();
             
             $deliveries = Delivery::where('challan_id', $challan->id)->get();
             $this->changeDeliveries = $deliveries->map(function($d) {
@@ -131,14 +142,8 @@ class AllDelivery extends Component
 
             if (count($this->changeDeliveries) > 0) {
                 $this->selectedDeliveryId = $this->changeDeliveries[0]['id'];
-                $firstDel = $deliveries->first();
-                $this->currentDeliveryDate = $firstDel && $firstDel->delivery_date ? $firstDel->delivery_date->format('d-m-Y') : now()->format('d-m-Y');
-                $this->newDeliveryDate = $firstDel && $firstDel->delivery_date ? $firstDel->delivery_date->toDateString() : now()->toDateString();
             } else {
                 $this->selectedDeliveryId = null;
-                $date = $challan->date ?: now();
-                $this->newDeliveryDate = $date->toDateString();
-                $this->currentDeliveryDate = $date->format('d-m-Y');
             }
             
             $this->showChangeDateModal = true;
@@ -160,32 +165,31 @@ class AllDelivery extends Component
             'newDeliveryDate' => 'required|date'
         ]);
 
-        $delivery = Delivery::find($this->selectedDeliveryId);
-        if ($delivery) {
-            $oldDate = $delivery->delivery_date->toDateString();
-            
-            if ($this->changeOption === 'all') {
-                // Update all deliveries of this Challan on this date to the new date
-                Delivery::where('challan_id', $delivery->challan_id)
-                    ->whereDate('delivery_date', $oldDate)
-                    ->update(['delivery_date' => $this->newDeliveryDate]);
+        if ($this->selectedChallanId) {
+            $challan = Challan::find($this->selectedChallanId);
+            if ($challan) {
+                $oldDate = $challan->date ? $challan->date->toDateString() : '';
                 
-                \App\Models\ActivityLog::log(
-                    'ডেলিভারি তারিখ আপডেট (পুরো চালান)',
-                    "চালান নং {$this->selectedChallanNo} এর সকল ডেলিভারির তারিখ পরিবর্তনঃ {$oldDate} -> {$this->newDeliveryDate}"
-                );
-            } else {
-                // Update only this specific delivery category
-                $delivery->update([
-                    'delivery_date' => $this->newDeliveryDate
+                $challan->update([
+                    'date' => $this->newDeliveryDate,
+                    'delivery_date' => $this->newDeliveryDate,
                 ]);
 
+                if ($this->changeOption === 'all' || !$this->selectedDeliveryId) {
+                    Delivery::where('challan_id', $challan->id)
+                        ->update(['delivery_date' => $this->newDeliveryDate]);
+                } elseif ($this->selectedDeliveryId) {
+                    Delivery::where('id', $this->selectedDeliveryId)
+                        ->update(['delivery_date' => $this->newDeliveryDate]);
+                }
+
                 \App\Models\ActivityLog::log(
-                    'ডেলিভারি তারিখ আপডেট (শ্রেণি অনুযায়ী)',
-                    "চালান নং {$this->selectedChallanNo} এর শ্রেণির ডেলিভারি তারিখ পরিবর্তনঃ {$oldDate} -> {$this->newDeliveryDate}"
+                    'ডেলিভারি তারিখ আপডেট',
+                    "চালান নং {$this->selectedChallanNo} এর তারিখ পরিবর্তনঃ {$oldDate} -> {$this->newDeliveryDate}"
                 );
+
+                $this->dispatch('show-toast', message: 'ডেলিভারি তারিখ সফলভাবে পরিবর্তন করা হয়েছে।');
             }
-            $this->dispatch('show-toast', message: 'ডেলিভারি তারিখ সফলভাবে পরিবর্তন করা হয়েছে।');
         }
         $this->showChangeDateModal = false;
     }

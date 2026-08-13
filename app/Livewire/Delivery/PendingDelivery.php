@@ -184,6 +184,16 @@ class PendingDelivery extends Component
             $this->selectedChallanId = $challan->id;
             $this->selectedChallanNo = $challan->challan_no;
             $this->changeOption = 'all';
+
+            $delDateVal = $challan->delivery_date;
+            if (!$delDateVal) {
+                $firstDel = Delivery::where('challan_id', $challan->id)->latest('id')->first();
+                $delDateVal = $firstDel ? $firstDel->delivery_date : $challan->date;
+            }
+
+            $dateObj = $delDateVal ? \Carbon\Carbon::parse($delDateVal) : now();
+            $this->currentDeliveryDate = $dateObj->format('d-m-Y');
+            $this->newDeliveryDate = $dateObj->toDateString();
             
             // Get all unique categories for this challan that have deliveries
             $deliveries = Delivery::where('challan_id', $challan->id)->get();
@@ -197,14 +207,8 @@ class PendingDelivery extends Component
 
             if (count($this->changeDeliveries) > 0) {
                 $this->selectedDeliveryId = $this->changeDeliveries[0]['id'];
-                $firstDel = $deliveries->first();
-                $this->currentDeliveryDate = $firstDel && $firstDel->delivery_date ? $firstDel->delivery_date->format('d-m-Y') : now()->format('d-m-Y');
-                $this->newDeliveryDate = $firstDel && $firstDel->delivery_date ? $firstDel->delivery_date->toDateString() : now()->toDateString();
             } else {
                 $this->selectedDeliveryId = null;
-                $date = $challan->date ?: now();
-                $this->newDeliveryDate = $date->toDateString();
-                $this->currentDeliveryDate = $date->format('d-m-Y');
             }
             
             $this->showChangeDateModal = true;
@@ -222,9 +226,12 @@ class PendingDelivery extends Component
             if ($challan) {
                 $oldDate = $challan->date ? $challan->date->toDateString() : '';
                 
-                $challan->update(['date' => $this->newDeliveryDate]);
+                $challan->update([
+                    'date' => $this->newDeliveryDate,
+                    'delivery_date' => $this->newDeliveryDate,
+                ]);
 
-                if ($this->changeOption === 'all') {
+                if ($this->changeOption === 'all' || !$this->selectedDeliveryId) {
                     Delivery::where('challan_id', $challan->id)
                         ->update(['delivery_date' => $this->newDeliveryDate]);
                 } elseif ($this->selectedDeliveryId) {

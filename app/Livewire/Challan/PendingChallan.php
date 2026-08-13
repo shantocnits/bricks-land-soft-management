@@ -224,6 +224,7 @@ class PendingChallan extends Component
         $this->grand_total = 0;
         $this->due = 0;
         $this->due_payment_date = '';
+        $this->deliveryDate = now()->toDateString();
         $this->editingId = null;
         $this->resetValidation();
     }
@@ -379,6 +380,7 @@ class PendingChallan extends Component
             'due' => $this->due,
             'send_sms' => $this->send_sms,
             'due_payment_date' => $this->due_payment_date ?: null,
+            'delivery_date' => $this->deliveryDate ?: null,
         ];
 
         if ($this->editingId) {
@@ -392,6 +394,9 @@ class PendingChallan extends Component
                 );
             }
             $challan->update($challanData);
+            if ($this->deliveryDate) {
+                \App\Models\Delivery::where('challan_id', $challan->id)->update(['delivery_date' => $this->deliveryDate]);
+            }
             $challan->items()->delete();
         } else {
             $challan = Challan::create($challanData);
@@ -541,6 +546,7 @@ class PendingChallan extends Component
         $this->cash = $challan->cash;
         $this->send_sms = $challan->send_sms;
         $this->due_payment_date = $challan->due_payment_date ?? '';
+        $this->deliveryDate = $challan->delivery_date ? $challan->delivery_date->toDateString() : ($challan->date ? $challan->date->toDateString() : now()->toDateString());
 
         $this->items = [];
         foreach ($challan->items as $item) {
