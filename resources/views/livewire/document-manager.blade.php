@@ -39,13 +39,15 @@
             
             <!-- Left: Back Button, Home Button & Breadcrumbs -->
             <div class="flex items-center gap-2 flex-wrap text-xs font-bold">
-                <!-- Back Button (<-) -->
-                <button type="button" wire:click="navigateToFolder({{ $currentFolder ? $currentFolder->parent_id : null }})"
-                        class="p-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-[#034C3C] hover:text-white dark:hover:bg-emerald-600 transition-all cursor-pointer shadow-xs flex items-center justify-center" title="আগের ফোল্ডার (Back)">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                    </svg>
-                </button>
+                <!-- Back Button (<-) - Only visible inside sub-folders -->
+                @if($currentFolderId !== null)
+                    <button type="button" wire:click="navigateToFolder({{ $currentFolder ? $currentFolder->parent_id : null }})"
+                            class="p-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-[#034C3C] hover:text-white dark:hover:bg-emerald-600 transition-all cursor-pointer shadow-xs flex items-center justify-center" title="আগের ফোল্ডার (Back)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </button>
+                @endif
 
                 <!-- Home Button -->
                 <button type="button" wire:click="navigateToFolder(null)"
@@ -162,7 +164,7 @@
                                                             class="text-gray-500 hover:text-emerald-600 p-1 cursor-pointer">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                     </button>
-                                                    <button type="button" wire:confirm="ফোল্ডারটি মুছে ফেলতে চান?" wire:click.stop="deleteFolder({{ $f->id }})" title="মুছে ফেলুন"
+                                                    <button type="button" wire:click.stop="confirmDeleteFolder({{ $f->id }})" title="মুছে ফেলুন"
                                                             class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                     </button>
@@ -197,7 +199,7 @@
                                                                 class="text-gray-500 hover:text-emerald-600 p-1 cursor-pointer">
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                         </button>
-                                                        <button type="button" wire:confirm="ফাইলটি মুছে ফেলতে চান?" wire:click="deleteFile({{ $file->id }})" title="ডিলিট"
+                                                        <button type="button" wire:click="confirmDeleteFile({{ $file->id }})" title="ডিলিট"
                                                                 class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer">
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                         </button>
@@ -256,7 +258,7 @@
                                         <td class="py-3.5 px-4 text-center">
                                             <div class="flex items-center justify-center gap-2">
                                                 <button type="button" wire:click.stop="openFolderModal({{ $f->id }})" class="text-emerald-600 font-bold hover:underline cursor-pointer">এডিট</button>
-                                                <button type="button" wire:confirm="ফোল্ডারটি মুছে ফেলতে চান?" wire:click.stop="deleteFolder({{ $f->id }})" class="text-rose-500 font-bold hover:underline cursor-pointer">ডিলিট</button>
+                                                <button type="button" wire:click.stop="confirmDeleteFolder({{ $f->id }})" class="text-rose-500 font-bold hover:underline cursor-pointer">ডিলিট</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -274,7 +276,7 @@
                                                 <a href="{{ route('documents.stream', $file->id) }}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-sky-50 dark:bg-slate-800 text-sky-600 dark:text-sky-400 hover:bg-sky-600 hover:text-white dark:hover:bg-sky-600 dark:hover:text-white rounded-lg transition-all">ভিউ</a>
                                                 <a href="{{ Storage::url($file->file_path) }}" target="_blank" download="{{ $file->file_name }}" class="px-2.5 py-1 bg-emerald-50 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-700 hover:text-white dark:hover:bg-emerald-600 dark:hover:text-white rounded-lg transition-all">ডাউনলোড</a>
                                                 <button type="button" wire:click="openFileEditModal({{ $file->id }})" class="px-2.5 py-1 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-emerald-600 hover:text-white rounded-lg transition-all cursor-pointer">এডিট</button>
-                                                <button type="button" wire:confirm="ফাইলটি মুছে ফেলতে চান?" wire:click="deleteFile({{ $file->id }})" class="px-2.5 py-1 bg-rose-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg transition-all cursor-pointer">ডিলিট</button>
+                                                <button type="button" wire:click="confirmDeleteFile({{ $file->id }})" class="px-2.5 py-1 bg-rose-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg transition-all cursor-pointer">ডিলিট</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -288,10 +290,16 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         @foreach($files as $file)
                             <div class="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center text-center space-y-3 relative group">
-                                <button type="button" wire:click="openFileEditModal({{ $file->id }})" title="এডিট"
-                                        class="absolute top-2 right-2 p-1 text-gray-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                </button>
+                                <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 dark:bg-slate-900/80 p-1 rounded-lg backdrop-blur-xs z-10">
+                                    <button type="button" wire:click="openFileEditModal({{ $file->id }})" title="এডিট"
+                                            class="text-gray-500 hover:text-emerald-600 p-1 cursor-pointer">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    </button>
+                                    <button type="button" wire:click="confirmDeleteFile({{ $file->id }})" title="ডিলিট"
+                                            class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
                                 @if(in_array(strtolower($file->file_type), ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']))
                                     <img src="{{ Storage::url($file->file_path) }}" alt="{{ $file->title }}" class="h-36 w-full object-cover rounded-xl border border-gray-200 dark:border-slate-800">
                                 @else
@@ -426,5 +434,43 @@
             </div>
         </div>
     @endif
+
+    <!-- Delete Confirmation Modal -->
+    <div x-data
+         x-show="$wire.confirmDeleteFolderId !== null || $wire.confirmDeleteFileId !== null"
+         @click.self="$wire.cancelDelete()"
+         class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+         x-cloak
+         x-transition>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-red-200 dark:border-red-900/60 p-6 max-w-sm w-full shadow-2xl space-y-5">
+            <div class="flex items-start gap-4">
+                <div class="w-11 h-11 rounded-xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-gray-900 dark:text-white">নিশ্চিত মুছে ফেলবেন?</h3>
+                    <p class="text-xs text-gray-500 dark:text-slate-400 font-semibold mt-1">
+                        @if($confirmDeleteFolderId)
+                            আপনি কি নিশ্চিতভাবে এই ফোল্ডার ও এর মধ্যকার সকল ফাইল স্থায়ীভাবে মুছে ফেলতে চান?
+                        @else
+                            আপনি কি নিশ্চিতভাবে এই ফাইলটি মুছে ফেলতে চান?
+                        @endif
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 justify-end">
+                <button type="button" wire:click="cancelDelete()"
+                        class="px-5 py-2.5 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer">
+                    না, বাতিল
+                </button>
+                <button type="button" wire:click="{{ $confirmDeleteFolderId ? 'executeDeleteFolder' : 'executeDeleteFile' }}"
+                        class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-red-500/25 active:scale-95">
+                    হ্যাঁ, মুছে দিন
+                </button>
+            </div>
+        </div>
+    </div>
 
 </div>

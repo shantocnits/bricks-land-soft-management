@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\DocumentFolder;
 use App\Models\DocumentFile;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentManager extends Component
@@ -33,6 +34,42 @@ class DocumentManager extends Component
     public ?int $editingFileId = null;
     public string $editFileTitle = '';
     public string $editFileDescription = '';
+
+    // Delete Confirmation Modal
+    public ?int $confirmDeleteFolderId = null;
+    public ?int $confirmDeleteFileId = null;
+
+    public function confirmDeleteFolder(int $id)
+    {
+        $this->confirmDeleteFolderId = $id;
+    }
+
+    public function confirmDeleteFile(int $id)
+    {
+        $this->confirmDeleteFileId = $id;
+    }
+
+    public function cancelDelete()
+    {
+        $this->confirmDeleteFolderId = null;
+        $this->confirmDeleteFileId = null;
+    }
+
+    public function executeDeleteFolder()
+    {
+        if ($this->confirmDeleteFolderId) {
+            $this->deleteFolder($this->confirmDeleteFolderId);
+            $this->confirmDeleteFolderId = null;
+        }
+    }
+
+    public function executeDeleteFile()
+    {
+        if ($this->confirmDeleteFileId) {
+            $this->deleteFile($this->confirmDeleteFileId);
+            $this->confirmDeleteFileId = null;
+        }
+    }
 
     public function navigateToFolder(?int $folderId = null)
     {
@@ -75,6 +112,7 @@ class DocumentManager extends Component
                 'name' => trim($this->folderName),
                 'parent_id' => $this->currentFolderId,
                 'color' => $this->folderColor,
+                'season' => Setting::get('season', '২৫-২৬'),
             ]);
             $msg = 'নতুন ফোল্ডার সফলভাবে তৈরি হয়েছে!';
         }
@@ -118,10 +156,12 @@ class DocumentManager extends Component
             'file_type' => $extension,
             'file_size' => $size,
             'description' => trim($this->fileDescription),
+            'season' => Setting::get('season', '২৫-২৬'),
         ]);
 
         $this->showUploadModal = false;
-        $msg = 'ডকুমেন্ট সফলভাবে আপলোড হয়েছে!';
+        $this->reset(['fileTitle', 'uploadedFile', 'fileDescription']);
+        $msg = 'নতুন ফাইল সফলভাবে আপলোড হয়েছে!';
         session()->flash('message', $msg);
         $this->dispatch('show-toast', message: $msg, type: 'success');
     }
@@ -136,7 +176,7 @@ class DocumentManager extends Component
         $this->showFileEditModal = true;
     }
 
-    public function saveFileEdit()
+    public function updateFile()
     {
         $this->validate([
             'editFileTitle' => 'required|string|max:255',
@@ -144,17 +184,15 @@ class DocumentManager extends Component
             'editFileTitle.required' => 'ডকুমেন্টের টাইটেল দেওয়া আবশ্যক',
         ]);
 
-        if ($this->editingFileId) {
-            $file = DocumentFile::findOrFail($this->editingFileId);
-            $file->update([
-                'title' => trim($this->editFileTitle),
-                'description' => trim($this->editFileDescription),
-            ]);
-        }
+        $file = DocumentFile::findOrFail($this->editingFileId);
+        $file->update([
+            'title' => trim($this->editFileTitle),
+            'description' => trim($this->editFileDescription),
+        ]);
 
         $this->showFileEditModal = false;
         $this->editingFileId = null;
-        $msg = 'ডকুমেন্ট তথ্য আপডেট করা হয়েছে!';
+        $msg = 'ফাইল তথ্য আপডেট করা হয়েছে!';
         session()->flash('message', $msg);
         $this->dispatch('show-toast', message: $msg, type: 'success');
     }
@@ -166,8 +204,7 @@ class DocumentManager extends Component
             Storage::disk('public')->delete($file->file_path);
         }
         $file->delete();
-
-        $msg = 'ডকুমেন্ট মুছে ফেলা হয়েছে!';
+        $msg = 'ফাইল মুছে ফেলা হয়েছে!';
         session()->flash('message', $msg);
         $this->dispatch('show-toast', message: $msg, type: 'success');
     }
@@ -175,8 +212,14 @@ class DocumentManager extends Component
     public function deleteFolder(int $id)
     {
         $folder = DocumentFolder::findOrFail($id);
+        // Recursively delete files & physical files
+        foreach ($folder->files as $f) {
+            if (Storage::disk('public')->exists($f->file_path)) {
+                Storage::disk('public')->delete($f->file_path);
+            }
+            $f->delete();
+        }
         $folder->delete();
-
         $msg = 'ফোল্ডার মুছে ফেলা হয়েছে!';
         session()->flash('message', $msg);
         $this->dispatch('show-toast', message: $msg, type: 'success');
@@ -184,6 +227,8 @@ class DocumentManager extends Component
 
     public function render()
     {
+        $activeSeason = Setting::get('season', '২৫-২৬');
+
         $currentFolder = $this->currentFolderId ? DocumentFolder::find($this->currentFolderId) : null;
 
         // Build Breadcrumb Navigation Trail
@@ -195,14 +240,16 @@ class DocumentManager extends Component
         }
 
         // Query Folders
-        $folderQuery = DocumentFolder::where('parent_id', $this->currentFolderId);
+        $folderQuery = DocumentFolder::where('parent_id', $this->currentFolderId)
+            ->where('season', $activeSeason);
         if (!empty($this->search)) {
             $folderQuery->where('name', 'like', "%{$this->search}%");
         }
         $folders = $folderQuery->orderBy('name', 'asc')->get();
 
         // Query Files
-        $fileQuery = DocumentFile::where('folder_id', $this->currentFolderId);
+        $fileQuery = DocumentFile::where('folder_id', $this->currentFolderId)
+            ->where('season', $activeSeason);
         if (!empty($this->search)) {
             $fileQuery->where(function($q) {
                 $q->where('title', 'like', "%{$this->search}%")

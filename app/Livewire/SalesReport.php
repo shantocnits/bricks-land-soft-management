@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Models\Challan;
 use App\Models\ChallanItem;
 use App\Models\Category;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
 class SalesReport extends Component
@@ -52,8 +53,11 @@ class SalesReport extends Component
 
     public function render()
     {
-        // 1. Build Base Query
-        $query = Challan::query();
+        $activeSeason = Setting::get('season', '২৫-২৬');
+
+        // 1. Build Base Query filtered by Active Season
+        $query = Challan::query()
+            ->where('season', $activeSeason);
 
         if (!empty($this->search)) {
             $search = trim($this->search);
@@ -66,10 +70,20 @@ class SalesReport extends Component
         }
 
         if (!empty($this->dateFrom)) {
-            $query->whereDate('date', '>=', $this->dateFrom);
+            try {
+                $parsedFrom = \Carbon\Carbon::parse($this->dateFrom)->toDateString();
+                $query->whereDate('date', '>=', $parsedFrom);
+            } catch (\Exception $e) {
+                $query->whereDate('date', '>=', $this->dateFrom);
+            }
         }
         if (!empty($this->dateTo)) {
-            $query->whereDate('date', '<=', $this->dateTo);
+            try {
+                $parsedTo = \Carbon\Carbon::parse($this->dateTo)->toDateString();
+                $query->whereDate('date', '<=', $parsedTo);
+            } catch (\Exception $e) {
+                $query->whereDate('date', '<=', $this->dateTo);
+            }
         }
 
         if ($this->challanType !== 'all') {
@@ -88,7 +102,7 @@ class SalesReport extends Component
         $totalPaid  = $summaryQuery->sum('cash');
         $totalDue   = $summaryQuery->sum('due');
 
-        // Total brick quantity sold for filtered challans
+        // Total brick quantity sold — filtered by all active filters
         $filteredIds = (clone $query)->pluck('id');
         $totalQuantity = ChallanItem::whereIn('challan_id', $filteredIds)->sum('quantity');
 
@@ -101,12 +115,8 @@ class SalesReport extends Component
                           ->orderBy('id', 'desc')
                           ->paginate($this->perPage);
 
-        // Brick Categories for filter
-        $categoryNames = ['১ নং', 'পিকেট', '২ নং (ক)', '২ নং (খ)', '৩ নং গরিয়া', '৩ নং ছালট', 'এলোট', '3 no it'];
-        $whenClauses = implode(' ', array_map(fn($i) => "WHEN name = ? THEN $i", array_keys($categoryNames)));
-        $categories = Category::whereIn('name', $categoryNames)
-            ->orderByRaw("CASE {$whenClauses} ELSE 999 END", array_values($categoryNames))
-            ->get();
+        // Categories dynamic from Settings (শ্রেণি এবং রেট table)
+        $categories = Category::orderBy('id', 'asc')->get();
 
         return view('livewire.sales-report', [
             'challans'      => $challans,

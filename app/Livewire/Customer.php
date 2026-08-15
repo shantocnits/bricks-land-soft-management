@@ -211,6 +211,11 @@ class Customer extends Component
             ];
         }
 
+        // Sort by customer ID descending so recent/higher IDs appear at the top
+        usort($customersList, function ($a, $b) {
+            return $b['id'] <=> $a['id'];
+        });
+
         // Custom memory pagination wrapping
         $total = count($customersList);
         $offset = ($this->getPage() - 1) * $this->perPage;

@@ -855,7 +855,7 @@
             'printChallans' => $printChallans,
             'totalDue'      => $totalDue,
             'settings'      => $settings,
-            'categories'    => Category::all(),
+            'categories'    => Category::orderBy('id', 'asc')->get(),
             'ledgers'       => Ledger::all()
         ])->layout('layouts.app');
     }

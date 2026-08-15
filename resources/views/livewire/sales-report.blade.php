@@ -17,7 +17,7 @@ if (!function_exists('toBanglaNum')) {
             <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-5 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
                 <div class="flex items-center justify-between">
                     <div>
-                        <span class="text-[11px] font-bold text-gray-500 dark:text-slate-400 font-sans block uppercase">মোট বিক্রি (ভ্যাট সহ)</span>
+                        <span class="text-[11px] font-bold text-gray-500 dark:text-slate-400 font-sans block uppercase">মোট বিক্রি ( ভারা সহ )</span>
                         <h3 class="text-xl sm:text-2xl font-black text-[#034C3C] dark:text-emerald-400 font-mono mt-1">
                             ৳{{ toBanglaNum(number_format((float)($totalGrand), (float)($totalGrand) == (int)($totalGrand) ? 0 : 2)) }}
                         </h3>
@@ -114,19 +114,19 @@ if (!function_exists('toBanglaNum')) {
                 </div>
             </div>
 
-            <!-- Chart Canvas Container (wire:key ensures instant re-rendering on data/tab change) -->
-            <div wire:key="sales-chart-{{ $chartPeriod }}-{{ md5(json_encode($chartData)) }}"
+            <!-- Chart Canvas Container -->
+            <div wire:key="sales-chart-{{ $chartPeriod }}-{{ md5($dateFrom.$dateTo.$challanType.$categoryFilter) }}"
                  x-data="{
                     chart: null,
-                    renderChart() {
+                    renderChart(freshData) {
                         if (typeof Chart === 'undefined') {
-                            setTimeout(() => this.renderChart(), 100);
+                            setTimeout(() => this.renderChart(freshData), 100);
                             return;
                         }
                         const canvas = this.$refs.canvas;
                         if (!canvas) return;
 
-                        const data = @js($chartData);
+                        const data = freshData !== undefined ? freshData : (@js($chartData));
                         const labels = (data && data.labels && data.labels.length > 0) ? data.labels : ['কোনো বিক্রি ডেটা নেই'];
                         const series = (data && data.series && data.series.length > 0) ? data.series : [0];
 
@@ -169,6 +169,10 @@ if (!function_exists('toBanglaNum')) {
                         } else {
                             const cash = (data && data.cash && data.cash.length > 0) ? data.cash : [0];
                             const due = (data && data.due && data.due.length > 0) ? data.due : [0];
+                            const isSingle = series.length === 1;
+                            const pRadius = isSingle ? 8 : 4.5;
+                            const pHoverRadius = isSingle ? 11 : 7;
+
                             this.chart = new Chart(ctx, {
                                 type: 'line',
                                 data: {
@@ -179,30 +183,41 @@ if (!function_exists('toBanglaNum')) {
                                             data: series,
                                             borderColor: '#059669',
                                             backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                                            pointBackgroundColor: '#059669',
+                                            pointBorderColor: '#ffffff',
+                                            pointBorderWidth: isSingle ? 2 : 1,
                                             fill: true,
                                             tension: 0.3,
                                             borderWidth: 3,
-                                            pointRadius: 4,
-                                            pointHoverRadius: 6
+                                            pointRadius: pRadius,
+                                            pointHoverRadius: pHoverRadius
                                         },
                                         {
                                             label: 'নগদ জমা (৳)',
                                             data: cash,
                                             borderColor: '#0284c7',
-                                            backgroundColor: 'transparent',
+                                            backgroundColor: 'rgba(2, 132, 199, 0.08)',
+                                            pointBackgroundColor: '#0284c7',
+                                            pointBorderColor: '#ffffff',
+                                            pointBorderWidth: isSingle ? 2 : 1,
                                             tension: 0.3,
                                             borderWidth: 2.5,
-                                            pointRadius: 3
+                                            pointRadius: pRadius,
+                                            pointHoverRadius: pHoverRadius
                                         },
                                         {
                                             label: 'বাকি (৳)',
                                             data: due,
                                             borderColor: '#f43f5e',
                                             backgroundColor: 'transparent',
+                                            pointBackgroundColor: '#f43f5e',
+                                            pointBorderColor: '#ffffff',
+                                            pointBorderWidth: isSingle ? 2 : 1,
                                             borderDash: [5, 5],
                                             tension: 0.3,
                                             borderWidth: 2,
-                                            pointRadius: 3
+                                            pointRadius: pRadius,
+                                            pointHoverRadius: pHoverRadius
                                         }
                                     ]
                                 },
@@ -231,19 +246,19 @@ if (!function_exists('toBanglaNum')) {
         <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm space-y-4">
             <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
                 
-                <!-- Left: Search & Filter Inputs -->
-                <div class="flex flex-wrap items-center gap-3 flex-grow">
-                    
-                    <!-- Search Input -->
-                    <div class="relative flex-grow sm:flex-grow-0 sm:w-64 font-sans">
-                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="কাস্টমার নাম, ফোন বা মেমো নং সার্চ..."
-                               class="w-full pl-4 pr-9 py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
-                        <span class="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </span>
-                    </div>
+                <!-- Left: Search Input -->
+                <div class="relative font-sans flex-shrink-0 sm:w-64 w-full">
+                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="কাস্টমার নাম, ফোন বা মেমো নং সার্চ..."
+                           class="w-full pl-4 pr-9 py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
+                    <span class="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </span>
+                </div>
+
+                <!-- Right: Filters -->
+                <div class="flex flex-wrap items-center gap-3">
 
                     <!-- Date From -->
                     <div class="relative font-sans text-xs flex items-center">
@@ -271,14 +286,14 @@ if (!function_exists('toBanglaNum')) {
                             <svg class="w-3.5 h-3.5 transition-transform" :class="{'rotate-180': open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div x-show="open" @click.outside="open = false" x-cloak
-                             class="absolute left-0 mt-1.5 z-[999] w-36 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden py-1">
+                             class="absolute right-0 mt-1.5 z-[999] w-36 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden py-1">
                             <button type="button" wire:click="$set('challanType', 'all')" @click="open = false" class="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 font-bold">সকল ধরণ</button>
                             <button type="button" wire:click="$set('challanType', 'আজকের')" @click="open = false" class="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 font-bold">আজকের চালান</button>
                             <button type="button" wire:click="$set('challanType', 'অগ্রিম')" @click="open = false" class="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 font-bold">অগ্রিম চালান</button>
                         </div>
                     </div>
 
-                    <!-- Category Filter -->
+                    <!-- Category Filter (Dynamic from Settings) -->
                     <div x-data="{ open: false }" class="relative font-sans text-xs">
                         <button @click="open = !open" type="button"
                                 class="flex items-center justify-between gap-2 px-3 py-2 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-bold rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer min-w-[120px]">
@@ -286,7 +301,7 @@ if (!function_exists('toBanglaNum')) {
                             <svg class="w-3.5 h-3.5 transition-transform" :class="{'rotate-180': open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div x-show="open" @click.outside="open = false" x-cloak
-                             class="absolute left-0 mt-1.5 z-[999] w-40 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden py-1 max-h-48 overflow-y-auto">
+                             class="absolute right-0 mt-1.5 z-[999] w-40 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden py-1 max-h-48 overflow-y-auto">
                             <button type="button" wire:click="$set('categoryFilter', 'all')" @click="open = false" class="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 font-bold">সকল শ্রেণি</button>
                             @foreach($categories as $cat)
                                 <button type="button" wire:click="$set('categoryFilter', '{{ $cat->name }}')" @click="open = false" class="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 font-bold">{{ $cat->name }}</button>
@@ -301,17 +316,6 @@ if (!function_exists('toBanglaNum')) {
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                         রিসেট
-                    </button>
-                </div>
-
-                <!-- Right: Print Button -->
-                <div class="flex items-center gap-2">
-                    <button type="button" onclick="window.print()"
-                            class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5 font-sans">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
-                        </svg>
-                        প্রিন্ট করুন
                     </button>
                 </div>
 
@@ -422,8 +426,10 @@ if (!function_exists('toBanglaNum')) {
                     মোট বিক্রি রেকর্ড: <strong class="text-gray-800 dark:text-white">{{ toBanglaNum($challans->total()) }} টি</strong>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    {{ $challans->links() }}
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center [&_p]:mr-6 sm:[&_p]:mr-8 [&_p]:text-xs [&_p]:font-semibold [&_p]:text-gray-500 [&_p]:dark:text-slate-400 font-sans">
+                        {{ $challans->links() }}
+                    </div>
 
                     <!-- Root Per Page Dropdown -->
                     <div x-data="{ open: false }" class="relative font-sans text-xs">

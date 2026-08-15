@@ -369,7 +369,7 @@ class CustomerProfile extends Component
             'printTotal'     => $printTotal,
             'dueHistoryData' => $dueHistoryData,
             'stats'          => $stats,
-            'categories'     => Category::all(),
+            'categories'     => Category::orderBy('id', 'asc')->get(),
             'ledgers'        => Ledger::all()
         ])->layout('layouts.app');
     }
