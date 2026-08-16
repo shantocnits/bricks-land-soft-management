@@ -8,6 +8,11 @@
         </div>
     </div>
 
+    @php
+        $currentUser = auth()->user();
+        $isUserAdmin = $currentUser && ($currentUser->role === 'admin' || $currentUser->isAdmin());
+    @endphp
+
     <!-- Main Container: Mobile Top-Horizontal, Desktop Left-Sidebar Grid -->
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
 
@@ -23,16 +28,16 @@
                     <span>আমার প্রোফাইল</span>
                 </button>
 
-                <!-- 1. ডাটার তথ্য -->
-                <button type="button" wire:click="setTab('profile')"
-                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'profile' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-slate-900 border border-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h18v18H3V3z"/>
-                    </svg>
-                    <span>ডাটার তথ্য</span>
-                </button>
+                @if($isUserAdmin)
+                    <!-- 1. ডাটার তথ্য -->
+                    <button type="button" wire:click="setTab('profile')"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'profile' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-slate-900 border border-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h18v18H3V3z"/>
+                        </svg>
+                        <span>ডাটার তথ্য</span>
+                    </button>
 
-                @if(auth()->user()->role === 'admin')
                     <!-- 2. শ্রেণি এবং রেট -->
                     <button type="button" wire:click="setTab('category')"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'category' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-slate-900 border border-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
@@ -71,7 +76,7 @@
                     <span>পাসওয়ার্ড পরিবর্তন</span>
                 </button>
 
-                @if(auth()->user()->role === 'admin')
+                @if($isUserAdmin)
                     <!-- 6. ইউজার লিমিট -->
                     <button type="button" wire:click="setTab('limit')"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'limit' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-slate-900 border border-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
@@ -80,7 +85,6 @@
                         </svg>
                         <span>ইউজার লিমিট</span>
                     </button>
-
 
                     <!-- 8. প্রিন্টার সেটিংস -->
                     <button type="button" wire:click="setTab('printer')"
@@ -124,16 +128,16 @@
                     <span>আমার প্রোফাইল</span>
                 </button>
 
-                <!-- 1. ডাটার তথ্য -->
-                <button type="button" wire:click="setTab('profile')"
-                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'profile' ? 'bg-primary text-white shadow-md' : 'bg-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h18v18H3V3z"/>
-                    </svg>
-                    <span>ডাটার তথ্য</span>
-                </button>
+                @if($isUserAdmin)
+                    <!-- 1. ডাটার তথ্য -->
+                    <button type="button" wire:click="setTab('profile')"
+                       class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'profile' ? 'bg-primary text-white shadow-md' : 'bg-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h18v18H3V3z"/>
+                        </svg>
+                        <span>ডাটার তথ্য</span>
+                    </button>
 
-                @if(auth()->user()->role === 'admin')
                     <!-- 2. শ্রেণি এবং রেট -->
                     <button type="button" wire:click="setTab('category')"
                        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'category' ? 'bg-primary text-white shadow-md' : 'bg-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
@@ -172,7 +176,7 @@
                     <span>পাসওয়ার্ড পরিবর্তন</span>
                 </button>
 
-                @if(auth()->user()->role === 'admin')
+                @if($isUserAdmin)
                     <!-- 6. ইউজার লিমিট -->
                     <button type="button" wire:click="setTab('limit')"
                        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'limit' ? 'bg-primary text-white shadow-md' : 'bg-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
@@ -221,13 +225,17 @@
                         <livewire:settings.my-profile wire:key="subtab-my-profile" />
                         @break
                     @case('profile')
-                        <livewire:settings.profile-info wire:key="subtab-profile-info" />
+                        @if($isUserAdmin)
+                            <livewire:settings.profile-info wire:key="subtab-profile-info" />
+                        @else
+                            <livewire:settings.my-profile wire:key="subtab-my-profile" />
+                        @endif
                         @break
                     @case('password')
                         <livewire:settings.password-change wire:key="subtab-password-change" />
                         @break
                     @default
-                        @if(auth()->user()->role === 'admin')
+                        @if($isUserAdmin)
                             @switch($activeTab)
                                 @case('category')
                                     <livewire:settings.category-rate wire:key="subtab-category-rate" />

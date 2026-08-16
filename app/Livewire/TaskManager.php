@@ -22,8 +22,15 @@ class TaskManager extends Component
     public $description = '';
     public $repeatPeriod = 'everyday';
     public $repeatDay = '';
-    public $assignedTo = 'demo';
+    public $assignedTo = 'admin';
     public $dueDate = '';
+
+    // Custom Delete Confirmation Modal state (Rule 4)
+    public $confirmDeleteTaskId = null;
+
+    // Today Task Reminder Modal state (Rule 3)
+    public $showReminderModal = false;
+    public $hasDismissedReminder = false;
 
     // List of users for assignment dropdown
     public $usersList = [];
@@ -49,14 +56,81 @@ class TaskManager extends Component
         'dueDate.date'          => 'সঠিক তারিখ প্রদান করুন।',
     ];
 
+    public function checkIsAdmin(): bool
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return true;
+        }
+        return ($user->role === 'admin' || strtolower($user->role ?? '') === 'admin' || $user->hasRole('admin') || strtolower($user->name ?? '') === 'admin');
+    }
+
+    public function canEditTask($task): bool
+    {
+        if ($this->checkIsAdmin()) {
+            return true;
+        }
+
+        $user = auth()->user();
+        $userName = $user ? strtolower(trim($user->name)) : '';
+
+        // Staff can ONLY edit their own assigned incomplete task
+        $isAssignedToMe = ($task && $task->assigned_to && strtolower(trim($task->assigned_to)) === $userName);
+        $isCreatedByMe = ($task && property_exists($task, 'created_by') && $task->created_by && $user && $task->created_by == $user->id);
+
+        return (!$task->is_completed) && ($isAssignedToMe || $isCreatedByMe);
+    }
+
+    public function canDeleteTask(): bool
+    {
+        return $this->checkIsAdmin();
+    }
+
     public function mount()
     {
+        $user = auth()->user();
         $this->dueDate = Carbon::today()->format('Y-m-d');
         $this->usersList = User::pluck('name')->filter()->values()->toArray();
         if (empty($this->usersList)) {
-            $this->usersList = ['demo', 'admin', 'shanto', 'niloy'];
+            $this->usersList = ['admin', 'shanto', 'niloy'];
         }
-        $this->assignedTo = $this->usersList[0] ?? 'demo';
+
+        if ($user && !$this->checkIsAdmin()) {
+            $this->assignedTo = $user->name;
+        } else {
+            $this->assignedTo = $user ? $user->name : ($this->usersList[0] ?? 'admin');
+        }
+
+        // Auto trigger today task reminder check on page mount/reload
+        $this->checkTodayReminder();
+    }
+
+    public function checkTodayReminder()
+    {
+        if ($this->hasDismissedReminder) {
+            return;
+        }
+
+        $today = Carbon::today();
+        $user = auth()->user();
+
+        $query = Task::where('is_completed', false)
+            ->whereDate('due_date', $today);
+
+        if ($user && !$this->checkIsAdmin()) {
+            $query->where('assigned_to', $user->name);
+        }
+
+        $count = $query->count();
+        if ($count > 0) {
+            $this->showReminderModal = true;
+        }
+    }
+
+    public function dismissReminderModal()
+    {
+        $this->showReminderModal = false;
+        $this->hasDismissedReminder = true;
     }
 
     public function setFilterPeriod($period)
@@ -76,20 +150,33 @@ class TaskManager extends Component
     public function openTaskModal($taskId = null)
     {
         $this->resetValidation();
+        $user = auth()->user();
+        $isAdmin = $this->checkIsAdmin();
+
         if ($taskId) {
             $task = Task::findOrFail($taskId);
+            if (!$this->canEditTask($task)) {
+                $msg = 'দুঃখিত! আপনার এই টাস্ক এডিট করার অনুমতি নেই।';
+                session()->flash('message', $msg);
+                $this->dispatch('show-toast', message: $msg, type: 'error');
+                return;
+            }
             $this->editingTaskId = $task->id;
             $this->description = $task->description;
             $this->repeatPeriod = $task->repeat_period;
             $this->repeatDay = $task->repeat_day ?: '';
-            $this->assignedTo = $task->assigned_to ?: ($this->usersList[0] ?? 'demo');
+            $this->assignedTo = $task->assigned_to ?: ($user ? $user->name : 'admin');
             $this->dueDate = $task->due_date ? Carbon::parse($task->due_date)->format('Y-m-d') : Carbon::today()->format('Y-m-d');
         } else {
             $this->editingTaskId = null;
             $this->description = '';
             $this->repeatPeriod = 'everyday';
             $this->repeatDay = '';
-            $this->assignedTo = $this->usersList[0] ?? 'demo';
+            if ($user && !$isAdmin) {
+                $this->assignedTo = $user->name;
+            } else {
+                $this->assignedTo = $user ? $user->name : ($this->usersList[0] ?? 'admin');
+            }
             $this->dueDate = Carbon::today()->format('Y-m-d');
         }
         $this->showTaskModal = true;
@@ -97,7 +184,23 @@ class TaskManager extends Component
 
     public function saveTask()
     {
+        $user = auth()->user();
+        $isAdmin = $this->checkIsAdmin();
+
+        // Non-admin regular user CANNOT assign tasks to others - lock to their own name
+        if ($user && !$isAdmin) {
+            $this->assignedTo = $user->name;
+        }
+
         $this->validate();
+
+        if ($this->editingTaskId) {
+            $existingTask = Task::find($this->editingTaskId);
+            if ($existingTask && !$this->canEditTask($existingTask)) {
+                session()->flash('message', 'আপনার এই টাস্ক এডিট করার অনুমতি নেই।');
+                return;
+            }
+        }
 
         Task::updateOrCreate(
             ['id' => $this->editingTaskId],
@@ -111,8 +214,13 @@ class TaskManager extends Component
         );
 
         $this->showTaskModal = false;
-        session()->flash('message', $this->editingTaskId ? 'কাজ সফলভাবে আপডেট করা হয়েছে!' : 'নতুন কাজ সফলভাবে যুক্ত করা হয়েছে!');
+        $msg = $this->editingTaskId ? 'কাজ সফলভাবে আপডেট করা হয়েছে!' : 'নতুন কাজ সফলভাবে যুক্ত করা হয়েছে!';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', message: $msg, type: 'success');
         $this->reset(['editingTaskId', 'description', 'repeatDay']);
+
+        // Refresh reminder state if today's task was modified
+        $this->checkTodayReminder();
     }
 
     public function toggleTaskStatus($taskId)
@@ -122,23 +230,66 @@ class TaskManager extends Component
         $task->completed_at = $task->is_completed ? now() : null;
         $task->save();
 
-        session()->flash('message', $task->is_completed ? 'কাজটি সম্পূর্ণ হিসেবে মার্ক করা হয়েছে!' : 'কাজটি অসম্পূর্ণ তালিকায় ফেরত আনা হয়েছে!');
+        $msg = $task->is_completed ? 'কাজটি সম্পূর্ণ হিসেবে মার্ক করা হয়েছে!' : 'কাজটি অসম্পূর্ণ তালিকায় ফেরত আনা হয়েছে!';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', message: $msg, type: 'success');
+
+        // If all today's tasks completed, check reminder state
+        $this->checkTodayReminder();
     }
 
     public function updateInline($taskId, $field, $value)
     {
         $task = Task::findOrFail($taskId);
+        if (!$this->canEditTask($task)) {
+            session()->flash('message', 'আপনার এই টাস্ক আপডেট করার অনুমতি নেই।');
+            return;
+        }
+
         if (in_array($field, ['repeat_period', 'repeat_day', 'assigned_to', 'due_date'])) {
             $task->update([$field => $value]);
             session()->flash('message', 'কাজের তথ্য আপডেট করা হয়েছে!');
         }
     }
 
+    public function confirmDeleteTask($taskId)
+    {
+        if (!$this->canDeleteTask()) {
+            $msg = 'দুঃখিত! শুধুমাত্র অ্যাডমিন টাস্ক মুছে ফেলতে পারবেন।';
+            session()->flash('message', $msg);
+            $this->dispatch('show-toast', message: $msg, type: 'error');
+            return;
+        }
+        $this->confirmDeleteTaskId = $taskId;
+    }
+
+    public function cancelDeleteTask()
+    {
+        $this->confirmDeleteTaskId = null;
+    }
+
+    public function executeDeleteTask()
+    {
+        if (!$this->canDeleteTask()) {
+            $this->confirmDeleteTaskId = null;
+            return;
+        }
+
+        if ($this->confirmDeleteTaskId) {
+            $task = Task::find($this->confirmDeleteTaskId);
+            if ($task) {
+                $task->delete();
+                $msg = 'কাজটি মুছে ফেলা হয়েছে!';
+                session()->flash('message', $msg);
+                $this->dispatch('show-toast', message: $msg, type: 'success');
+            }
+            $this->confirmDeleteTaskId = null;
+        }
+    }
+
     public function deleteTask($taskId)
     {
-        $task = Task::findOrFail($taskId);
-        $task->delete();
-        session()->flash('message', 'কাজটি মুছে ফেলা হয়েছে!');
+        $this->confirmDeleteTask($taskId);
     }
 
     // Per Page pagination states for both tables
@@ -160,6 +311,8 @@ class TaskManager extends Component
     public function render()
     {
         $today = Carbon::today();
+        $user = auth()->user();
+        $isAdmin = $this->checkIsAdmin();
 
         // Build base query according to period filter
         $applyFilter = function ($query) use ($today) {
@@ -183,7 +336,14 @@ class TaskManager extends Component
         $completedTasksQuery = $applyFilter($completedTasksQuery);
         $completedTasks = $completedTasksQuery->orderBy('completed_at', 'desc')->orderBy('id', 'desc')->paginate($this->perPageCompleted, ['*'], 'comp_page');
 
-        // Generate date numbers strip (e.g. current week / month days around today)
+        // Fetch Today's Incomplete Tasks for Reminder Modal
+        $todayPendingTasksQuery = Task::where('is_completed', false)->whereDate('due_date', $today);
+        if ($user && !$isAdmin) {
+            $todayPendingTasksQuery->where('assigned_to', $user->name);
+        }
+        $todayPendingTasks = $todayPendingTasksQuery->orderBy('id', 'desc')->get();
+
+        // Generate date numbers strip
         $dateStrip = [];
         $startDate = $today->copy()->subDays(3);
         for ($i = 0; $i < 7; $i++) {
@@ -196,9 +356,11 @@ class TaskManager extends Component
         }
 
         return view('livewire.task-manager', [
-            'incompleteTasks' => $incompleteTasks,
-            'completedTasks'  => $completedTasks,
-            'dateStrip'       => $dateStrip,
+            'incompleteTasks'   => $incompleteTasks,
+            'completedTasks'    => $completedTasks,
+            'todayPendingTasks' => $todayPendingTasks,
+            'dateStrip'         => $dateStrip,
+            'isAdmin'           => $isAdmin,
         ])->layout('layouts.app');
     }
 }

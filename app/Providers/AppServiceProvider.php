@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            if ($user && ($user->role === 'admin' || strtolower($user->role ?? '') === 'admin' || strtolower($user->name ?? '') === 'admin' || $user->hasRole('admin'))) {
+                return true;
+            }
+        });
+
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, function ($event) {
             $agent = request()->userAgent() ?: 'Unknown';
             $device = 'Unknown';

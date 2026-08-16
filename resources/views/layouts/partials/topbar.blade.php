@@ -21,7 +21,7 @@
     } elseif (request()->routeIs('fee-payment')) {
         $title = 'ফি পেমেন্ট';
     } elseif (request()->routeIs('payment-khata')) {
-        $title = 'পেমেন্ট খাতা';
+        $title = 'পেমент খাতা';
     } elseif (request()->routeIs('cash-khata')) {
         $title = 'ক্যাশ খাতা';
     } elseif (request()->routeIs('load-khata')) {
@@ -291,8 +291,8 @@
         <!-- Profile / Account -->
         <div x-data="{ open: false, hover: false }" class="relative flex items-center justify-center">
             <button @click="open = !open" @mouseenter="hover = true" @mouseleave="hover = false" class="flex items-center focus:outline-none cursor-pointer">
-                @if($currentUser && $currentUser->profile_photo)
-                    <img src="{{ asset('storage/' . $currentUser->profile_photo) }}" class="h-8 w-8 rounded-full object-cover shadow-sm ring-2 ring-primary-100 dark:ring-primary-950">
+                @if($currentUser && $currentUser->profile_photo_url)
+                    <img src="{{ $currentUser->profile_photo_url }}" data-topbar-avatar class="h-8 w-8 rounded-full object-cover shadow-sm ring-2 ring-primary-100 dark:ring-primary-950">
                 @else
                     <div class="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center relative shadow-inner ring-2 ring-primary-100 dark:ring-primary-950 bg-gray-50 dark:bg-slate-950">
                         <div class="absolute inset-y-0 left-0 right-1/2 bg-[#F59E0B]"></div>
@@ -328,8 +328,8 @@
                 <!-- Profile Header Card -->
                 <div class="bg-gray-50 dark:bg-slate-800/40 p-5 flex flex-col items-center border-b border-gray-100 dark:border-slate-800">
                     <div class="h-16 w-16 rounded-full overflow-hidden flex items-center justify-center relative shadow-inner mb-3 border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950">
-                        @if($currentUser && $currentUser->profile_photo)
-                            <img src="{{ asset('storage/' . $currentUser->profile_photo) }}" class="w-full h-full object-cover">
+                        @if($currentUser && $currentUser->profile_photo_url)
+                            <img src="{{ $currentUser->profile_photo_url }}" data-topbar-avatar class="w-full h-full object-cover">
                         @else
                             <div class="absolute inset-y-0 left-0 right-1/2 bg-[#F59E0B]"></div>
                             <div class="absolute inset-y-0 right-0 left-1/2 bg-[#009E74]"></div>
@@ -338,10 +338,10 @@
                             </svg>
                         @endif
                     </div>
-                    <span class="font-bold text-sm text-gray-800 dark:text-white font-sans">{{ $currentUser->name ?? 'Demo' }}</span>
+                    <span class="font-bold text-sm text-gray-800 dark:text-white font-sans">{{ $currentUser->name ?? '' }}</span>
                     <span class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 font-sans">{{ $currentUser->email ?? '' }}</span>
                     <span class="text-xs font-semibold text-[#E57E22] mt-1.5 font-sans">
-                        {{ $currentUser->role === 'admin' ? 'এডমিন (Admin)' : ($currentUser->role === 'demo' ? 'ডেমো (Demo)' : 'ইউজার (User)') }}
+                        {{ $currentUser->role === 'admin' ? 'এডমিন (Admin)' : 'ইউজার (User)' }}
                     </span>
                 </div>
 

@@ -8,8 +8,20 @@ if (!function_exists('toBanglaNum')) {
 }
 @endphp
 
-<div class="space-y-6 pb-12">
-    <!-- Req 2: Status Toast Notification (Top Center Fixed) -->
+<div class="space-y-6 pb-12"
+     x-data
+     x-init="
+        window.addEventListener('focus', () => {
+            $wire.checkTodayReminder();
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                $wire.checkTodayReminder();
+            }
+        });
+     ">
+    
+    <!-- Toast Notification (Top Center Fixed) -->
     @if(session()->has('message'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
              x-transition:enter="transition ease-out duration-300 transform"
@@ -93,81 +105,93 @@ if (!function_exists('toBanglaNum')) {
                     </thead>
                     <tbody class="divide-y divide-gray-150 dark:divide-slate-800 text-xs">
                         @forelse($incompleteTasks as $task)
-                            <!-- Req 3: Same hover row color across both tables (light & dark) -->
-                            <tr class="hover:bg-emerald-50/40 dark:hover:bg-slate-800/60 transition-colors">
+                            @php $canEdit = $this->canEditTask($task); @endphp
+                            <tr wire:key="inc-task-row-{{ $task->id }}" class="hover:bg-emerald-50/40 dark:hover:bg-slate-800/60 transition-colors">
                                 <!-- Checkbox + Description -->
                                 <td class="py-3.5 px-4 font-semibold text-gray-900 dark:text-white border-r border-gray-150 dark:border-slate-800">
                                     <label class="flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" wire:click="toggleTaskStatus({{ $task->id }})"
+                                        <input type="checkbox" wire:key="chk-inc-{{ $task->id }}" wire:click="toggleTaskStatus({{ $task->id }})"
                                                class="w-4 h-4 rounded text-emerald-600 border-gray-300 focus:ring-emerald-500 cursor-pointer">
                                         <span class="text-xs font-bold leading-normal">{{ $task->description }}</span>
                                     </label>
                                 </td>
 
-                                <!-- Req 1: Repeat Period as Dynamic Name (NO dropdown in table) -->
+                                <!-- Repeat Period -->
                                 <td class="py-3.5 px-4 border-r border-gray-150 dark:border-slate-800">
                                     <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-xs inline-block border border-emerald-200/60 dark:border-emerald-900/50">
                                         {{ $task->repeat_period }} {{ $task->repeat_day ? '('.$task->repeat_day.')' : '' }}
                                     </span>
                                 </td>
 
-                                <!-- Assignee Person Dropdown (Dynamic Users List) -->
+                                <!-- Assignee Person Dropdown -->
                                 <td class="py-3.5 px-4 border-r border-gray-150 dark:border-slate-800">
-                                    <div x-data="{ open: false }" class="relative text-xs">
-                                        <button @click="open = !open" type="button"
-                                                class="w-full flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-bold rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs hover:border-emerald-500 transition-colors">
-                                            <span>{{ $task->assigned_to ?: '—' }}</span>
-                                            <svg class="w-3.5 h-3.5 text-gray-400 transition-transform" :class="{'rotate-180': open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                                        </button>
-                                        <div x-show="open" @click.outside="open = false" x-cloak
-                                             class="absolute bottom-full mb-1 left-0 right-0 z-[9999] max-h-44 overflow-y-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl py-1">
-                                            @foreach($usersList as $u)
-                                                <button type="button" wire:click="updateInline({{ $task->id }}, 'assigned_to', '{{ $u }}')" @click="open = false"
-                                                        class="w-full text-left px-3 py-1.5 text-xs font-bold hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between {{ $task->assigned_to === $u ? 'text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/60 dark:text-emerald-300' : 'text-gray-700 dark:text-slate-200' }}">
-                                                    <span>{{ $u }}</span>
-                                                    @if($task->assigned_to === $u) <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> @endif
-                                                </button>
-                                            @endforeach
+                                    @if($canEdit && $isAdmin)
+                                        <div x-data="{ open: false }" class="relative text-xs">
+                                            <button @click="open = !open" type="button"
+                                                    class="w-full flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-bold rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs hover:border-emerald-500 transition-colors">
+                                                <span>{{ $task->assigned_to ?: '—' }}</span>
+                                                <svg class="w-3.5 h-3.5 text-gray-400 transition-transform" :class="{'rotate-180': open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                            </button>
+                                            <div x-show="open" @click.outside="open = false" x-cloak
+                                                 class="absolute bottom-full mb-1 left-0 right-0 z-[9999] max-h-44 overflow-y-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl py-1">
+                                                @foreach($usersList as $u)
+                                                    <button type="button" wire:click="updateInline({{ $task->id }}, 'assigned_to', '{{ $u }}')" @click="open = false"
+                                                            class="w-full text-left px-3 py-1.5 text-xs font-bold hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between {{ $task->assigned_to === $u ? 'text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/60 dark:text-emerald-300' : 'text-gray-700 dark:text-slate-200' }}">
+                                                        <span>{{ $u }}</span>
+                                                        @if($task->assigned_to === $u) <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> @endif
+                                                    </button>
+                                                @endforeach
+                                            </div>
                                         </div>
-                                    </div>
+                                    @else
+                                        <span class="font-bold text-gray-700 dark:text-slate-300">{{ $task->assigned_to ?: '—' }}</span>
+                                    @endif
                                 </td>
 
-                                <!-- Date (Flatpickr Integration with d-m-Y display) -->
+                                <!-- Date -->
                                 <td class="py-3.5 px-4 border-r border-gray-150 dark:border-slate-800">
-                                    <div class="relative" wire:ignore>
-                                        <input type="text" data-flatpickr
-                                               data-wire-prop="due_date"
-                                               data-default="{{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('Y-m-d') : '' }}"
-                                               x-data x-init="
-                                                   flatpickr($el, {
-                                                       dateFormat: 'Y-m-d',
-                                                       altInput: true,
-                                                       altFormat: 'd-m-Y',
-                                                       defaultDate: '{{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('Y-m-d') : '' }}',
-                                                       onChange: function(dates, str) {
-                                                           $wire.updateInline({{ $task->id }}, 'due_date', str);
-                                                       }
-                                                   });
-                                               "
-                                               placeholder="dd-mm-yyyy" readonly
-                                               class="w-full pl-3 pr-8 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-mono font-bold text-xs focus:outline-none cursor-pointer">
-                                        <span class="absolute right-2.5 top-2.5 text-emerald-500 pointer-events-none">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                        </span>
-                                    </div>
+                                    @if($canEdit)
+                                        <div class="relative" wire:ignore>
+                                            <input type="text" data-flatpickr
+                                                   data-wire-prop="due_date"
+                                                   data-default="{{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('Y-m-d') : '' }}"
+                                                   x-data x-init="
+                                                       flatpickr($el, {
+                                                           dateFormat: 'Y-m-d',
+                                                           altInput: true,
+                                                           altFormat: 'd-m-Y',
+                                                           defaultDate: '{{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('Y-m-d') : '' }}',
+                                                           onChange: function(dates, str) {
+                                                               $wire.updateInline({{ $task->id }}, 'due_date', str);
+                                                           }
+                                                       });
+                                                   "
+                                                   placeholder="dd-mm-yyyy" readonly
+                                                   class="w-full pl-3 pr-8 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-mono font-bold text-xs focus:outline-none cursor-pointer">
+                                            <span class="absolute right-2.5 top-2.5 text-emerald-500 pointer-events-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                            </span>
+                                        </div>
+                                    @else
+                                        <span class="font-mono font-semibold text-gray-700 dark:text-slate-300">{{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('d-m-Y') : '—' }}</span>
+                                    @endif
                                 </td>
 
-                                <!-- Professional Action Buttons -->
+                                <!-- Action Buttons (Role Based) -->
                                 <td class="py-3.5 px-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button type="button" wire:click="openTaskModal({{ $task->id }})"
-                                                class="p-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white dark:bg-emerald-950/60 dark:text-emerald-400 font-bold rounded-xl border border-emerald-200 dark:border-emerald-900/50 transition-all cursor-pointer shadow-xs" title="এডিট">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
-                                        <button type="button" wire:confirm="আপনি কি নিশ্চিতভাবে এই কাজ মুছে ফেলতে চান?" wire:click="deleteTask({{ $task->id }})"
-                                                class="p-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white dark:bg-rose-950/60 dark:text-rose-400 font-bold rounded-xl border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer shadow-xs" title="ডিলিট">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
+                                        @if($canEdit)
+                                            <button type="button" wire:click="openTaskModal({{ $task->id }})"
+                                                    class="p-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white dark:bg-emerald-950/60 dark:text-emerald-400 font-bold rounded-xl border border-emerald-200 dark:border-emerald-900/50 transition-all cursor-pointer shadow-xs" title="এডিট">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            </button>
+                                        @endif
+                                        @if($isAdmin)
+                                            <button type="button" wire:click="confirmDeleteTask({{ $task->id }})"
+                                                    class="p-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white dark:bg-rose-950/60 dark:text-rose-400 font-bold rounded-xl border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer shadow-xs" title="ডিলিট">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -221,10 +245,11 @@ if (!function_exists('toBanglaNum')) {
         <!-- Mobile Box-Type Card View (Incomplete Tasks) -->
         <div class="block md:hidden space-y-3">
             @forelse($incompleteTasks as $task)
-                <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 shadow-xs space-y-3">
+                @php $canEdit = $this->canEditTask($task); @endphp
+                <div wire:key="mob-inc-task-{{ $task->id }}" class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl p-4 shadow-xs space-y-3">
                     <div class="flex items-start justify-between gap-3 border-b border-gray-100 dark:border-slate-800 pb-2">
                         <label class="flex items-start gap-2.5 cursor-pointer">
-                            <input type="checkbox" wire:click="toggleTaskStatus({{ $task->id }})"
+                            <input type="checkbox" wire:key="chk-mob-inc-{{ $task->id }}" wire:click="toggleTaskStatus({{ $task->id }})"
                                    class="w-4 h-4 mt-0.5 rounded text-emerald-600 border-gray-300 focus:ring-emerald-500 cursor-pointer">
                             <span class="text-xs font-extrabold text-gray-900 dark:text-white leading-snug">{{ $task->description }}</span>
                         </label>
@@ -248,16 +273,20 @@ if (!function_exists('toBanglaNum')) {
                     </div>
 
                     <div class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">
-                        <button type="button" wire:click="openTaskModal({{ $task->id }})"
-                                class="flex-1 py-1.5 bg-emerald-50 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-bold rounded-xl text-xs hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            <span>এডিট</span>
-                        </button>
-                        <button type="button" wire:confirm="আপনি কি নিশ্চিতভাবে এই কাজ মুছে ফেলতে চান?" wire:click="deleteTask({{ $task->id }})"
-                                class="py-1.5 px-3 bg-rose-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl text-xs hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            <span>ডিলিট</span>
-                        </button>
+                        @if($canEdit)
+                            <button type="button" wire:click="openTaskModal({{ $task->id }})"
+                                    class="flex-1 py-1.5 bg-emerald-50 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-bold rounded-xl text-xs hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span>এডিট</span>
+                            </button>
+                        @endif
+                        @if($isAdmin)
+                            <button type="button" wire:click="confirmDeleteTask({{ $task->id }})"
+                                    class="py-1.5 px-3 bg-rose-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl text-xs hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <span>ডিলিট</span>
+                            </button>
+                        @endif
                     </div>
                 </div>
             @empty
@@ -298,12 +327,12 @@ if (!function_exists('toBanglaNum')) {
                     </thead>
                     <tbody class="divide-y divide-gray-150 dark:divide-slate-800 text-xs">
                         @forelse($completedTasks as $task)
-                            <!-- Req 3: Same row hover color for completed tasks -->
-                            <tr class="bg-emerald-50/20 dark:bg-slate-900/60 hover:bg-emerald-50/40 dark:hover:bg-slate-800/60 transition-colors">
-                                <!-- Checkbox + Description -->
+                            @php $canEdit = $this->canEditTask($task); @endphp
+                            <tr wire:key="comp-task-row-{{ $task->id }}" class="bg-emerald-50/20 dark:bg-slate-900/60 hover:bg-emerald-50/40 dark:hover:bg-slate-800/60 transition-colors">
+                                <!-- Checkbox + Description (Unchecking returns task to incomplete list cleanly) -->
                                 <td class="py-3.5 px-4 font-semibold text-gray-800 dark:text-slate-200 border-r border-gray-150 dark:border-slate-800">
                                     <label class="flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" checked wire:click="toggleTaskStatus({{ $task->id }})"
+                                        <input type="checkbox" checked wire:key="chk-comp-{{ $task->id }}" wire:click="toggleTaskStatus({{ $task->id }})"
                                                class="w-4 h-4 rounded text-emerald-600 border-gray-300 focus:ring-emerald-500 cursor-pointer">
                                         <span class="text-xs font-bold line-through text-gray-500 dark:text-slate-400 leading-normal">{{ $task->description }}</span>
                                     </label>
@@ -326,17 +355,21 @@ if (!function_exists('toBanglaNum')) {
                                     {{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('d-m-Y') : '—' }}
                                 </td>
 
-                                <!-- Buttons -->
+                                <!-- Action Buttons for Completed Tasks -->
                                 <td class="py-3.5 px-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button type="button" wire:click="openTaskModal({{ $task->id }})"
-                                                class="p-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white dark:bg-emerald-950/60 dark:text-emerald-400 font-bold rounded-xl border border-emerald-200 dark:border-emerald-900/50 transition-all cursor-pointer shadow-xs" title="এডিট">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
-                                        <button type="button" wire:confirm="আপনি কি নিশ্চিতভাবে এই কাজ মুছে ফেলতে চান?" wire:click="deleteTask({{ $task->id }})"
-                                                class="p-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white dark:bg-rose-950/60 dark:text-rose-400 font-bold rounded-xl border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer shadow-xs" title="ডিলিট">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
+                                        @if($canEdit)
+                                            <button type="button" wire:click="openTaskModal({{ $task->id }})"
+                                                    class="p-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white dark:bg-emerald-950/60 dark:text-emerald-400 font-bold rounded-xl border border-emerald-200 dark:border-emerald-900/50 transition-all cursor-pointer shadow-xs" title="এডিট">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            </button>
+                                        @endif
+                                        @if($isAdmin)
+                                            <button type="button" wire:click="confirmDeleteTask({{ $task->id }})"
+                                                    class="p-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white dark:bg-rose-950/60 dark:text-rose-400 font-bold rounded-xl border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer shadow-xs" title="ডিলিট">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -390,10 +423,11 @@ if (!function_exists('toBanglaNum')) {
         <!-- Mobile Box-Type Card View (Completed Tasks) -->
         <div class="block md:hidden space-y-3">
             @forelse($completedTasks as $task)
-                <div class="bg-emerald-50/30 dark:bg-slate-900 border border-emerald-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs space-y-3">
+                @php $canEdit = $this->canEditTask($task); @endphp
+                <div wire:key="mob-comp-task-{{ $task->id }}" class="bg-emerald-50/30 dark:bg-slate-900 border border-emerald-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs space-y-3">
                     <div class="flex items-start justify-between gap-3 border-b border-emerald-100 dark:border-slate-800 pb-2">
                         <label class="flex items-start gap-2.5 cursor-pointer">
-                            <input type="checkbox" checked wire:click="toggleTaskStatus({{ $task->id }})"
+                            <input type="checkbox" checked wire:key="chk-mob-comp-{{ $task->id }}" wire:click="toggleTaskStatus({{ $task->id }})"
                                    class="w-4 h-4 mt-0.5 rounded text-emerald-600 border-gray-300 focus:ring-emerald-500 cursor-pointer">
                             <span class="text-xs font-extrabold line-through text-gray-500 dark:text-slate-400 leading-snug">{{ $task->description }}</span>
                         </label>
@@ -417,16 +451,20 @@ if (!function_exists('toBanglaNum')) {
                     </div>
 
                     <div class="flex items-center gap-2 pt-2 border-t border-emerald-100 dark:border-slate-800">
-                        <button type="button" wire:click="openTaskModal({{ $task->id }})"
-                                class="flex-1 py-1.5 bg-emerald-100 dark:bg-slate-800 text-emerald-800 dark:text-emerald-300 font-bold rounded-xl text-xs hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            <span>এডিট</span>
-                        </button>
-                        <button type="button" wire:confirm="আপনি কি নিশ্চিতভাবে এই কাজ মুছে ফেলতে চান?" wire:click="deleteTask({{ $task->id }})"
-                                class="py-1.5 px-3 bg-rose-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl text-xs hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            <span>ডিলিট</span>
-                        </button>
+                        @if($canEdit)
+                            <button type="button" wire:click="openTaskModal({{ $task->id }})"
+                                    class="flex-1 py-1.5 bg-emerald-100 dark:bg-slate-800 text-emerald-800 dark:text-emerald-300 font-bold rounded-xl text-xs hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span>এডিট</span>
+                            </button>
+                        @endif
+                        @if($isAdmin)
+                            <button type="button" wire:click="confirmDeleteTask({{ $task->id }})"
+                                    class="py-1.5 px-3 bg-rose-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl text-xs hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <span>ডিলিট</span>
+                            </button>
+                        @endif
                     </div>
                 </div>
             @empty
@@ -442,7 +480,6 @@ if (!function_exists('toBanglaNum')) {
     </div>
 
     <!-- Modal: নতুন কাজ সংযোজন / এডিট (Add / Edit Task Modal) -->
-    <!-- Req 4: Exclusive dropdown state (activeDropdown) + Outside click handler -->
     @if($showTaskModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
              wire:click.self="$set('showTaskModal', false)">
@@ -462,7 +499,6 @@ if (!function_exists('toBanglaNum')) {
                             <p class="text-[11px] text-gray-400 font-semibold">কাজের বিবরণ ও মেয়াদ নির্ধারণ করুন</p>
                         </div>
                     </div>
-                    <!-- Rounded Close Button -->
                     <button type="button" wire:click="$set('showTaskModal', false)"
                             class="text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer p-2 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all">✕</button>
                 </div>
@@ -479,7 +515,7 @@ if (!function_exists('toBanglaNum')) {
 
                     <!-- Repeat Period & Assignee Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <!-- Repeat Period Dropdown (Single activeDropdown handler) -->
+                        <!-- Repeat Period Dropdown -->
                         <div>
                             <label class="block font-bold text-gray-700 dark:text-slate-300 mb-1">পুনরাবৃত্তি পিরিয়ড *</label>
                             <div class="relative">
@@ -502,30 +538,37 @@ if (!function_exists('toBanglaNum')) {
                             @error('repeatPeriod') <span class="text-rose-500 text-[10px] font-bold mt-0.5 block">{{ $message }}</span> @enderror
                         </div>
 
-                        <!-- Assignee Person Dropdown (Single activeDropdown handler) -->
+                        <!-- Assignee Person Dropdown (Rule 1: Disabled/Locked for non-admin regular user) -->
                         <div>
                             <label class="block font-bold text-gray-700 dark:text-slate-300 mb-1">ব্যক্তি</label>
-                            <div class="relative">
-                                <button @click="activeDropdown = (activeDropdown === 'assignee' ? null : 'assignee')" type="button"
-                                        class="w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-bold rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs hover:border-emerald-500 transition-colors">
-                                    <span>{{ $assignedTo ?: 'নির্বাচন করুন' }}</span>
-                                    <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{'rotate-180': activeDropdown === 'assignee'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                                </button>
-                                <div x-show="activeDropdown === 'assignee'" x-cloak
-                                     class="absolute left-0 right-0 mt-1 z-[9999] max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl py-1">
-                                    @foreach($usersList as $u)
-                                        <button type="button" wire:click="$set('assignedTo', '{{ $u }}')" @click="activeDropdown = null"
-                                                class="w-full text-left px-4 py-2 text-xs font-bold hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between {{ $assignedTo === $u ? 'text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/60 dark:text-emerald-300' : 'text-gray-700 dark:text-slate-200' }}">
-                                            <span>{{ $u }}</span>
-                                            @if($assignedTo === $u) <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> @endif
-                                        </button>
-                                    @endforeach
+                            @if($isAdmin)
+                                <div class="relative">
+                                    <button @click="activeDropdown = (activeDropdown === 'assignee' ? null : 'assignee')" type="button"
+                                            class="w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-white font-bold rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs hover:border-emerald-500 transition-colors">
+                                        <span>{{ $assignedTo ?: 'নির্বাচন করুন' }}</span>
+                                        <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{'rotate-180': activeDropdown === 'assignee'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                    </button>
+                                    <div x-show="activeDropdown === 'assignee'" x-cloak
+                                         class="absolute left-0 right-0 mt-1 z-[9999] max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-2xl py-1">
+                                        @foreach($usersList as $u)
+                                            <button type="button" wire:click="$set('assignedTo', '{{ $u }}')" @click="activeDropdown = null"
+                                                    class="w-full text-left px-4 py-2 text-xs font-bold hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between {{ $assignedTo === $u ? 'text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/60 dark:text-emerald-300' : 'text-gray-700 dark:text-slate-200' }}">
+                                                <span>{{ $u }}</span>
+                                                @if($assignedTo === $u) <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> @endif
+                                            </button>
+                                        @endforeach
+                                    </div>
                                 </div>
-                            </div>
+                            @else
+                                <div class="px-3.5 py-2.5 bg-gray-100 dark:bg-slate-950/80 text-gray-700 dark:text-slate-300 font-bold rounded-xl border border-gray-200 dark:border-slate-800 flex items-center justify-between cursor-not-allowed">
+                                    <span>{{ auth()->user()?->name ?: $assignedTo }}</span>
+                                    <span class="text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md font-sans">লকড</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
-                    <!-- Dynamic Sub-Field for Weekly or Monthly (Single activeDropdown handler) -->
+                    <!-- Dynamic Sub-Field for Weekly or Monthly -->
                     @if($repeatPeriod === 'weekly')
                         <div x-transition class="p-3 bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl space-y-1.5">
                             <label class="block font-bold text-emerald-800 dark:text-emerald-300 text-xs">📅 সপ্তাহের কোনো দিনে অনুষ্ঠিত হবে? (Select Day of Week)</label>
@@ -601,4 +644,105 @@ if (!function_exists('toBanglaNum')) {
             </div>
         </div>
     @endif
+
+    <!-- Rule 3: Today's Pending Tasks Smart Reminder Modal (Auto-Popup) -->
+    @if($showReminderModal && count($todayPendingTasks) > 0)
+        <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs"
+             wire:click.self="dismissReminderModal"
+             x-data
+             x-cloak
+             x-transition>
+            <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-2 border-amber-400 dark:border-amber-700/80 w-full max-w-lg overflow-hidden relative space-y-4 p-6"
+                 wire:click.stop>
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0 animate-bounce">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                                <span>আজকের কাজের রিমাইন্ডার</span>
+                                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-xs font-mono font-bold">
+                                    {{ toBanglaNum(count($todayPendingTasks)) }} টি
+                                </span>
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-slate-400 font-semibold mt-0.5">আজকের ঝুলন্ত কাজসমূহ সময়মত সম্পন্ন করুন</p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="dismissReminderModal"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 cursor-pointer p-1.5 rounded-full bg-gray-100 dark:bg-slate-800 transition-colors">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Modal Body: Today's Tasks List -->
+                <div class="max-h-72 overflow-y-auto space-y-2.5 pr-1 divide-y divide-gray-100 dark:divide-slate-800">
+                    @foreach($todayPendingTasks as $tTask)
+                        <div wire:key="remind-task-row-{{ $tTask->id }}" class="flex items-start justify-between gap-3 p-3 rounded-2xl bg-amber-50/40 dark:bg-slate-800/50 border border-amber-100 dark:border-slate-800/80">
+                            <label class="flex items-start gap-3 cursor-pointer flex-1">
+                                <input type="checkbox" wire:key="chk-remind-{{ $tTask->id }}" wire:click="toggleTaskStatus({{ $tTask->id }})"
+                                       class="w-4 h-4 mt-0.5 rounded text-emerald-600 border-gray-300 focus:ring-emerald-500 cursor-pointer">
+                                <div>
+                                    <span class="text-xs font-extrabold text-gray-900 dark:text-white block leading-snug">{{ $tTask->description }}</span>
+                                    <div class="flex items-center gap-2 mt-1.5">
+                                        <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
+                                            {{ $tTask->repeat_period }}
+                                        </span>
+                                        @if($tTask->assigned_to)
+                                            <span class="text-[10px] text-gray-500 dark:text-slate-400 font-semibold">
+                                                👤 {{ $tTask->assigned_to }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="flex items-center justify-end pt-3 border-t border-gray-100 dark:border-slate-800">
+                    <button type="button" wire:click="dismissReminderModal"
+                            class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer">
+                        বন্ধ করুন
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Rule 4: Custom Delete Confirmation Modal (হ্যাঁ / না) -->
+    <div x-data
+         x-show="$wire.confirmDeleteTaskId !== null"
+         @click.self="$wire.cancelDeleteTask()"
+         class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+         x-cloak
+         x-transition>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-rose-200 dark:border-rose-900/60 p-6 max-w-sm w-full shadow-2xl space-y-5">
+            <div class="flex items-start gap-4">
+                <div class="w-11 h-11 rounded-xl bg-rose-100 dark:bg-rose-950/40 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-gray-900 dark:text-white">নিশ্চিত মুছে ফেলবেন?</h3>
+                    <p class="text-xs text-gray-500 dark:text-slate-400 font-semibold mt-1">আপনি কি নিশ্চিতভাবে এই টাস্কটি স্থায়ীভাবে মুছে ফেলতে চান?</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 justify-end">
+                <button type="button" wire:click="cancelDeleteTask()"
+                        class="px-5 py-2.5 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer">
+                    না
+                </button>
+                <button type="button" wire:click="executeDeleteTask()"
+                        class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-rose-500/25 active:scale-95">
+                    হ্যাঁ
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

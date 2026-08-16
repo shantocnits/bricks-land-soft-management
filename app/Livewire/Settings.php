@@ -40,7 +40,8 @@ class Settings extends Component
      */
     private function getAllowedTabs()
     {
-        if (Auth::user() && Auth::user()->role === 'admin') {
+        $user = Auth::user();
+        if ($user && $user->isAdmin()) {
             return ['my_profile', 'profile', 'category', 'ledger', 'user', 'password', 'limit', 'printer', 'stock', 'sms'];
         }
         return ['my_profile', 'password'];

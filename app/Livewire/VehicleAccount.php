@@ -186,11 +186,32 @@ class VehicleAccount extends Component
         $this->showDeleteConfirmModal = false;
     }
 
+    public function canManageTransaction($tx): bool
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return true;
+        }
+
+        if (!$tx) return true;
+
+        $txDate = $tx->date ? Carbon::parse($tx->date)->startOfDay() : null;
+        $today = Carbon::today()->startOfDay();
+
+        return $txDate ? $txDate->equalTo($today) : true;
+    }
+
     // Transaction Management
     public function openTransactionModal($txId = null)
     {
         if ($txId) {
             $tx = VehicleTransaction::findOrFail($txId);
+            if (!$this->canManageTransaction($tx)) {
+                $this->dispatch('show-toast', message: 'পেছনের তারিখের হিসাব পরিবর্তন করার পারমিশন নেই (শুধুমাত্র অ্যাডমিন করতে পারবে)।');
+                session()->flash('message', 'পেছনের তারিখের হিসাব পরিবর্তন করার পারমিশন নেই (শুধুমাত্র অ্যাডমিন করতে পারবে)।');
+                return;
+            }
             $this->editingTransactionId = $tx->id;
             $this->txDate = $tx->date ? $tx->date->format('Y-m-d') : Carbon::today()->format('Y-m-d');
             $this->txDescription = $tx->description;
@@ -245,16 +266,24 @@ class VehicleAccount extends Component
     {
         if (!$this->selectedVehicleId) return;
 
+        if ($this->editingTransactionId) {
+            $existingTx = VehicleTransaction::find($this->editingTransactionId);
+            if ($existingTx && !$this->canManageTransaction($existingTx)) {
+                $this->dispatch('show-toast', message: 'পেছনের তারিখের হিসাব পরিবর্তন করার পারমিশন নেই (শুধুমাত্র অ্যাডমিন করতে পারবে)।');
+                session()->flash('message', 'পেছনের তারিখের হিসাব পরিবর্তন করার পারমিশন নেই (শুধুমাত্র অ্যাডমিন করতে পারবে)।');
+                $this->showTransactionModal = false;
+                return;
+            }
+        }
+
         $due = 0;
         $amount = 0;
 
         if ($this->activeTab === 'income') {
             $due = floatval($this->txRent) - floatval($this->txReceived);
-            if ($due < 0) $due = 0;
             $amount = floatval($this->txReceived);
         } elseif ($this->activeTab === 'expense') {
             $due = floatval($this->txRent) - floatval($this->txReceived);
-            if ($due < 0) $due = 0;
             $amount = floatval($this->txReceived);
         } elseif ($this->activeTab === 'cash') {
             if (floatval($this->txRent) > 0) {
@@ -264,7 +293,6 @@ class VehicleAccount extends Component
             }
         } elseif ($this->activeTab === 'due') {
             $due = floatval($this->txRent) - floatval($this->txReceived);
-            if ($due < 0) $due = 0;
             $amount = floatval($this->txReceived);
         }
 
@@ -295,6 +323,12 @@ class VehicleAccount extends Component
 
     public function confirmDeleteTransaction($txId)
     {
+        $tx = VehicleTransaction::find($txId);
+        if ($tx && !$this->canManageTransaction($tx)) {
+            $this->dispatch('show-toast', message: 'পেছনের তারিখের হিসাব ডিলেট করার পারমিশন নেই (শুধুমাত্র অ্যাডমিন করতে পারবে)।');
+            session()->flash('message', 'পেছনের তারিখের হিসাব ডিলেট করার পারমিশন নেই (শুধুমাত্র অ্যাডমিন করতে পারবে)।');
+            return;
+        }
         $this->deletingTransactionId = $txId;
         $this->showDeleteConfirmModal = true;
     }
@@ -311,6 +345,13 @@ class VehicleAccount extends Component
         if ($id) {
             $tx = VehicleTransaction::find($id);
             if ($tx) {
+                if (!$this->canManageTransaction($tx)) {
+                    $this->dispatch('show-toast', message: 'পেছনের তারিখের হিসাব ডিলেট করার পারমিশন নেই (শুধুমাত্র অ্যাডমিন করতে পারবে)।');
+                    session()->flash('message', 'পেছনের তারিখের হিসাব ডিলেট করার পারমিশন নেই (শুধুমাত্র অ্যাডমিন করতে পারবে)।');
+                    $this->showDeleteConfirmModal = false;
+                    $this->deletingTransactionId = null;
+                    return;
+                }
                 $tx->delete();
                 session()->flash('message', 'গাড়ির হিসাব ডিলেট করা হয়েছে!');
             }
@@ -318,6 +359,7 @@ class VehicleAccount extends Component
         $this->showDeleteConfirmModal = false;
         $this->deletingTransactionId = null;
     }
+
 
     // Khotian Detail Modal
     public function openKhotianDetailModal($name)
@@ -339,6 +381,16 @@ class VehicleAccount extends Component
     public function selectPerPage($size)
     {
         $this->perPage = $size;
+        $this->resetPage();
+    }
+
+    public function updatedFilterDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterMonth()
+    {
         $this->resetPage();
     }
 
@@ -407,20 +459,28 @@ class VehicleAccount extends Component
         $sumExpenseAmount = 0;
 
         if ($this->selectedVehicleId) {
+            $vQueryBase = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId);
+
+            if (!empty($this->filterDate)) {
+                $vQueryBase->whereDate('date', $this->filterDate);
+            } elseif (!empty($this->filterMonth)) {
+                $vQueryBase->whereMonth('date', Carbon::parse($this->filterMonth)->month)
+                           ->whereYear('date', Carbon::parse($this->filterMonth)->year);
+            }
+
             // Vehicle specific calculations for tab top-right badges
-            $vehicleTotalIncome  = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId)->where('type', 'income')->sum('received');
-            $vehicleTotalExpense = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId)->where('type', 'expense')->sum('amount');
+            $vehicleTotalIncome  = (clone $vQueryBase)->where('type', 'income')->sum('received');
+            $vehicleTotalExpense = (clone $vQueryBase)->where('type', 'expense')->sum('amount');
             $vehicleCash        = $vehicleTotalIncome - $vehicleTotalExpense;
             $vehicleCashJer     = $vehicleCash;
-            $vehicleDueGet      = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId)->where('type', 'income')->sum('due_amount');
-            $vehicleDuePay      = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId)->where('type', 'expense')->sum('due_amount');
+            $vehicleDueGet      = (clone $vQueryBase)->where('type', 'income')->sum('due_amount');
+            $vehicleDuePay      = (clone $vQueryBase)->where('type', 'expense')->sum('due_amount');
 
-            $vTxQuery = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId);
+            $vTxQuery = (clone $vQueryBase);
             
             if ($this->activeTab === 'ledger') {
                 // Group transactions for Khotian Cards from expense table entries
-                $khotianGroupQuery = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId)
-                    ->where('type', 'expense');
+                $khotianGroupQuery = (clone $vQueryBase)->where('type', 'expense');
                 if (!empty($this->searchKhotian)) {
                     $khotianGroupQuery->where(function($q) {
                         $q->where('khotian_name', 'like', '%'.$this->searchKhotian.'%')
@@ -453,7 +513,7 @@ class VehicleAccount extends Component
                 $sumDue      = (clone $vTxQuery)->sum('due_amount');
 
                 // Dynamic Cash In and Cash Out sum calculations
-                $userCashRows = VehicleTransaction::where('vehicle_id', $this->selectedVehicleId)->where('type', 'cash')->get();
+                $userCashRows = (clone $vQueryBase)->where('type', 'cash')->get();
                 $userCashIn  = $userCashRows->sum(function($tx) { return $tx->received ?: 0; });
                 $userCashOut = $userCashRows->sum(function($tx) { return $tx->rent ?: ($tx->amount ?: 0); });
 
@@ -462,7 +522,18 @@ class VehicleAccount extends Component
 
                 $sumDueGet   = (clone $vTxQuery)->where('type', 'income')->sum('due_amount');
                 $sumDuePay   = (clone $vTxQuery)->where('type', 'expense')->sum('due_amount');
-                $sumExpenseAmount = (clone $vTxQuery)->where('type', 'expense')->sum('amount');
+
+                if ($this->activeTab === 'history') {
+                    $allHistoryRows = (clone $vTxQuery)->get();
+                    $sumReceived = $allHistoryRows->sum(function($tx) {
+                        return $tx->type !== 'expense' ? ($tx->received ?: ($tx->amount ?: 0)) : 0;
+                    });
+                    $sumExpenseAmount = $allHistoryRows->sum(function($tx) {
+                        return $tx->type === 'expense' ? ($tx->rent ?: ($tx->amount ?: 0)) : 0;
+                    });
+                } else {
+                    $sumExpenseAmount = (clone $vTxQuery)->where('type', 'expense')->sum('amount');
+                }
 
                 $vehicleTransactions = $vTxQuery->orderBy('updated_at', 'desc')->orderBy('id', 'desc')->paginate($this->perPage);
             }

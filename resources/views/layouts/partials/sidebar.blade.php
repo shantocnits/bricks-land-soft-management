@@ -3,11 +3,18 @@
     $hasAccess = function($menuKey) use ($currentUser) {
         if (!$currentUser) return false;
         try {
-            if ($currentUser->hasRole('admin')) return true;
-            return $currentUser->hasPermissionTo($menuKey);
-        } catch (\Exception $e) {
-            return false;
-        }
+            if ($currentUser->isAdmin()) return true;
+        } catch (\Throwable $e) {}
+        try {
+            if ($currentUser->hasPermissionTo($menuKey)) return true;
+        } catch (\Throwable $e) {}
+        try {
+            if ($currentUser->permissions && $currentUser->permissions->contains('name', $menuKey)) return true;
+        } catch (\Throwable $e) {}
+        try {
+            if ($currentUser->hasDirectPermission($menuKey)) return true;
+        } catch (\Throwable $e) {}
+        return false;
     };
 @endphp
 
@@ -390,6 +397,7 @@
         @endif
 
         <!-- 15b. টাস্ক ম্যানেজার -->
+        @if($hasAccess('task_manager'))
         <div class="mx-2 mt-1">
             <a href="{{ route('task-manager') }}" wire:navigate 
                @mouseenter="showTooltip('টাস্ক ম্যানেজার', $el)"
@@ -402,6 +410,7 @@
                       :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">টাস্ক ম্যানেজার</span>
             </a>
         </div>
+        @endif
 
         <!-- 17. গাড়ির হিসাব -->
         @if($hasAccess('vehicle_acc'))
@@ -468,6 +477,7 @@
         @endif
 
         <!-- 23. এসএমএস -->
+        @if($hasAccess('sms'))
         <div class="mx-2">
             <a href="{{ route('sms-khata') }}" wire:navigate
                @mouseenter="showTooltip('এসএমএস', $el)"
@@ -480,6 +490,7 @@
                       :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden pointer-events-none'">এসএমএস</span>
             </a>
         </div>
+        @endif
 
 
 

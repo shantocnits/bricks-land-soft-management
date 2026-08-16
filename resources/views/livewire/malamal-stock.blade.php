@@ -120,9 +120,9 @@ if (!function_exists('toBanglaNum')) {
                      wire:click="$set('activeTab', 'stock_list')">
                     <div class="flex items-center justify-between">
                         <div>
-                            <span class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase leading-tight block">মোট অ্যাসেট (স্টক)</span>
+                            <span class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase leading-tight block">মোট অ্যাসেট (মূল্য)</span>
                             <h3 class="text-lg sm:text-2xl font-black text-[#034C3C] dark:text-emerald-400 font-mono mt-1">
-                                {{ toBanglaNum($totalAssetCount) }}
+                                ৳{{ toBanglaNum(number_format($totalAssetValue, 0)) }}
                             </h3>
                             <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($totalAssetCount) }} টি</span>
                         </div>
@@ -138,7 +138,7 @@ if (!function_exists('toBanglaNum')) {
                         <div>
                             <span class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase leading-tight block">বর্তমান রেডি স্টক</span>
                             <h3 class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1">
-                                {{ toBanglaNum($currentStockCount) }}
+                                ৳{{ toBanglaNum(number_format($currentStockValue, 0)) }}
                             </h3>
                             <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($currentStockCount) }} টি</span>
                         </div>
@@ -154,7 +154,7 @@ if (!function_exists('toBanglaNum')) {
                         <div>
                             <span class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase leading-tight block">নষ্ট আইটেম</span>
                             <h3 class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1">
-                                {{ toBanglaNum($damagedCount) }}
+                                ৳{{ toBanglaNum(number_format($damagedValue, 0)) }}
                             </h3>
                             <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($damagedCount) }} টি</span>
                         </div>
@@ -170,7 +170,7 @@ if (!function_exists('toBanglaNum')) {
                         <div>
                             <span class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase leading-tight block">হারানো আইটেম</span>
                             <h3 class="text-lg sm:text-2xl font-black text-rose-500 dark:text-rose-400 font-mono mt-1">
-                                {{ toBanglaNum($lostCount) }}
+                                ৳{{ toBanglaNum(number_format($lostValue, 0)) }}
                             </h3>
                             <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold block mt-1">পরিমাণ: {{ toBanglaNum($lostCount) }} টি</span>
                         </div>
@@ -342,6 +342,10 @@ if (!function_exists('toBanglaNum')) {
                                             <span class="inline-flex px-2 py-0.5 rounded bg-sky-100 text-sky-800 text-[10px] font-extrabold">ইস্যু</span>
                                         @elseif($log->action_type === 'return')
                                             <span class="inline-flex px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-[10px] font-extrabold">ফেরত</span>
+                                        @elseif($log->action_type === 'repair')
+                                            <span class="inline-flex px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-extrabold">মেরামত</span>
+                                        @elseif($log->action_type === 'found')
+                                            <span class="inline-flex px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">পুনরুদ্ধার</span>
                                         @elseif($log->action_type === 'damaged')
                                             <span class="inline-flex px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-extrabold">নষ্ট</span>
                                         @elseif($log->action_type === 'lost')
@@ -358,7 +362,31 @@ if (!function_exists('toBanglaNum')) {
                                         {{ toBanglaNum($log->quantity) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-center">
-                                        <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px]">সম্পন্ন</span>
+                                        @if($log->action_type === 'add_stock')
+                                            <span class="text-gray-300 font-bold">—</span>
+                                        @elseif($log->action_type === 'issue')
+                                            <span class="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-extrabold text-[10px]">
+                                                Pending
+                                            </span>
+                                        @elseif($log->action_type === 'return')
+                                            <div class="flex items-center justify-center gap-1 flex-wrap">
+                                                <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-extrabold">
+                                                    ভালো-{{ toBanglaNum($log->good_qty ?? 0) }}
+                                                </span>
+                                                <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-extrabold">
+                                                    নষ্ট-{{ toBanglaNum($log->damaged_qty ?? 0) }}
+                                                </span>
+                                                <span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-extrabold">
+                                                    হারানো-{{ toBanglaNum($log->lost_qty ?? 0) }}
+                                                </span>
+                                            </div>
+                                        @elseif(in_array($log->action_type, ['repair', 'found']))
+                                            <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[10px]">
+                                                সম্পন্ন
+                                            </span>
+                                        @else
+                                            <span class="text-gray-300 font-bold">—</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -377,9 +405,10 @@ if (!function_exists('toBanglaNum')) {
                                     </td>
                                     <td class="py-3.5 px-4 text-center border-r border-gray-150 dark:border-slate-800">
                                         @if($a->image)
+                                            @php $imgUrl = asset('storage/' . ltrim($a->image, '/')); @endphp
                                             <div class="relative group w-9 h-9 mx-auto rounded-xl overflow-hidden cursor-pointer"
-                                                 wire:click="openQuickView('{{ Storage::url($a->image) }}', '{{ $a->name }}')">
-                                                <img src="{{ Storage::url($a->image) }}" alt="{{ $a->name }}" class="w-9 h-9 object-cover rounded-xl border border-gray-200 dark:border-slate-700">
+                                                 wire:click="openQuickView('{{ $imgUrl }}', '{{ $a->name }}')">
+                                                <img src="{{ $imgUrl }}" alt="{{ $a->name }}" class="w-9 h-9 object-cover rounded-xl border border-gray-200 dark:border-slate-700">
                                                 <div class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity duration-200">
                                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -416,10 +445,10 @@ if (!function_exists('toBanglaNum')) {
                                         {{ toBanglaNum($a->lost_qty) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-right font-black font-mono text-emerald-700 dark:text-emerald-400 border-r border-gray-150 dark:border-slate-800">
-                                        ৳{{ toBanglaNum(number_format((float)($a->unit_price), (float)($a->unit_price) == (int)($a->unit_price) ? 0 : 2)) }}
+                                        ৳{{ toBanglaNum(number_format((float)($a->unit_price), 0)) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-right font-black font-mono text-emerald-800 dark:text-emerald-300 border-r border-gray-150 dark:border-slate-800">
-                                        ৳{{ toBanglaNum(number_format((float)($a->total_qty * $a->unit_price), (float)($a->total_qty * $a->unit_price) == (int)($a->total_qty * $a->unit_price) ? 0 : 2)) }}
+                                        ৳{{ toBanglaNum(number_format((float)($a->total_qty * $a->unit_price), 0)) }}
                                     </td>
                                     <td class="py-3.5 px-4 text-center">
                                         <div class="flex items-center justify-center gap-1.5">
@@ -427,7 +456,7 @@ if (!function_exists('toBanglaNum')) {
                                                     class="p-1.5 rounded-lg bg-sky-50 dark:bg-slate-800 text-sky-600 dark:text-sky-400 hover:bg-sky-600 hover:text-white dark:hover:bg-sky-600 dark:hover:text-white transition-all cursor-pointer">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                             </button>
-                                            <button type="button" wire:confirm="আপনি কি নিশ্চিতভাবে এই প্রোডাক্ট মুছে ফেলতে চান?" wire:click="deleteAsset({{ $a->id }})" title="ডিলিট"
+                                            <button type="button" wire:click="confirmDeleteAsset({{ $a->id }})" title="ডিলিট"
                                                     class="p-1.5 rounded-lg bg-rose-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white transition-all cursor-pointer">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                             </button>
@@ -607,17 +636,34 @@ if (!function_exists('toBanglaNum')) {
                                         {{ toBanglaNum($log->quantity) }}
                                     </td>
 
-                                    <!-- Req 1: Dynamic Status Badge in History Log -->
                                     <td class="py-3.5 px-4 text-center border-r border-gray-150 dark:border-slate-800 font-bold">
-                                        <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[10px]">
-                                            সম্পন্ন
-                                        </span>
+                                        @if($log->action_type === 'issue')
+                                            <span class="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-extrabold text-[10px]">
+                                                Pending
+                                            </span>
+                                        @elseif($log->action_type === 'return')
+                                            <div class="flex items-center justify-center gap-1 flex-wrap">
+                                                <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-extrabold">
+                                                    ভালো: {{ toBanglaNum($log->good_qty ?? 0) }}
+                                                </span>
+                                                <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-extrabold">
+                                                    নষ্ট: {{ toBanglaNum($log->damaged_qty ?? 0) }}
+                                                </span>
+                                                <span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-extrabold">
+                                                    হারানো: {{ toBanglaNum($log->lost_qty ?? 0) }}
+                                                </span>
+                                            </div>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[10px]">
+                                                সম্পন্ন
+                                            </span>
+                                        @endif
                                     </td>
 
                                     <!-- Req 1: Dynamic Proof Image Box in History Log -->
                                     <td class="py-3.5 px-4 text-center">
                                         @php
-                                            $proofUrl = $log->proof_image ? Storage::url($log->proof_image) : ($log->asset && $log->asset->image ? Storage::url($log->asset->image) : null);
+                                            $proofUrl = $log->proof_image ? asset('storage/' . ltrim($log->proof_image, '/')) : ($log->asset && $log->asset->image ? asset('storage/' . ltrim($log->asset->image, '/')) : null);
                                         @endphp
                                         @if($proofUrl)
                                             <div class="relative group w-8 h-8 mx-auto rounded-xl overflow-hidden cursor-pointer"
@@ -750,7 +796,7 @@ if (!function_exists('toBanglaNum')) {
                                     class="flex-1 py-1.5 bg-sky-50 dark:bg-slate-800 text-sky-600 dark:text-sky-400 font-bold rounded-xl text-xs hover:bg-sky-600 hover:text-white transition-all">
                                 👁️ ভিউ
                             </button>
-                            <button type="button" wire:confirm="আপনি কি নিশ্চিতভাবে এই প্রোডাক্ট মুছে ফেলতে চান?" wire:click="deleteAsset({{ $rec->id }})"
+                            <button type="button" wire:click="confirmDeleteAsset({{ $rec->id }})"
                                     class="py-1.5 px-3 bg-rose-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl text-xs hover:bg-rose-600 hover:text-white transition-all">
                                 🗑️ ডিলিট
                             </button>
@@ -1340,6 +1386,10 @@ if (!function_exists('toBanglaNum')) {
                             <label class="cursor-pointer border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-emerald-500 rounded-2xl p-6 bg-gray-50 dark:bg-slate-950 flex flex-col items-center justify-center text-center space-y-2 transition-all">
                                 @if($assetImage)
                                     <img src="{{ $assetImage->temporaryUrl() }}" class="h-28 object-cover rounded-xl shadow-xs">
+                                    <span class="text-[10px] font-bold text-emerald-600 block mt-1">নতুন ছবি সিলেক্ট করা হয়েছে</span>
+                                @elseif($existingAssetImage)
+                                    <img src="{{ asset('storage/' . ltrim($existingAssetImage, '/')) }}" class="h-28 object-cover rounded-xl shadow-xs border border-gray-200 dark:border-slate-700">
+                                    <span class="text-[10px] font-bold text-gray-400 block mt-1">ক্লিক করে নতুন ছবি দিয়ে পরিবর্তন (Replace) করুন</span>
                                 @else
                                     <div class="p-3 bg-white dark:bg-slate-900 rounded-full shadow-xs text-gray-400">
                                         <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
@@ -1403,19 +1453,27 @@ if (!function_exists('toBanglaNum')) {
                 <!-- Header with image + info + actions -->
                 <div class="flex items-start gap-4 p-5 bg-gray-50 dark:bg-slate-950 border-b border-gray-100 dark:border-slate-800">
                     <!-- Product Image -->
+                    @php $viewImgUrl = $selectedAssetForView->image ? asset('storage/' . ltrim($selectedAssetForView->image, '/')) : ''; @endphp
                     <div class="relative flex-shrink-0 group cursor-pointer"
-                         @click="quickView = true; quickViewUrl = '{{ $selectedAssetForView->image ? Storage::url($selectedAssetForView->image) : '' }}'">
+                         @click="quickView = true; quickViewUrl = '{{ $viewImgUrl }}'">
                         @if($selectedAssetForView->image)
-                            <img src="{{ Storage::url($selectedAssetForView->image) }}" class="w-20 h-20 object-cover rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 shadow">
+                            <img src="{{ $viewImgUrl }}" class="w-20 h-20 object-cover rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 shadow">
                             @if($selectedAssetForView->current_qty == 0)
-                                <span class="absolute bottom-0 left-0 right-0 bg-rose-500/80 text-white text-[8px] font-black text-center py-0.5 rounded-b-2xl">OUT OF STOCK</span>
+                                <span class="absolute bottom-0 left-0 right-0 bg-rose-600 text-white text-[8px] font-black text-center py-0.5 rounded-b-2xl">OUT OF STOCK</span>
+                            @else
+                                <span class="absolute bottom-0 left-0 right-0 bg-emerald-600 text-white text-[8px] font-black text-center py-0.5 rounded-b-2xl">IN STOCK</span>
                             @endif
                             <div class="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </div>
                         @else
-                            <div class="w-20 h-20 rounded-2xl bg-gray-200 dark:bg-slate-800 flex items-center justify-center border-2 border-gray-200 dark:border-slate-700">
+                            <div class="relative w-20 h-20 rounded-2xl bg-gray-200 dark:bg-slate-800 flex items-center justify-center border-2 border-gray-200 dark:border-slate-700">
                                 <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                @if($selectedAssetForView->current_qty == 0)
+                                    <span class="absolute bottom-0 left-0 right-0 bg-rose-600 text-white text-[8px] font-black text-center py-0.5 rounded-b-2xl">OUT OF STOCK</span>
+                                @else
+                                    <span class="absolute bottom-0 left-0 right-0 bg-emerald-600 text-white text-[8px] font-black text-center py-0.5 rounded-b-2xl">IN STOCK</span>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -1436,7 +1494,7 @@ if (!function_exists('toBanglaNum')) {
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     এডিট
                                 </button>
-                                <button type="button" wire:click="deleteAsset({{ $selectedAssetForView->id }})" wire:confirm="নিশ্চিত করুন: এই আইটেমটি মুছে দিতে চান?"
+                                <button type="button" wire:click="confirmDeleteAsset({{ $selectedAssetForView->id }})"
                                         class="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold rounded-xl flex items-center gap-1 cursor-pointer transition-all">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     ডিলিট
@@ -1790,5 +1848,37 @@ if (!function_exists('toBanglaNum')) {
             </div>
         </div>
     @endif
+
+    <!-- Custom Delete Confirmation Modal (Rule 5) -->
+    <div x-data
+         x-show="$wire.confirmDeleteAssetId !== null"
+         @click.self="$wire.cancelDeleteAsset()"
+         class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+         x-cloak
+         x-transition>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-rose-200 dark:border-rose-900/60 p-6 max-w-sm w-full shadow-2xl space-y-5">
+            <div class="flex items-start gap-4">
+                <div class="w-11 h-11 rounded-xl bg-rose-100 dark:bg-rose-950/40 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-gray-900 dark:text-white">নিশ্চিত মুছে ফেলবেন?</h3>
+                    <p class="text-xs text-gray-500 dark:text-slate-400 font-semibold mt-1">আপনি কি নিশ্চিতভাবে এই প্রোডাক্টটি স্থায়ীভাবে মুছে ফেলতে চান?</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 justify-end">
+                <button type="button" wire:click="cancelDeleteAsset()"
+                        class="px-5 py-2.5 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer">
+                    না
+                </button>
+                <button type="button" wire:click="executeDeleteAsset()"
+                        class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-rose-500/25 active:scale-95">
+                    হ্যাঁ
+                </button>
+            </div>
+        </div>
+    </div>
 
 </div>

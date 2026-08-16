@@ -1,18 +1,4 @@
 <div class="space-y-6">
-    <!-- Header banner card -->
-    <div class="flex items-start gap-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-2xl">
-        <div class="flex-shrink-0 p-2 bg-emerald-600 text-white rounded-xl flex items-center justify-center">
-            <!-- User Icon -->
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0110.089 21c-2.243 0-4.352-.64-6.136-1.759a3.33 3.33 0 01-1.737-2.98V15.75c0-1.35.535-2.572 1.4-3.47m16.8 1.94c0-.772-.119-1.52-.338-2.222m-13.8 2.222a4.47 4.47 0 01-1.127-3.086c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5a4.47 4.47 0 01-1.127 3.086M15 7.5a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
-            </svg>
-        </div>
-        <div>
-            <h4 class="font-bold text-gray-800 dark:text-white text-sm">সফটওয়্যার ইউজার</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">সিস্টেম ব্যবহারের জন্য নতুন ব্যবহারকারী তৈরি করুন অথবা বিদ্যমান ব্যবহারকারীদের রোল ও পাসওয়ার্ড পরিবর্তন করুন।</p>
-        </div>
-    </div>
-
     <!-- Success Alert -->
     @if (session()->has('message'))
         <div x-data="{ show: true }"
@@ -82,13 +68,17 @@
                         <tr class="hover:bg-gray-50/40 dark:hover:bg-slate-800/25 transition-colors">
                             <td class="px-4 py-4 font-semibold text-gray-800 dark:text-slate-200">
                                 <div class="flex items-center gap-3">
-                                    <div class="relative w-8 h-8 rounded-full overflow-hidden border border-emerald-500 bg-gray-150 dark:bg-slate-950 flex items-center justify-center shadow-sm">
-                                        @if ($user->profile_photo)
-                                            <img src="{{ asset('storage/' . $user->profile_photo) }}" class="w-full h-full object-cover">
+                                    <div class="relative w-8 h-8 rounded-full overflow-hidden border border-emerald-500 bg-gray-150 dark:bg-slate-950 flex items-center justify-center shadow-sm flex-shrink-0">
+                                        @if ($user->profile_photo_url)
+                                            <img src="{{ $user->profile_photo_url }}" class="w-full h-full object-cover">
                                         @else
-                                            <span class="font-bold text-xs text-emerald-700 dark:text-emerald-400 uppercase">
-                                                {{ strtoupper(substr($user->name, 0, 1)) }}
-                                            </span>
+                                            <div class="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative shadow-inner bg-gray-50 dark:bg-slate-950">
+                                                <div class="absolute inset-y-0 left-0 right-1/2 bg-[#F59E0B]"></div>
+                                                <div class="absolute inset-y-0 right-0 left-1/2 bg-[#009E74]"></div>
+                                                <svg class="w-4 h-4 text-white relative z-10 filter drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M21.25,12.75 C20,12 18,12 16.5,12.5 C15.5,12.83 14,14 13.5,15.5 C13,17 13.5,19 14.5,20 C14,20 12,18 11.5,16.5 C11,15 11.25,13.25 12,11.5 C12.25,11 11,11 10.5,11.5 C9.5,12.5 8,14.5 7,16.5 C6,18.5 5.5,20 5.5,20 C5.5,20 5.8,18 6,16 C6.2,14 6,11.5 5.5,10 C5.2,9.1 4.5,8.2 4.1,8 C3.8,7.9 3.5,8.1 3.5,8.5 C3.5,9.5 4,11.5 4,13.5 C4,15.5 3.5,17 3.5,17 C3.5,17 3.25,15.5 3,14 C2.75,12.5 2.25,11.5 2.25,11 C2.25,10.5 2.5,10 3,9.5 C4.5,8 7.5,6.5 10.5,6.5 C11.5,6.5 12.5,6.75 13.5,7 C14,7.1 14.5,6.9 14.5,6.5 C14.5,6.1 14,5.9 13.5,5.8 C11.5,5.4 9,6.2 7,7.2 C8.5,5.8 10.5,5 12.5,5 C15.5,5 18,6.5 19.5,8.5 C20,9.2 20.5,10 20.8,10.8 C21,11.3 21.25,11.8 21.25,12.25 C21.25,12.5 21,12.6 21.25,12.75 Z"/>
+                                                </svg>
+                                            </div>
                                         @endif
                                     </div>
                                     <span>{{ $user->name }}</span>
@@ -99,8 +89,8 @@
                             </td>
                             <td class="px-4 py-4 text-center">
                                 <span class="px-3 py-1 rounded-full text-[10px] font-bold
-                                    {{ $user->role === 'admin' ? 'bg-red-55/10 text-red-700 dark:bg-red-950/20 dark:text-red-400 border border-red-200' : ($user->role === 'demo' ? 'bg-amber-55/10 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-200' : 'bg-emerald-55/10 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-200') }}">
-                                    {{ $user->role === 'admin' ? 'এডমিন (Admin)' : ($user->role === 'demo' ? 'ডেমো (Demo)' : 'ইউজার (User)') }}
+                                    {{ $user->role === 'admin' ? 'bg-red-55/10 text-red-700 dark:bg-red-950/20 dark:text-red-400 border border-red-200' : 'bg-emerald-55/10 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-200' }}">
+                                    {{ $user->role === 'admin' ? 'এডমিন (Admin)' : 'ইউজার (User)' }}
                                 </span>
                             </td>
                             <td class="px-4 py-4 text-right">
@@ -168,6 +158,33 @@
                   </h3>
                   
                   <form wire:submit.prevent="save" class="space-y-4">
+                      <!-- Profile Photo Input -->
+                      <div>
+                          <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">প্রোফাইল ছবি</label>
+                          <div class="flex items-center gap-4">
+                              <div class="relative w-12 h-12 rounded-full overflow-hidden border-2 border-emerald-500 bg-gray-100 dark:bg-slate-950 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                  @if ($profile_photo)
+                                      <img src="{{ $profile_photo->temporaryUrl() }}" class="w-full h-full object-cover">
+                                  @elseif ($current_profile_photo_url)
+                                      <img src="{{ $current_profile_photo_url }}" class="w-full h-full object-cover">
+                                  @else
+                                      <div class="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative shadow-inner bg-gray-50 dark:bg-slate-950">
+                                          <div class="absolute inset-y-0 left-0 right-1/2 bg-[#F59E0B]"></div>
+                                          <div class="absolute inset-y-0 right-0 left-1/2 bg-[#009E74]"></div>
+                                          <svg class="w-6 h-6 text-white relative z-10 filter drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
+                                              <path d="M21.25,12.75 C20,12 18,12 16.5,12.5 C15.5,12.83 14,14 13.5,15.5 C13,17 13.5,19 14.5,20 C14,20 12,18 11.5,16.5 C11,15 11.25,13.25 12,11.5 C12.25,11 11,11 10.5,11.5 C9.5,12.5 8,14.5 7,16.5 C6,18.5 5.5,20 5.5,20 C5.5,20 5.8,18 6,16 C6.2,14 6,11.5 5.5,10 C5.2,9.1 4.5,8.2 4.1,8 C3.8,7.9 3.5,8.1 3.5,8.5 C3.5,9.5 4,11.5 4,13.5 C4,15.5 3.5,17 3.5,17 C3.5,17 3.25,15.5 3,14 C2.75,12.5 2.25,11.5 2.25,11 C2.25,10.5 2.5,10 3,9.5 C4.5,8 7.5,6.5 10.5,6.5 C11.5,6.5 12.5,6.75 13.5,7 C14,7.1 14.5,6.9 14.5,6.5 C14.5,6.1 14,5.9 13.5,5.8 C11.5,5.4 9,6.2 7,7.2 C8.5,5.8 10.5,5 12.5,5 C15.5,5 18,6.5 19.5,8.5 C20,9.2 20.5,10 20.8,10.8 C21,11.3 21.25,11.8 21.25,12.25 C21.25,12.5 21,12.6 21.25,12.75 Z"/>
+                                          </svg>
+                                      </div>
+                                  @endif
+                              </div>
+                              <label class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-xl border border-emerald-250 cursor-pointer transition-all shadow-sm">
+                                  ছবি নির্বাচন করুন
+                                  <input type="file" wire:model="profile_photo" class="hidden" accept="image/*">
+                              </label>
+                          </div>
+                          @error('profile_photo') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
+                      </div>
+
                       <!-- Name -->
                       <div>
                           <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">নাম</label>
@@ -176,10 +193,10 @@
                           @error('name') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                       </div>
 
-                      <!-- Email -->
+                      <!-- Email / Username -->
                       <div>
                           <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">ইমেইল / ইউজারনেম</label>
-                          <input type="email" wire:model="email" placeholder="যেমন: user@gmail.com"
+                          <input type="text" wire:model="email" placeholder="যেমন: user1 অথবা user@gmail.com"
                                  class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20 transition-all font-semibold">
                           @error('email') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                       </div>
@@ -190,7 +207,7 @@
                               {{ $editingId ? 'নতুন পাসওয়ার্ড (পরিবর্তন না করতে চাইলে খালি রাখুন)' : 'পাসওয়ার্ড' }}
                           </label>
                           <div class="relative">
-                              <input :type="showPass ? 'text' : 'password'" wire:model="password" placeholder="কমপক্ষে ৮ অক্ষরের পাসওয়ার্ড"
+                              <input :type="showPass ? 'text' : 'password'" wire:model="password" placeholder="কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড"
                                      class="w-full py-2.5 pl-3 pr-10 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20 transition-all font-semibold">
                               <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-emerald-600 focus:outline-none transition-colors">
                                   <svg x-show="showPass" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" x-cloak>
@@ -205,50 +222,60 @@
                           @error('password') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                       </div>
 
-                      <!-- Role Dropdown -->
-                      <div class="relative" x-data="{ dropdownOpen: false, roleVal: @entangle('role') }">
-                          <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">ইউজার টাইপ (Role)</label>
-                          
-                          <!-- Selector Button -->
-                          <button type="button" @click="dropdownOpen = !dropdownOpen"
-                                  class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-250/20 cursor-pointer text-left transition-all">
-                              <span x-text="roleVal === 'admin' ? 'এডমিন (Admin)' : (roleVal === 'demo' ? 'ডেমো (Demo)' : 'ইউজার (User)')"></span>
-                              <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': dropdownOpen }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                              </svg>
-                          </button>
-                          
-                          <!-- Dropdown List Container -->
-                          <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-transition
-                               class="absolute left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-150 dark:border-slate-800 p-1.5 z-55 text-xs flex flex-col" x-cloak>
-                              <button type="button" @click="roleVal = 'admin'; dropdownOpen = false" class="w-full text-left px-4 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-lg cursor-pointer">এডমিন (Admin)</button>
-                              <button type="button" @click="roleVal = 'demo'; dropdownOpen = false" class="w-full text-left px-4 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-lg cursor-pointer">ডেমো (Demo)</button>
-                              <button type="button" @click="roleVal = 'user'; dropdownOpen = false" class="w-full text-left px-4 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-lg cursor-pointer">ইউজার (User)</button>
+                      <!-- Role Field (Disabled for Admin edit; Editable for Staff) -->
+                      @if($editingId && ($role === 'admin' || $editingUserRole === 'admin'))
+                          <div>
+                              <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">ইউজার টাইপ (Role)</label>
+                              <div class="py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-100 dark:bg-slate-950/80 text-xs font-bold text-gray-600 dark:text-slate-300 flex items-center justify-between cursor-not-allowed">
+                                  <span>এডমিন (Admin)</span>
+                                  <span class="px-2 py-0.5 text-[10px] bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 rounded-md font-sans">পরিবর্তনযোগ্য নয়</span>
+                              </div>
+                              <p class="text-[10px] text-gray-400 dark:text-slate-500 mt-1">অ্যাডমিন অ্যাকাউন্টের রোল ডেমোশন রোধ করতে এটি লক করা হয়েছে।</p>
                           </div>
-                          @error('role') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
-                      </div>
+                      @else
+                          <div class="relative" x-data="{ dropdownOpen: false, roleVal: @entangle('role') }">
+                              <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">ইউজার টাইপ (Role)</label>
+                              
+                              <button type="button" @click="dropdownOpen = !dropdownOpen"
+                                      class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-250/20 cursor-pointer text-left transition-all">
+                                  <span x-text="roleVal === 'admin' ? 'এডমিন (Admin)' : 'ইউজার (User)'"></span>
+                                  <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': dropdownOpen }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                  </svg>
+                              </button>
+                              
+                              <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-transition
+                                   class="absolute left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-150 dark:border-slate-800 p-1.5 z-55 text-xs flex flex-col" x-cloak>
+                                  <button type="button" @click="roleVal = 'admin'; dropdownOpen = false" class="w-full text-left px-4 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-lg cursor-pointer">এডমিন (Admin)</button>
+                                  <button type="button" @click="roleVal = 'user'; dropdownOpen = false" class="w-full text-left px-4 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-lg cursor-pointer">ইউজার (User)</button>
+                              </div>
+                              @error('role') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
+                          </div>
+                      @endif
 
-                      <!-- Spatie Permissions checklist (when role is not admin) -->
-                      <div x-show="roleVal !== 'admin'" class="space-y-2 mt-4" x-cloak>
-                          <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 font-sans">মেনু অ্যাক্সেস পারমিশনসমূহ</label>
-                          <div class="grid grid-cols-3 gap-2 p-3 bg-gray-50 dark:bg-slate-950 border border-gray-155 dark:border-slate-800 rounded-xl">
-                              @foreach($menuOptions as $key => $label)
-                                  <label class="flex items-center space-x-2.5 text-xs text-gray-700 dark:text-slate-300 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold transition-all font-sans">
-                                      <input 
-                                          type="checkbox" 
-                                          value="{{ $key }}"
-                                          wire:model="selectedPermissions"
-                                          class="rounded-lg border-gray-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4 cursor-pointer">
-                                      <span>{{ $label }}</span>
-                                  </label>
-                              @endforeach
+                      <!-- Spatie Permissions checklist (Hidden for Admin; Visible for Staff/User) -->
+                      @if($role !== 'admin' && $editingUserRole !== 'admin')
+                          <div class="space-y-2 mt-4">
+                              <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 font-sans">মেনু অ্যাক্সেস পারমিশনসমূহ</label>
+                              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-gray-50 dark:bg-slate-950 border border-gray-155 dark:border-slate-800 rounded-xl max-h-56 overflow-y-auto">
+                                  @foreach($menuOptions as $key => $label)
+                                      <label class="flex items-center space-x-2.5 text-xs text-gray-700 dark:text-slate-300 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold transition-all font-sans">
+                                          <input 
+                                              type="checkbox" 
+                                              value="{{ $key }}"
+                                              wire:model="selectedPermissions"
+                                              class="rounded-lg border-gray-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4 cursor-pointer">
+                                          <span>{{ $label }}</span>
+                                      </label>
+                                  @endforeach
+                              </div>
                           </div>
-                      </div>
+                      @endif
 
                       <!-- Modal Actions -->
                       <div class="flex items-center justify-end gap-2 pt-4 border-t border-gray-100 dark:border-slate-800">
                           <button type="button" @click="open = false; $wire.resetForm()" class="px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 hover:text-gray-900 dark:hover:text-white text-xs font-semibold rounded-xl cursor-pointer transition-all font-sans">বাতিল</button>
-                          <button type="submit" class="px-6 py-2 bg-primary text-white text-xs font-bold rounded-xl cursor-pointer shadow-md hover:bg-emerald-600 transition-all font-sans">সংরক্ষণ করুন</button>
+                          <button type="submit" class="px-5 py-2 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer font-sans">সংরক্ষণ করুন</button>
                       </div>
                   </form>
              </div>

@@ -33,7 +33,11 @@ class MalamalStock extends Component
     public bool $hasWarranty = false;
     public string $warrantyExpiry = '';
     public $assetImage = null;
+    public ?string $existingAssetImage = null;
     public string $assetNotes = '';
+
+    // Delete Confirmation Modal
+    public ?int $confirmDeleteAssetId = null;
 
     // Issue Modal
     public bool $showIssueModal = false;
@@ -98,7 +102,7 @@ class MalamalStock extends Component
     public function updatingPerPage() { $this->resetPage(); }
     public function updatingActiveTab() { $this->resetPage(); }
 
-    // Dynamic Exclusive Input Reset for Return Modal (Req 5)
+    // Mutual Auto-Reset for Return Modal (Rule 3.1)
     public function updatedReturnGoodQty($value)
     {
         if ((int)$value > 0) {
@@ -184,6 +188,7 @@ class MalamalStock extends Component
             $this->initialQty = (string)$a->total_qty;
             $this->hasWarranty = (bool)$a->has_warranty;
             $this->warrantyExpiry = $a->warranty_expiry ? $a->warranty_expiry->format('Y-m-d') : '';
+            $this->existingAssetImage = $a->image;
             $this->assetNotes = $a->notes ?? '';
         } else {
             $this->assetName = '';
@@ -194,6 +199,7 @@ class MalamalStock extends Component
             $this->initialQty = '';
             $this->hasWarranty = false;
             $this->warrantyExpiry = '';
+            $this->existingAssetImage = null;
             $this->assetNotes = '';
         }
         $this->assetImage = null;
@@ -268,6 +274,9 @@ class MalamalStock extends Component
                 'notes' => trim($this->assetNotes),
             ];
             if ($imagePath) {
+                if ($a->image && Storage::disk('public')->exists($a->image)) {
+                    Storage::disk('public')->delete($a->image);
+                }
                 $data['image'] = $imagePath;
             }
             $a->update($data);
@@ -307,6 +316,24 @@ class MalamalStock extends Component
     {
         $this->selectedAssetForView = Asset::with('category')->findOrFail($id);
         $this->showAssetViewModal = true;
+    }
+
+    public function confirmDeleteAsset(int $id)
+    {
+        $this->confirmDeleteAssetId = $id;
+    }
+
+    public function cancelDeleteAsset()
+    {
+        $this->confirmDeleteAssetId = null;
+    }
+
+    public function executeDeleteAsset()
+    {
+        if ($this->confirmDeleteAssetId) {
+            $this->deleteAsset($this->confirmDeleteAssetId);
+            $this->confirmDeleteAssetId = null;
+        }
     }
 
     public function deleteAsset(int $id)
@@ -450,6 +477,9 @@ class MalamalStock extends Component
                     'asset_id' => $asset->id,
                     'action_type' => 'return',
                     'quantity' => $good + $damaged + $lost,
+                    'good_qty' => $good,
+                    'damaged_qty' => $damaged,
+                    'lost_qty' => $lost,
                     'proof_image' => $proofPath ?: $issue->image,
                     'notes' => "ফেরত পাওয়া গেছে: {$this->returnEmployeeName} (ভালো: {$good}, নষ্ট: {$damaged}, হারানো: {$lost})",
                 ]);
@@ -498,7 +528,7 @@ class MalamalStock extends Component
 
             AssetHistory::create([
                 'asset_id' => $asset->id,
-                'action_type' => 'add_stock',
+                'action_type' => 'repair',
                 'quantity' => $qty,
                 'notes' => "মেরামত সম্পন্ন করে স্টকে যুক্ত করা হলো: " . trim($this->repairNotes),
             ]);
@@ -532,7 +562,7 @@ class MalamalStock extends Component
 
                 AssetHistory::create([
                     'asset_id' => $asset->id,
-                    'action_type' => 'add_stock',
+                    'action_type' => 'found',
                     'quantity' => $qty,
                     'notes' => "হারানো পণ্য পাওয়া গেছে এবং স্টকে যোগ করা হয়েছে",
                 ]);
@@ -599,12 +629,15 @@ class MalamalStock extends Component
     {
         $categories = AssetCategory::orderBy('name', 'asc')->get();
 
-        // Summary Calculations
+        // Summary Calculations & Money Values (Rule 1)
         $totalAssetCount = Asset::sum('total_qty');
         $currentStockCount = Asset::sum('current_qty');
         $damagedCount = Asset::sum('damaged_qty');
         $lostCount = Asset::sum('lost_qty');
         $totalAssetValue = Asset::select(DB::raw('SUM(unit_price * total_qty) as total_val'))->value('total_val') ?: 0;
+        $currentStockValue = Asset::select(DB::raw('SUM(unit_price * current_qty) as total_val'))->value('total_val') ?: 0;
+        $damagedValue = Asset::select(DB::raw('SUM(unit_price * damaged_qty) as total_val'))->value('total_val') ?: 0;
+        $lostValue = Asset::select(DB::raw('SUM(unit_price * lost_qty) as total_val'))->value('total_val') ?: 0;
 
         // Dynamic Stock List Total Value calculation
         $stockListQuery = Asset::query();
@@ -620,11 +653,11 @@ class MalamalStock extends Component
         }
         $totalStockListValue = $stockListQuery->select(DB::raw('SUM(unit_price * total_qty) as total_val'))->value('total_val') ?: 0;
 
-        // History Log Specific Metrics
+        // History Log Lifetime Cumulative Metrics (Rule 7: Non-decreasing)
         $returnedCount = AssetHistory::where('action_type', 'return')->sum('quantity');
-        $goodCount = $currentStockCount;
-        $damagedLogCount = AssetHistory::where('action_type', 'damaged')->sum('quantity') ?: $damagedCount;
-        $lostLogCount = AssetHistory::where('action_type', 'lost')->sum('quantity') ?: $lostCount;
+        $goodCount = AssetHistory::where('action_type', 'return')->sum('good_qty');
+        $damagedLogCount = AssetHistory::where('action_type', 'return')->sum('damaged_qty') + AssetHistory::where('action_type', 'damaged')->sum('quantity');
+        $lostLogCount = AssetHistory::where('action_type', 'return')->sum('lost_qty') + AssetHistory::where('action_type', 'lost')->sum('quantity');
 
         // Data Query depending on active tab
         $query = null;
@@ -653,7 +686,7 @@ class MalamalStock extends Component
             $records = $query->orderBy('name', 'asc')->paginate($this->perPage);
 
         } elseif ($this->activeTab === 'issue_list') {
-            // Req 4: Issue List ONLY fetches active issues where status = 'issued' so returned items disappear!
+            // Issue List ONLY fetches active issues where status = 'issued'
             $query = AssetIssue::with(['asset.category'])->where('status', 'issued');
 
             if (!empty($this->search)) {
@@ -669,7 +702,21 @@ class MalamalStock extends Component
 
             $records = $query->orderBy('issue_date', 'desc')->orderBy('id', 'desc')->paginate($this->perPage);
 
-        } elseif ($this->activeTab === 'history_log' || $this->activeTab === 'dashboard') {
+        } elseif ($this->activeTab === 'history_log') {
+            // Rule 6.1: History Log ONLY displays 'issue' and 'return' action types
+            $query = AssetHistory::with(['asset.category'])
+                ->whereIn('action_type', ['issue', 'return']);
+
+            if (!empty($this->search)) {
+                $s = trim($this->search);
+                $query->whereHas('asset', function($aq) use ($s) {
+                    $aq->where('name', 'like', "%{$s}%");
+                });
+            }
+
+            $records = $query->orderBy('created_at', 'desc')->paginate($this->perPage);
+
+        } elseif ($this->activeTab === 'dashboard') {
             $query = AssetHistory::with(['asset.category']);
 
             if (!empty($this->search)) {
@@ -693,6 +740,9 @@ class MalamalStock extends Component
             'damagedCount' => $damagedCount,
             'lostCount' => $lostCount,
             'totalAssetValue' => $totalAssetValue,
+            'currentStockValue' => $currentStockValue,
+            'damagedValue' => $damagedValue,
+            'lostValue' => $lostValue,
             'totalStockListValue' => $totalStockListValue,
             'returnedCount' => $returnedCount,
             'goodCount' => $goodCount,

@@ -527,6 +527,10 @@ if (!function_exists('toBanglaNum')) {
                                             @endforeach
                                         @else
                                             @forelse($vehicleTransactions as $tx)
+                                                @php
+                                                    $txIsToday = $tx->date ? \Carbon\Carbon::parse($tx->date)->startOfDay()->equalTo(\Carbon\Carbon::today()->startOfDay()) : true;
+                                                    $canManageTx = auth()->user()?->isAdmin() || $txIsToday;
+                                                @endphp
                                                 <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
                                                     @if($activeTab === 'income')
                                                         <td class="py-2.5 px-4 font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">
@@ -538,15 +542,24 @@ if (!function_exists('toBanglaNum')) {
                                                         <td class="py-2.5 px-4 font-mono text-gray-700 dark:text-slate-300 text-right">{{ $tx->quantity ? toBanglaNum($tx->quantity) : '—' }}</td>
                                                         <td class="py-2.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400 text-right">৳ {{ toBanglaNum(number_format($tx->rent, 0)) }}</td>
                                                         <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($tx->received, 0)) }}</td>
-                                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($tx->due_amount, 0)) }}</td>
+                                                         <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->due_amount < 0 ? '- ৳ ' . toBanglaNum(number_format(abs($tx->due_amount), 0)) : '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) }}</td>
                                                         <td class="py-2.5 px-4 text-center">
                                                             <div class="flex items-center justify-center gap-1.5">
-                                                                <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                                </button>
-                                                                <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                                </button>
+                                                                @if($canManageTx)
+                                                                    <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                    </button>
+                                                                    <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                    </button>
+                                                                @else
+                                                                    <button type="button" disabled class="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 opacity-40 cursor-not-allowed transition-all shadow-xs" title="পেছনের তারিখের হিসাব পরিবর্তন করার পারমিশন নেই">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                    </button>
+                                                                    <button type="button" disabled class="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 opacity-40 cursor-not-allowed transition-all shadow-xs" title="পেছনের তারিখের হিসাব ডিলেট করার পারমিশন নেই">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                    </button>
+                                                                @endif
                                                             </div>
                                                         </td>
                                                     @elseif($activeTab === 'expense')
@@ -559,15 +572,24 @@ if (!function_exists('toBanglaNum')) {
                                                         <td class="py-2.5 px-4 font-mono text-gray-700 dark:text-slate-300 text-right">{{ $tx->quantity ? toBanglaNum($tx->quantity) : '—' }}</td>
                                                         <td class="py-2.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400 text-right">৳ {{ toBanglaNum(number_format($tx->rent, 0)) }}</td>
                                                         <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">৳ {{ toBanglaNum(number_format($tx->received, 0)) }}</td>
-                                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">৳ {{ toBanglaNum(number_format($tx->due_amount, 0)) }}</td>
+                                                         <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->due_amount < 0 ? '- ৳ ' . toBanglaNum(number_format(abs($tx->due_amount), 0)) : '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) }}</td>
                                                         <td class="py-2.5 px-4 text-center">
                                                             <div class="flex items-center justify-center gap-1.5">
-                                                                <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                                </button>
-                                                                <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                                </button>
+                                                                @if($canManageTx)
+                                                                    <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                    </button>
+                                                                    <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                    </button>
+                                                                @else
+                                                                    <button type="button" disabled class="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 opacity-40 cursor-not-allowed transition-all shadow-xs" title="পেছনের তারিখের হিসাব পরিবর্তন করার পারমিশন নেই">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                    </button>
+                                                                    <button type="button" disabled class="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 opacity-40 cursor-not-allowed transition-all shadow-xs" title="পেছনের তারিখের হিসাব ডিলেট করার পারমিশন নেই">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                    </button>
+                                                                @endif
                                                             </div>
                                                         </td>
                                                     @elseif($activeTab === 'due')
@@ -576,16 +598,25 @@ if (!function_exists('toBanglaNum')) {
                                                             <span class="text-[10px] text-gray-400 font-semibold block">({{ \Carbon\Carbon::parse($tx->created_at ?: $tx->date)->setTimezone('Asia/Dhaka')->format('h:i A') }})</span>
                                                         </td>
                                                         <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</td>
-                                                        <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->type === 'income' ? '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) : '—' }}</td>
-                                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->type === 'expense' ? '৳ ' . toBanglaNum(number_format($tx->due_amount, 0)) : '—' }}</td>
+                                                         <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->type === 'income' ? ($tx->due_amount < 0 ? '- ৳ ' . toBanglaNum(number_format(abs($tx->due_amount), 0)) : '৳ ' . toBanglaNum(number_format($tx->due_amount, 0))) : '—' }}</td>
+                                                         <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->type === 'expense' ? ($tx->due_amount < 0 ? '- ৳ ' . toBanglaNum(number_format(abs($tx->due_amount), 0)) : '৳ ' . toBanglaNum(number_format($tx->due_amount, 0))) : '—' }}</td>
                                                         <td class="py-2.5 px-4 text-center">
                                                             <div class="flex items-center justify-center gap-1.5">
-                                                                <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                                </button>
-                                                                <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                                </button>
+                                                                @if($canManageTx)
+                                                                    <button type="button" wire:click="editTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-all shadow-xs" title="সম্পাদনা">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                    </button>
+                                                                    <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                    </button>
+                                                                @else
+                                                                    <button type="button" disabled class="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 opacity-40 cursor-not-allowed transition-all shadow-xs" title="পেছনের তারিখের হিসাব পরিবর্তন করার পারমিশন নেই">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                    </button>
+                                                                    <button type="button" disabled class="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 opacity-40 cursor-not-allowed transition-all shadow-xs" title="পেছনের তারিখের হিসাব ডিলেট করার পারমিশন নেই">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                    </button>
+                                                                @endif
                                                             </div>
                                                         </td>
                                                     @elseif($activeTab === 'history')
@@ -596,15 +627,21 @@ if (!function_exists('toBanglaNum')) {
                                                         </td>
                                                         <td class="py-2.5 px-4 font-mono text-gray-500 dark:text-slate-400 whitespace-nowrap text-[11px]">{{ \Carbon\Carbon::parse($tx->updated_at)->setTimezone('Asia/Dhaka')->format('d-m-Y h:i A') }}</td>
                                                         <td class="py-2.5 px-4 font-bold text-gray-800 dark:text-white">{{ $tx->description ?: ($tx->khotian_name ?: '—') }}</td>
-                                                        <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->received ? '৳ ' . toBanglaNum(number_format($tx->received, 0)) : '—' }}</td>
-                                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->type === 'expense' || $tx->amount ? '৳ ' . toBanglaNum(number_format($tx->amount ?: $tx->rent, 0)) : '—' }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-emerald-600 text-right">{{ $tx->type !== 'expense' && ($tx->received || $tx->amount) ? '৳ ' . toBanglaNum(number_format($tx->received ?: $tx->amount, 0)) : '—' }}</td>
+                                                        <td class="py-2.5 px-4 font-mono font-bold text-rose-500 text-right">{{ $tx->type === 'expense' ? '৳ ' . toBanglaNum(number_format($tx->rent ?: $tx->amount, 0)) : '—' }}</td>
                                                         <td class="py-2.5 px-4 text-center">
-                                                            <div class="flex items-center justify-center gap-1.5">
-                                                                <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                                </button>
-                                                            </div>
-                                                        </td>
+                                                             <div class="flex items-center justify-center gap-1.5">
+                                                                 @if($canManageTx)
+                                                                     <button type="button" wire:click="confirmDeleteTransaction({{ $tx->id }})" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer transition-all shadow-xs" title="ডিলেট">
+                                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                     </button>
+                                                                 @else
+                                                                     <button type="button" disabled class="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 opacity-40 cursor-not-allowed transition-all shadow-xs" title="পেছনের তারিখের হিসাব ডিলেট করার পারমিশন নেই (শুধুমাত্র অ্যাডমিন করতে পারবে)">
+                                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                     </button>
+                                                                 @endif
+                                                             </div>
+                                                         </td>
                                                     @endif
                                                 </tr>
                                             @empty
@@ -672,6 +709,10 @@ if (!function_exists('toBanglaNum')) {
                             <!-- Mobile Box View (Full Data Cards) -->
                             <div class="block sm:hidden p-4 space-y-3">
                                 @forelse($vehicleTransactions as $tx)
+                                    @php
+                                        $txIsToday = $tx->date ? \Carbon\Carbon::parse($tx->date)->startOfDay()->equalTo(\Carbon\Carbon::today()->startOfDay()) : true;
+                                        $canManageTx = auth()->user()?->isAdmin() || $txIsToday;
+                                    @endphp
                                     <div class="p-4 bg-gray-50 dark:bg-slate-800/60 rounded-2xl border border-gray-200 dark:border-slate-700 space-y-2 text-xs">
                                         <div class="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 pb-2">
                                             <div>
@@ -854,9 +895,9 @@ if (!function_exists('toBanglaNum')) {
                                         <span class="absolute left-3 top-2.5 text-rose-600 font-bold">৳</span>
                                         @php
                                             $calculatedDue = floatval($txRent) - floatval($txReceived);
-                                            if ($calculatedDue < 0) $calculatedDue = 0;
+                                            $dueValue = $calculatedDue < 0 ? '-' . toBanglaNum(number_format(abs($calculatedDue), 0)) : toBanglaNum(number_format($calculatedDue, 0));
                                         @endphp
-                                        <input type="text" value="{{ toBanglaNum(number_format($calculatedDue, 0)) }}" readonly placeholder="0"
+                                        <input type="text" value="{{ $dueValue }}" readonly placeholder="0"
                                                class="w-full pl-7 pr-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-mono font-bold text-sm">
                                     </div>
                                 </div>
@@ -982,9 +1023,9 @@ if (!function_exists('toBanglaNum')) {
                                         <span class="absolute left-3 top-2.5 text-rose-600 font-bold">৳</span>
                                         @php
                                             $expDue = floatval($txRent) - floatval($txReceived);
-                                            if ($expDue < 0) $expDue = 0;
+                                            $expDueValue = $expDue < 0 ? '-' . toBanglaNum(number_format(abs($expDue), 0)) : toBanglaNum(number_format($expDue, 0));
                                         @endphp
-                                        <input type="text" value="{{ toBanglaNum(number_format($expDue, 0)) }}" readonly placeholder="0"
+                                        <input type="text" value="{{ $expDueValue }}" readonly placeholder="0"
                                                class="w-full pl-7 pr-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-mono font-bold text-sm">
                                     </div>
                                 </div>
@@ -1342,4 +1383,242 @@ if (!function_exists('toBanglaNum')) {
             </div>
         </div>
     @endif
+
+    {{-- ===== গাড়ি সেটিংস মোডাল ===== --}}
+    <template x-teleport="body">
+    <div x-data="{ open: @entangle('showVehicleModal') }"
+         x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click.self="open = false; $wire.set('showVehicleModal', false)"
+         class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs"
+         x-cloak>
+
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 w-full max-w-sm overflow-visible"
+             x-show="open"
+             x-transition:enter="transition ease-out duration-200 transform"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150 transform"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-2">
+
+            {{-- Header Tabs --}}
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-700 px-5 pt-4 pb-0 rounded-t-2xl">
+                <div class="flex items-center gap-1">
+                    <button type="button"
+                            wire:click="$set('activeVehicleModalTab', 'rename')"
+                            class="px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer
+                                {{ $activeVehicleModalTab === 'rename'
+                                    ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400'
+                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                        নাম পরিবর্তন
+                    </button>
+                    <button type="button"
+                            wire:click="$set('activeVehicleModalTab', 'delete')"
+                            class="px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer
+                                {{ $activeVehicleModalTab === 'delete'
+                                    ? 'border-red-500 text-red-600 dark:text-red-400'
+                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                        ডিলেট
+                    </button>
+                </div>
+                <button type="button"
+                        @click="open = false; $wire.set('showVehicleModal', false)"
+                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 mb-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            {{-- Body --}}
+            <div class="p-5 space-y-4" x-data="{ confirmOpen: false }">
+
+                @if($activeVehicleModalTab === 'rename')
+                    {{-- গাড়ি ড্রপডাউন --}}
+                    <div class="relative" x-data="{ vDropOpen: false, selectedName: '{{ $editVehicleId ? (\App\Models\Vehicle::find($editVehicleId)?->name ?? 'গাড়ি নির্বাচন করুন') : 'গাড়ি নির্বাচন করুন' }}' }">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">গাড়ি</label>
+                        <button type="button" @click="vDropOpen = !vDropOpen"
+                                class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-250/20 cursor-pointer text-left transition-all">
+                            <span x-text="selectedName"></span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': vDropOpen }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="vDropOpen" @click.away="vDropOpen = false" x-transition
+                             class="absolute left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-150 dark:border-slate-800 p-1.5 z-[99999] text-xs flex flex-col"
+                             x-cloak>
+                            @foreach($vehicles as $v)
+                                <button type="button"
+                                        @click="selectedName = '{{ $v->name }}'; vDropOpen = false; $wire.call('selectEditVehicle', {{ $v->id }})"
+                                        class="w-full text-left px-4 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all font-semibold rounded-lg cursor-pointer
+                                            {{ $editVehicleId == $v->id ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/10' : 'text-gray-700 dark:text-gray-200' }}">
+                                    {{ $v->name }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- নতুন নাম --}}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">নতুন নাম</label>
+                        <input type="text"
+                               wire:model="renameVehicleName"
+                               placeholder="গাড়ির নতুন নাম লিখুন"
+                               class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20 transition-all font-semibold">
+                    </div>
+
+                    {{-- Buttons --}}
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">
+                        <button type="button"
+                                @click="open = false; $wire.set('showVehicleModal', false)"
+                                class="px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all">
+                            বাতিল
+                        </button>
+                        <button type="button"
+                                wire:click="updateVehicleName"
+                                class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md active:scale-95 cursor-pointer transition-all">
+                            নাম পরিবর্তন
+                        </button>
+                    </div>
+                @endif
+
+                @if($activeVehicleModalTab === 'delete')
+                    {{-- গাড়ি ড্রপডাউন --}}
+                    <div class="relative" x-data="{ vDropOpen: false, selectedName: '{{ $editVehicleId ? (\App\Models\Vehicle::find($editVehicleId)?->name ?? 'গাড়ি নির্বাচন করুন') : 'গাড়ি নির্বাচন করুন' }}' }">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">গাড়ি</label>
+                        <button type="button" @click="vDropOpen = !vDropOpen"
+                                class="w-full flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-400/20 cursor-pointer text-left transition-all">
+                            <span x-text="selectedName"></span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': vDropOpen }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="vDropOpen" @click.away="vDropOpen = false" x-transition
+                             class="absolute left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-150 dark:border-slate-800 p-1.5 z-[99999] text-xs flex flex-col"
+                             x-cloak>
+                            @foreach($vehicles as $v)
+                                <button type="button"
+                                        @click="selectedName = '{{ $v->name }}'; vDropOpen = false; $wire.call('selectEditVehicle', {{ $v->id }})"
+                                        class="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 transition-all font-semibold rounded-lg cursor-pointer
+                                            {{ $editVehicleId == $v->id ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/10' : 'text-gray-700 dark:text-gray-200' }}">
+                                    {{ $v->name }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    @if($editVehicleId)
+                        <div class="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-xl text-xs text-red-700 dark:text-red-400 font-semibold">
+                            ⚠️ এই গাড়িটি ডিলেট করলে তার সকল হিসাব স্থায়ীভাবে মুছে যাবে।
+                        </div>
+                    @endif
+
+                    {{-- Buttons --}}
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">
+                        <button type="button"
+                                @click="open = false; $wire.set('showVehicleModal', false)"
+                                class="px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer transition-all">
+                            বাতিল
+                        </button>
+                        <button type="button"
+                                @click="confirmOpen = true"
+                                {{ !$editVehicleId ? 'disabled' : '' }}
+                                class="px-5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-md active:scale-95 cursor-pointer transition-all">
+                            ডিলেট করুন
+                        </button>
+                    </div>
+
+                    {{-- হ্যাঁ/না Confirm Overlay Popup --}}
+                    <template x-teleport="body">
+                        <div x-show="confirmOpen"
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-100"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             class="fixed inset-0 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4 z-[10000]"
+                             x-cloak>
+                            <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 w-full max-w-xs flex flex-col items-center gap-3 text-center shadow-2xl">
+                                <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800 dark:text-white">নিশ্চিত করুন</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">এই গাড়ির সকল হিসাব মুছে যাবে!</p>
+                                </div>
+                                <div class="flex gap-2.5 w-full justify-center mt-1">
+                                    <button type="button" @click="confirmOpen = false"
+                                            class="px-5 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 text-xs font-bold rounded-xl cursor-pointer transition-all">
+                                        না
+                                    </button>
+                                    <button type="button"
+                                            @click="confirmOpen = false; $wire.call('deleteVehicle')"
+                                            class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer transition-all active:scale-95">
+                                        হ্যাঁ, ডিলেট করুন
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                @endif
+
+            </div>
+        </div>
+    </div>
+    </template>
+
+    {{-- ===== হ্যাঁ/না ডিলেট কনফার্ম মোডাল (হিসাব ডিলেট) ===== --}}
+    <template x-teleport="body">
+    <div x-data="{ open: @entangle('showDeleteConfirmModal') }"
+         x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click.self="open = false; $wire.set('showDeleteConfirmModal', false)"
+         class="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs"
+         x-cloak>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 w-full max-w-xs p-5 flex flex-col items-center gap-3 text-center"
+             x-show="open"
+             x-transition:enter="transition ease-out duration-200 transform"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150 transform"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-2">
+            <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-gray-800 dark:text-white">হিসাব ডিলেট করবেন?</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">এই হিসাবটি স্থায়ীভাবে মুছে যাবে।</p>
+            </div>
+            <div class="flex gap-2.5 w-full justify-center mt-1">
+                <button type="button"
+                        @click="open = false; $wire.set('showDeleteConfirmModal', false)"
+                        class="px-5 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 text-xs font-bold rounded-xl cursor-pointer transition-all">
+                    না
+                </button>
+                <button type="button"
+                        wire:click="deleteTransaction"
+                        class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer transition-all active:scale-95">
+                    হ্যাঁ, ডিলেট করুন
+                </button>
+            </div>
+        </div>
+    </div>
+    </template>
 </div>

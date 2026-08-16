@@ -11,6 +11,10 @@ class AssetHistory extends Model
         'asset_id',
         'action_type',
         'quantity',
+        'good_qty',
+        'damaged_qty',
+        'lost_qty',
+        'proof_image',
         'notes',
     ];
 
