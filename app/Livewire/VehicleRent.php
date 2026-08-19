@@ -72,11 +72,13 @@ class VehicleRent extends Component
 
         if ($this->editingId) {
             $rent = VehicleRentModel::findOrFail($this->editingId);
+            $oldFare = $rent->fare;
             $rent->update([
                 'address' => $this->address,
                 'area' => $this->area ?: null,
                 'fare' => $this->fare ?: 0,
             ]);
+            \App\Models\ActivityLog::log('গাড়ির ভাড়া আপডেট', "গাড়ির ভাড়া আপডেট (ঠিকানা: {$rent->address}): ৳ {$oldFare} -> ৳ " . ($this->fare ?: 0));
             $this->dispatch('show-toast', ['message' => 'গাড়ি ভাড়ার তথ্য সফলভাবে আপডেট হয়েছে!']);
         }
 

@@ -54,7 +54,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
-                + নতুন হিসাব
+                নতুন হিসাব
             </button>
         </div>
         
@@ -149,7 +149,7 @@
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 সম্পাদনা
                                             </button>
-                                            <button type="button" wire:click="delete({{ $t->id }})" onclick="confirm('মুছবেন?') || event.stopImmediatePropagation()" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                            <button type="button" wire:click="confirmDelete({{ $t->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                 মুছুন
                                             </button>
@@ -308,7 +308,7 @@
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 সম্পাদনা
                                             </button>
-                                            <button type="button" wire:click="delete({{ $t->id }})" onclick="confirm('মুছবেন?') || event.stopImmediatePropagation()" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
+                                            <button type="button" wire:click="confirmDelete({{ $t->id }})" @click="openDropdown = false" class="w-full text-left px-3 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 transition-all font-semibold rounded-xl cursor-pointer flex items-center gap-2">
                                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                 মুছুন
                                             </button>
@@ -449,44 +449,27 @@
                             <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 font-sans">টাকা <span class="text-red-500">*</span></label>
                             <input type="text" wire:model="amount" placeholder="০.০০"
                                    oninput="this.value = this.value.replace(/[^0-9.]/g, '')"
-                                   class="w-full py-2 px-3 rounded-xl border border-gray-250 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-mono font-semibold">
+                                   @if($editingId) readonly @endif
+                                   class="w-full py-2 px-3 rounded-xl border border-gray-250 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-mono font-semibold {{ $editingId ? 'opacity-70 cursor-not-allowed bg-gray-100 dark:bg-slate-900' : '' }}">
                             @error('amount') <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
                         </div>
                     </div>
 
-                    {{-- Row 2: Type + Transaction Date --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 font-sans">ধরণ</label>
-                            <div class="relative" x-data="{ open: false }">
-                                <button type="button" @click="open = !open"
-                                        class="w-full flex items-center justify-between py-2 px-3 rounded-xl border border-gray-250 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 cursor-pointer text-left">
-                                    <span>{{ $transaction_type === 'দেওয়া' ? 'দেওয়া (আমার বাকি)' : 'নেওয়া (অন্যের বাকি)' }}</span>
-                                    <svg class="w-3.5 h-3.5 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                                </button>
-                                <div x-show="open" @click.outside="open = false" x-cloak
-                                     class="absolute top-full mt-1 left-0 w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl z-[999] overflow-hidden">
-                                    <button type="button" @click="$wire.set('transaction_type', 'নেওয়া'); open = false"
-                                            class="w-full text-left px-3 py-2.5 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all cursor-pointer">নেওয়া (অন্যের বাকি)</button>
-                                    <button type="button" @click="$wire.set('transaction_type', 'দেওয়া'); open = false"
-                                            class="w-full text-left px-3 py-2.5 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all cursor-pointer">দেওয়া (আমার বাকি)</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 font-sans">লেনদেনের তারিখ</label>
-                            <div class="relative flex items-center">
-                                <input type="text"
-                                       data-flatpickr
-                                       data-wire-prop="transaction_date"
-                                       data-default="{{ $transaction_date }}"
-                                       wire:model="transaction_date"
-                                       placeholder="লেনদেনের তারিখ"
-                                       readonly
-                                       class="w-full py-2 pl-3 pr-9 rounded-xl border border-gray-250 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 transition-all font-sans font-semibold cursor-pointer">
-                                <span class="absolute right-2.5 text-emerald-600 pointer-events-none">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                </span>
+                    {{-- Row 2: Type --}}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 font-sans">ধরণ</label>
+                        <div class="relative" x-data="{ open: false }">
+                            <button type="button" @click="open = !open"
+                                    class="w-full flex items-center justify-between py-2 px-3 rounded-xl border border-gray-250 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs font-semibold text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 cursor-pointer text-left">
+                                <span>{{ $transaction_type === 'দেওয়া' ? 'দেওয়া (আমার বাকি)' : 'নেওয়া (অন্যের বাকি)' }}</span>
+                                <svg class="w-3.5 h-3.5 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="open" @click.outside="open = false" x-cloak
+                                 class="absolute top-full mt-1 left-0 w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl z-[999] overflow-hidden">
+                                <button type="button" @click="$wire.set('transaction_type', 'নেওয়া'); open = false"
+                                        class="w-full text-left px-3 py-2.5 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all cursor-pointer">নেওয়া (অন্যের বাকি)</button>
+                                <button type="button" @click="$wire.set('transaction_type', 'দেওয়া'); open = false"
+                                        class="w-full text-left px-3 py-2.5 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-gray-800 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-all cursor-pointer">দেওয়া (আমার বাকি)</button>
                             </div>
                         </div>
                     </div>
@@ -506,17 +489,27 @@
                         </div>
                     </div>
 
-                    {{-- Row 4: Start Date + Due Date --}}
+                    {{-- Row 4: Transaction Date + Due Date (Side-by-Side) --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 font-sans">শুরু তারিখ</label>
-                            <div class="relative flex items-center">
-                                <input type="text"
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 font-sans">লেনদেনের তারিখ</label>
+                            <div class="relative flex items-center"
+                                 x-data
+                                 x-effect="
+                                    let val = $wire.transaction_date;
+                                    let input = $refs.trxInput;
+                                    if (input && input._flatpickr) {
+                                        if (val) input._flatpickr.setDate(val, false);
+                                        else input._flatpickr.clear();
+                                    }
+                                 ">
+                                <input x-ref="trxInput"
+                                       type="text"
                                        data-flatpickr
-                                       data-wire-prop="start_date"
-                                       data-default="{{ $start_date }}"
-                                       wire:model="start_date"
-                                       placeholder="শুরু তারিখ"
+                                       data-wire-prop="transaction_date"
+                                       data-default="{{ $transaction_date }}"
+                                       wire:model="transaction_date"
+                                       placeholder="লেনদেনের তারিখ"
                                        readonly
                                        class="w-full py-2 pl-3 pr-9 rounded-xl border border-gray-250 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 transition-all font-sans font-semibold cursor-pointer">
                                 <span class="absolute right-2.5 text-emerald-600 pointer-events-none">
@@ -526,8 +519,18 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 font-sans">পরিশোধের তারিখ</label>
-                            <div class="relative flex items-center">
-                                <input type="text"
+                            <div class="relative flex items-center"
+                                 x-data
+                                 x-effect="
+                                    let val = $wire.due_date;
+                                    let input = $refs.dueInput;
+                                    if (input && input._flatpickr) {
+                                        if (val) input._flatpickr.setDate(val, false);
+                                        else input._flatpickr.clear();
+                                    }
+                                 ">
+                                <input x-ref="dueInput"
+                                       type="text"
                                        data-flatpickr
                                        data-wire-prop="due_date"
                                        data-default="{{ $due_date }}"
@@ -574,6 +577,52 @@
                             class="px-6 py-2.5 bg-[#009669] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer transition-all active:scale-95 font-sans flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                         সেভ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    {{-- ========== DELETE CONFIRMATION MODAL ========== --}}
+    <template x-teleport="body">
+        <div x-data="{ open: @entangle('showDeleteConfirmModal') }"
+             x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click.self="open = false; $wire.set('showDeleteConfirmModal', false)"
+             class="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs"
+             x-cloak>
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 w-full max-w-xs p-5 flex flex-col items-center gap-3 text-center"
+                 x-show="open"
+                 x-transition:enter="transition ease-out duration-200 transform"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150 transform"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-2">
+                <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-gray-800 dark:text-white font-sans">হিসাব ডিলেট করবেন?</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-sans">এই হিসাবটি স্থায়ীভাবে মুছে যাবে।</p>
+                </div>
+                <div class="flex gap-2.5 w-full justify-center mt-1">
+                    <button type="button"
+                            @click="open = false; $wire.set('showDeleteConfirmModal', false)"
+                            class="px-5 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl cursor-pointer transition-all font-sans">
+                        না
+                    </button>
+                    <button type="button"
+                            wire:click="delete"
+                            class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer transition-all active:scale-95 font-sans">
+                        হ্যাঁ, ডিলেট করুন
                     </button>
                 </div>
             </div>

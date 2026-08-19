@@ -18,13 +18,16 @@ class DeunaLedger extends Component
     public bool $showModal = false;
     public ?int $editingId = null;
 
+    // Delete confirmation modal state
+    public bool $showDeleteConfirmModal = false;
+    public ?int $deletingId = null;
+
     // Form fields
     public string $ledger_name = '';
     public string $transaction_type = 'নেওয়া';  // দেওয়া / নেওয়া
     public string $address = '';
     public string $phone = '';
     public string $amount = '';
-    public string $start_date = '';
     public string $transaction_date = '';
     public string $due_date = '';
     public string $row1 = '';
@@ -41,6 +44,20 @@ class DeunaLedger extends Component
         $this->resetPage('receivedPage');
     }
 
+    public function checkCanModify(DeunaTransaction $transaction): bool
+    {
+        $user = auth()->user();
+        if ($user && $user->isAdmin()) {
+            return true;
+        }
+
+        $trxDate = $transaction->transaction_date 
+            ? $transaction->transaction_date->toDateString() 
+            : ($transaction->created_at ? $transaction->created_at->toDateString() : null);
+
+        return $trxDate === now()->toDateString();
+    }
+
     public function openCreateModal(): void
     {
         $this->resetForm();
@@ -50,13 +67,18 @@ class DeunaLedger extends Component
     public function openEditModal(int $id): void
     {
         $t = DeunaTransaction::findOrFail($id);
+
+        if (!$this->checkCanModify($t)) {
+            $this->dispatch('show-toast', message: 'সাধারণ ইউজার শুধুমাত্র আজকের হিসাব সম্পাদনা করতে পারবেন!', type: 'error');
+            return;
+        }
+
         $this->editingId = $id;
         $this->ledger_name = $t->ledger_name;
         $this->transaction_type = $t->transaction_type;
         $this->address = $t->address ?? '';
         $this->phone = $t->phone ?? '';
         $this->amount = (string) $t->amount;
-        $this->start_date = $t->start_date ? $t->start_date->toDateString() : '';
         $this->transaction_date = $t->transaction_date ? $t->transaction_date->toDateString() : '';
         $this->due_date = $t->due_date ? $t->due_date->toDateString() : '';
         $this->row1 = $t->row1 ?? '';
@@ -69,11 +91,10 @@ class DeunaLedger extends Component
     {
         $this->validate([
             'ledger_name'      => 'required|string|max:255',
-            'transaction_type' => 'required|in:দেওয়া,নেওয়া',
+            'transaction_type' => 'required|in:দেওয়া,দেওয়া,নেওয়া,নেওয়া',
             'address'          => 'nullable|string|max:255',
             'phone'            => 'nullable|string|max:20',
             'amount'           => 'required|numeric|min:0',
-            'start_date'       => 'nullable|date',
             'transaction_date' => 'nullable|date',
             'due_date'         => 'nullable|date',
             'row1'             => 'nullable|string|max:255',
@@ -87,7 +108,6 @@ class DeunaLedger extends Component
             'address'          => $this->address ?: null,
             'phone'            => $this->phone ?: null,
             'amount'           => (float) $this->amount,
-            'start_date'       => $this->start_date ?: null,
             'transaction_date' => $this->transaction_date ?: null,
             'due_date'         => $this->due_date ?: null,
             'row1'             => $this->row1 ?: null,
@@ -96,20 +116,32 @@ class DeunaLedger extends Component
         ];
 
         if ($this->editingId) {
-            DeunaTransaction::findOrFail($this->editingId)->update($data);
+            $t = DeunaTransaction::findOrFail($this->editingId);
+            if (!$this->checkCanModify($t)) {
+                $this->dispatch('show-toast', message: 'সাধারণ ইউজার শুধুমাত্র আজকের হিসাব সম্পাদনা করতে পারবেন!', type: 'error');
+                return;
+            }
+
+            // Amount cannot be changed on edit to maintain static snapshot history
+            $data['amount'] = (float) $t->amount;
+
+            $t->update($data);
+            \App\Models\ActivityLog::log('দেনা-পাওনা আপডেট', "হিসাব আপডেট (আইডি: {$t->id}): {$t->ledger_name} • ধরণ: {$t->transaction_type} • টাকা: {$t->amount}");
             $msg = 'হিসাব সফলভাবে আপডেট করা হয়েছে!';
         } else {
             $t = DeunaTransaction::create($data);
+            $isGiven = in_array(trim($t->transaction_type), ['দেওয়া', 'দেওয়া']);
             \App\Models\DeunaTransactionHistory::create([
                 'deuna_transaction_id' => $t->id,
                 'type'                 => 'initial',
                 'transaction_date'     => $t->transaction_date ?: now(),
                 'description'          => $t->description ?: 'প্রাথমিক লেনদেন',
-                'given_amount'         => $t->transaction_type === 'দেওয়া' ? $t->amount : 0,
-                'received_amount'      => $t->transaction_type === 'নেওয়া' ? $t->amount : 0,
+                'given_amount'         => $isGiven ? $t->amount : 0,
+                'received_amount'      => !$isGiven ? $t->amount : 0,
                 'paid_amount'          => 0,
                 'balance'              => $t->amount,
             ]);
+            \App\Models\ActivityLog::log('দেনা-পাওনা তৈরি', "নতুন হিসাব তৈরি: {$t->ledger_name} • ধরণ: {$t->transaction_type} • টাকা: {$t->amount}");
             $msg = 'নতুন হিসাব সফলভাবে যোগ করা হয়েছে!';
         }
 
@@ -118,10 +150,62 @@ class DeunaLedger extends Component
         $this->dispatch('show-toast', message: $msg, type: 'success');
     }
 
-    public function delete(int $id): void
+    public function confirmDelete(int $id): void
     {
-        DeunaTransaction::findOrFail($id)->delete();
-        $this->dispatch('show-toast', message: 'হিসাবটি সফলভাবে মুছে ফেলা হয়েছে!', type: 'success');
+        $t = DeunaTransaction::findOrFail($id);
+        if (!$this->checkCanModify($t)) {
+            $this->dispatch('show-toast', message: 'সাধারণ ইউজার শুধুমাত্র আজকের হিসাব মুছতে পারবেন!', type: 'error');
+            return;
+        }
+
+        $hasHistory = \App\Models\DeunaTransactionHistory::where('deuna_transaction_id', $t->id)
+            ->whereIn('type', ['payment', 'new_loan'])
+            ->exists() || $t->paid_amount > 0;
+
+        if ($hasHistory) {
+            $this->dispatch('show-toast', message: 'এই ব্যক্তির লেনদেন রেকর্ড বিদ্যমান থাকায় ডিলিট করা সম্ভব নয়।', type: 'error');
+            return;
+        }
+
+        $this->deletingId = $id;
+        $this->showDeleteConfirmModal = true;
+    }
+
+    public function delete(?int $id = null): void
+    {
+        $targetId = $id ?? $this->deletingId;
+        if ($targetId) {
+            $t = DeunaTransaction::findOrFail($targetId);
+            if (!$this->checkCanModify($t)) {
+                $this->dispatch('show-toast', message: 'সাধারণ ইউজার শুধুমাত্র আজকের হিসাব মুছতে পারবেন!', type: 'error');
+                $this->showDeleteConfirmModal = false;
+                $this->deletingId = null;
+                return;
+            }
+
+            $hasHistory = \App\Models\DeunaTransactionHistory::where('deuna_transaction_id', $t->id)
+                ->whereIn('type', ['payment', 'new_loan'])
+                ->exists() || $t->paid_amount > 0;
+
+            if ($hasHistory) {
+                $this->dispatch('show-toast', message: 'এই ব্যক্তির লেনদেন রেকর্ড বিদ্যমান থাকায় ডিলিট করা সম্ভব নয়।', type: 'error');
+                $this->showDeleteConfirmModal = false;
+                $this->deletingId = null;
+                return;
+            }
+
+            $deletedName = $t->ledger_name;
+            $deletedType = $t->transaction_type;
+            $deletedAmount = $t->amount;
+
+            \App\Models\DeunaTransactionHistory::where('deuna_transaction_id', $t->id)->delete();
+            $t->delete();
+
+            \App\Models\ActivityLog::log('দেনা-পাওনা ডিলিট', "হিসাব ডিলিট: {$deletedName} • ধরণ: {$deletedType} • টাকা: {$deletedAmount}");
+            $this->dispatch('show-toast', message: 'হিসাবটি সফলভাবে মুছে ফেলা হয়েছে!', type: 'success');
+        }
+        $this->showDeleteConfirmModal = false;
+        $this->deletingId = null;
     }
 
     public function closeModal(): void
@@ -138,7 +222,6 @@ class DeunaLedger extends Component
         $this->address = '';
         $this->phone = '';
         $this->amount = '';
-        $this->start_date = '';
         $this->transaction_date = '';
         $this->due_date = '';
         $this->row1 = '';
@@ -155,8 +238,8 @@ class DeunaLedger extends Component
                    ->orWhere('phone', 'like', '%' . $this->search . '%');
             }));
 
-        $givenTotal    = (clone $baseQuery)->where('transaction_type', 'দেওয়া')->sum('amount');
-        $receivedTotal = (clone $baseQuery)->where('transaction_type', 'নেওয়া')->sum('amount');
+        $givenTotal    = (clone $baseQuery)->where('transaction_type', 'দেওয়া')->get()->sum(fn($t) => max(0, $t->amount - $t->paid_amount));
+        $receivedTotal = (clone $baseQuery)->where('transaction_type', 'নেওয়া')->get()->sum(fn($t) => max(0, $t->amount - $t->paid_amount));
 
         $givenList    = (clone $baseQuery)->where('transaction_type', 'দেওয়া')->orderBy('id', 'desc')->paginate($this->givenPerPage, ['*'], 'givenPage');
         $receivedList = (clone $baseQuery)->where('transaction_type', 'নেওয়া')->orderBy('id', 'desc')->paginate($this->receivedPerPage, ['*'], 'receivedPage');

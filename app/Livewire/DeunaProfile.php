@@ -21,7 +21,7 @@ class DeunaProfile extends Component
     public string $nextPayDate = '';
     public string $payNotes = '';
 
-    // New Loan Form (+ নতুন লেনদেন)
+    // New Loan Form (নতুন লেনদেন)
     public bool $showNewLoanModal = false;
     public string $newLoanAmount = '';
     public string $newLoanDueDate = '';
@@ -58,20 +58,6 @@ class DeunaProfile extends Component
                 'paid_amount'          => 0,
                 'balance'              => $this->transaction->amount,
             ]);
-        } else {
-            // Fix initial history if amounts were 0 due to Bengali spelling mismatch
-            $initial = DeunaTransactionHistory::where('deuna_transaction_id', $this->transactionId)
-                ->where('type', 'initial')
-                ->first();
-
-            if ($initial && $initial->given_amount == 0 && $initial->received_amount == 0) {
-                if ($isGiven) {
-                    $initial->given_amount = $this->transaction->amount;
-                } else {
-                    $initial->received_amount = $this->transaction->amount;
-                }
-                $initial->save();
-            }
         }
     }
 
@@ -93,15 +79,22 @@ class DeunaProfile extends Component
 
         $t = DeunaTransaction::findOrFail($this->transactionId);
         $payVal = (float) $this->payAmount;
-        $t->paid_amount = min($t->amount, $t->paid_amount + $payVal);
+
+        // Get latest historical balance snapshot
+        $latestHistory = DeunaTransactionHistory::where('deuna_transaction_id', $t->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $prevBalance = $latestHistory ? (float)$latestHistory->balance : max(0, (float)$t->amount - (float)$t->paid_amount);
+        $newBalance = max(0, $prevBalance - $payVal);
+
+        $t->paid_amount += $payVal;
         if ($this->nextPayDate) {
             $t->due_date = $this->nextPayDate;
         }
         $t->save();
 
-        $newDue = max(0, $t->amount - $t->paid_amount);
-
-        // Record history log
+        // Record immutable static snapshot history log
         DeunaTransactionHistory::create([
             'deuna_transaction_id' => $t->id,
             'type'                 => 'payment',
@@ -110,8 +103,10 @@ class DeunaProfile extends Component
             'given_amount'         => 0,
             'received_amount'      => 0,
             'paid_amount'          => $payVal,
-            'balance'              => $newDue,
+            'balance'              => $newBalance,
         ]);
+
+        \App\Models\ActivityLog::log('ঋণ পরিশোধ', "গ্রাহক {$t->ledger_name} (আইডি: {$t->id}): ঋণ পরিশোধ ৳ {$payVal} • অবশিষ্ট বাকি: ৳ {$newBalance}");
 
         $this->transaction = $t;
         $this->showPayModal = false;
@@ -136,16 +131,24 @@ class DeunaProfile extends Component
 
         $t = DeunaTransaction::findOrFail($this->transactionId);
         $addedVal = (float) $this->newLoanAmount;
+
+        // Get latest historical balance snapshot
+        $latestHistory = DeunaTransactionHistory::where('deuna_transaction_id', $t->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $prevBalance = $latestHistory ? (float)$latestHistory->balance : max(0, (float)$t->amount - (float)$t->paid_amount);
+        $newBalance = $prevBalance + $addedVal;
+
         $t->amount += $addedVal;
         if ($this->newLoanDueDate) {
             $t->due_date = $this->newLoanDueDate;
         }
         $t->save();
 
-        $newDue = max(0, $t->amount - $t->paid_amount);
         $isGiven = $this->isGivenType($t->transaction_type);
 
-        // Record history log
+        // Record immutable static snapshot history log
         DeunaTransactionHistory::create([
             'deuna_transaction_id' => $t->id,
             'type'                 => 'new_loan',
@@ -154,8 +157,10 @@ class DeunaProfile extends Component
             'given_amount'         => $isGiven ? $addedVal : 0,
             'received_amount'      => !$isGiven ? $addedVal : 0,
             'paid_amount'          => 0,
-            'balance'              => $newDue,
+            'balance'              => $newBalance,
         ]);
+
+        \App\Models\ActivityLog::log('নতুন লেনদেন', "গ্রাহক {$t->ledger_name} (আইডি: {$t->id}): নতুন ঋণ/লেনদেন যোগ ৳ {$addedVal} • নতুন বাকি: ৳ {$newBalance}");
 
         $this->transaction = $t;
         $this->showNewLoanModal = false;

@@ -197,6 +197,12 @@
                     altInputClass: el.className,
                     allowInput: false,
                     disableMobile: true,
+                    position: 'auto',
+                    onOpen: function(selectedDates, dateStr, instance) {
+                        if (instance && typeof instance._positionCalendar === 'function') {
+                            setTimeout(function() { instance._positionCalendar(); }, 10);
+                        }
+                    },
                     onChange: function(selectedDates, dateStr, instance) {
                         if (!wireProp) return;
                         try {
@@ -371,16 +377,31 @@
             'Khulna': { lat: 22.8456, lon: 89.5403, name: 'খুলনা' },
             'Barisal': { lat: 22.7010, lon: 90.3535, name: 'বরিশাল' },
             'Rangpur': { lat: 25.7558, lon: 89.2444, name: 'রংপুর' },
-            'Mymensingh': { lat: 24.7471, lon: 90.4203, name: 'ময়মনসিংহ' }
+            'Mymensingh': { lat: 24.7471, lon: 90.4203, name: 'ময়মনসিংহ' },
+            'Pabna': { lat: 24.0063, lon: 89.2497, name: 'পাবনা' },
+            'Comilla': { lat: 23.4607, lon: 91.1809, name: 'কুমিল্লা' },
+            'Bogra': { lat: 24.8465, lon: 89.3777, name: 'বগুড়া' }
+        },
+        toBnNum(num) {
+            if (num === null || num === undefined || num === '') return '০';
+            const bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+            return String(num).replace(/[0-9]/g, d => bn[d]);
+        },
+        getMapUrl(lat, lon) {
+            if (!lat || !lon) return '';
+            const delta = 0.08;
+            const bbox = `${lon - delta},${lat - delta},${lon + delta},${lat + delta}`;
+            return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
         },
         getWeatherDesc(code) {
-            // Weather conditions categorized in Bengali
             if (code === 0) return { text: 'পরিষ্কার রৌদ্রোজ্জ্বল আকাশ', icon: '☀️', bg: 'from-amber-400 to-orange-500' };
-            if ([1, 2, 3].includes(code)) return { text: 'আংশিক মেঘলা', icon: '⛅', bg: 'from-sky-400 to-blue-500' };
+            if ([1, 2].includes(code)) return { text: 'আংশিক মেঘলা', icon: '⛅', bg: 'from-sky-400 to-blue-500' };
+            if (code === 3) return { text: 'মেঘলা আকাশ', icon: '☁️', bg: 'from-slate-500 to-slate-700' };
             if ([45, 48].includes(code)) return { text: 'ঘন কুয়াশাচ্ছন্ন', icon: '🌫️', bg: 'from-slate-400 to-gray-500' };
-            if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return { text: 'হালকা থেকে মাঝারি বৃষ্টিপাত', icon: '🌧️', bg: 'from-indigo-500 to-blue-700' };
+            if ([51, 53, 55].includes(code)) return { text: 'হালকা গুড়ি গুড়ি বৃষ্টি', icon: '🌦️', bg: 'from-cyan-500 to-blue-600' };
+            if ([61, 63, 65, 80, 81, 82].includes(code)) return { text: 'হালকা থেকে মাঝারি বৃষ্টিপাত', icon: '🌧️', bg: 'from-indigo-500 to-blue-700' };
             if ([95, 96, 99].includes(code)) return { text: 'বজ্রঝড় সহ বৃষ্টি', icon: '⛈️', bg: 'from-purple-800 to-indigo-950' };
-            return { text: 'মেঘলা আকাশ', icon: '☁️', bg: 'from-slate-500 to-slate-700' };
+            return { text: 'আংশিক মেঘলা', icon: '⛅', bg: 'from-sky-400 to-blue-500' };
         },
         getWindDir(degrees) {
             if (degrees >= 337.5 || degrees < 22.5) return 'উত্তর';
@@ -394,9 +415,8 @@
         },
         async fetchWeather() {
             this.weatherLoading = true;
-            const city = this.cities[this.selectedCity];
+            const city = this.cities[this.selectedCity] || this.cities['Dhaka'];
             try {
-                // Fetch current + daily data for UV and precipitation probability
                 const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_probability_max&timezone=Asia/Dhaka`);
                 const data = await res.json();
                 this.weatherData = {
@@ -406,15 +426,15 @@
                     code: data.current.weather_code,
                     windSpeed: data.current.wind_speed_10m,
                     windDir: this.getWindDir(data.current.wind_direction_10m),
-                    uv: data.daily.uv_index_max[0],
-                    rainProb: data.daily.precipitation_probability_max[0],
-                    tempMax: data.daily.temperature_2m_max[0],
-                    tempMin: data.daily.temperature_2m_min[0],
+                    uv: data.daily ? data.daily.uv_index_max[0] : 0,
+                    rainProb: data.daily ? data.daily.precipitation_probability_max[0] : 0,
+                    tempMax: data.daily ? data.daily.temperature_2m_max[0] : data.current.temperature_2m,
+                    tempMin: data.daily ? data.daily.temperature_2m_min[0] : data.current.temperature_2m,
                     lat: city.lat,
                     lon: city.lon
                 };
             } catch (err) {
-                console.error(err);
+                console.error('Weather fetch error:', err);
             } finally {
                 this.weatherLoading = false;
             }
@@ -618,7 +638,7 @@
                                     <div class="p-5 rounded-3xl text-white bg-gradient-to-tr shadow-lg flex items-center justify-between" :class="getWeatherDesc(weatherData.code).bg">
                                         <div class="space-y-1">
                                             <span class="text-xs font-black tracking-widest uppercase opacity-90 font-sans block" x-text="cities[selectedCity].name + ' আবহাওয়া'"></span >
-                                            <span class="text-4xl md:text-5xl font-black font-sans leading-none block" x-text="Math.round(weatherData.temp) + '°C'"></span>
+                                            <span class="text-4xl md:text-5xl font-black font-sans leading-none block" x-text="toBnNum(Math.round(weatherData.temp)) + '°C'"></span>
                                             <span class="text-xs font-bold font-sans opacity-95 block" x-text="getWeatherDesc(weatherData.code).text"></span>
                                         </div>
                                         <span class="text-6xl filter drop-shadow-md" x-text="getWeatherDesc(weatherData.code).icon"></span>
@@ -629,42 +649,42 @@
                                         <!-- RealFeel -->
                                         <div class="bg-gray-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-gray-150 dark:border-slate-800">
                                             <span class="text-[10px] font-bold text-gray-400 block font-sans uppercase">অনুভূত তাপমাত্রা</span>
-                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="Math.round(weatherData.feel) + '°C'"></span>
+                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="toBnNum(Math.round(weatherData.feel)) + '°C'"></span>
                                         </div>
                                         <!-- Min/Max Temp -->
                                         <div class="bg-gray-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-gray-150 dark:border-slate-800">
                                             <span class="text-[10px] font-bold text-gray-400 block font-sans uppercase">সর্বোচ্চ / সর্বনিম্ন</span>
-                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="Math.round(weatherData.tempMax) + '° / ' + Math.round(weatherData.tempMin) + '°'"></span>
+                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="toBnNum(Math.round(weatherData.tempMax)) + '° / ' + toBnNum(Math.round(weatherData.tempMin)) + '°'"></span>
                                         </div>
                                         <!-- Humidity -->
                                         <div class="bg-gray-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-gray-150 dark:border-slate-800">
                                             <span class="text-[10px] font-bold text-gray-400 block font-sans uppercase">আর্দ্রতা</span>
-                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="weatherData.humidity + '%'"></span>
+                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="toBnNum(weatherData.humidity) + '%'"></span>
                                         </div>
                                         <!-- Rain Probability -->
                                         <div class="bg-gray-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-gray-150 dark:border-slate-800">
                                             <span class="text-[10px] font-bold text-gray-400 block font-sans uppercase">বৃষ্টির সম্ভাবনা</span>
-                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="weatherData.rainProb + '%'"></span>
+                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="toBnNum(weatherData.rainProb) + '%'"></span>
                                         </div>
                                         <!-- Wind Speed & Direction -->
                                         <div class="bg-gray-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-gray-150 dark:border-slate-800">
                                             <span class="text-[10px] font-bold text-gray-400 block font-sans uppercase">বাতাস</span>
-                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block leading-tight" x-text="weatherData.windSpeed + ' কিমি/ঘণ্টা (' + weatherData.windDir + ')'"></span>
+                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block leading-tight" x-text="toBnNum(weatherData.windSpeed) + ' কিমি/ঘণ্টা (' + weatherData.windDir + ')'"></span>
                                         </div>
                                         <!-- UV Index -->
                                         <div class="bg-gray-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-gray-150 dark:border-slate-800">
                                             <span class="text-[10px] font-bold text-gray-400 block font-sans uppercase">ইউভি ইনডেক্স</span>
-                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="weatherData.uv + ' (সর্বোচ্চ)'"></span>
+                                            <span class="text-sm font-black text-gray-700 dark:text-slate-200 font-sans mt-0.5 block" x-text="toBnNum(weatherData.uv) + ' (সর্বোচ্চ)'"></span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- RIGHT: Location Map Frame (Google Maps Dynamic Embed) -->
+                                <!-- RIGHT: Location Map Frame (OpenStreetMap Dynamic Embed) -->
                                 <div class="bg-gray-50 dark:bg-slate-950 rounded-3xl border border-gray-150 dark:border-slate-800/80 p-3 flex flex-col h-full min-h-[250px] md:min-h-full">
                                     <span class="text-[10px] font-bold text-gray-500 dark:text-slate-400 mb-2 font-sans block uppercase pl-1">ভৌগোলিক মানচিত্র</span>
                                     <div class="flex-grow rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-800">
                                         <iframe 
-                                            x-bind:src="`https://maps.google.com/maps?q=${weatherData.lat},${weatherData.lon}&z=11&output=embed`" 
+                                            :src="getMapUrl(weatherData.lat, weatherData.lon)" 
                                             class="w-full h-full min-h-[240px] md:min-h-[300px]" 
                                             style="border:0;" 
                                             allowfullscreen="" 

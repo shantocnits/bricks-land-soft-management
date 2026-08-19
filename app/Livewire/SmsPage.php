@@ -29,9 +29,9 @@ class SmsPage extends Component
 
     // Payment Form
     public $paymentMethod = 'বিকাশ';
-    public $senderPhone = '01797-926335';
-    public $trxId = '655666';
-    public $amount = 500;
+    public $senderPhone = '';
+    public $trxId = '';
+    public $amount = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -91,7 +91,7 @@ class SmsPage extends Component
             'amount.required' => 'টাকার পরিমাণ আবশ্যক।',
         ]);
 
-        $smsRate = floatval(Setting::get('sms_rate', '0.52'));
+        $smsRate = floatval(Setting::get('sms_rate', '0.35'));
         $smsCount = $smsRate > 0 ? intval(floor($this->amount / $smsRate)) : intval($this->amount);
 
         SmsRecharge::create([
@@ -102,6 +102,10 @@ class SmsPage extends Component
             'sms_count' => $smsCount,
             'status' => 'Pending',
         ]);
+
+        $this->senderPhone = '';
+        $this->trxId = '';
+        $this->amount = null;
 
         $this->dispatch('show-toast', ['message' => 'পেমেন্ট রিকোয়েস্ট সফলভাবে জমা হয়েছে!']);
         $this->modalTab = 'history';

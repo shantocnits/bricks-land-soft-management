@@ -277,7 +277,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                     </svg>
                                     <div>
-                                        নিচের নম্বরে টাকা পাঠায়ে TrxID কপি করুন। SMS রেট: ০.৫২ পয়সা প্রতি এসএমএস।
+                                        নিচের নম্বরে টাকা পাঠায়ে TrxID কপি করুন। SMS রেট: ০.৩৫ পয়সা প্রতি এসএমএস।
                                     </div>
                                 </div>
 
@@ -406,7 +406,7 @@
                                         <input 
                                             type="text" 
                                             wire:model="senderPhone" 
-                                            placeholder="01797-926335" 
+                                            placeholder="প্রেরকের নম্বর" 
                                             class="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-800 dark:text-white font-mono"
                                         >
                                         @error('senderPhone') <span class="text-[10px] text-rose-500 mt-0.5 block">{{ $message }}</span> @enderror
@@ -418,7 +418,7 @@
                                         <input 
                                             type="text" 
                                             wire:model="trxId" 
-                                            placeholder="655666" 
+                                            placeholder="Transaction ID" 
                                             class="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-800 dark:text-white font-mono"
                                         >
                                         @error('trxId') <span class="text-[10px] text-rose-500 mt-0.5 block">{{ $message }}</span> @enderror
@@ -434,7 +434,7 @@
                                             <input 
                                                 type="number" 
                                                 wire:model.live="amount" 
-                                                placeholder="500" 
+                                                placeholder="টাকার পরিমাণ" 
                                                 class="w-full pl-7 pr-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-800 dark:text-white font-mono"
                                             >
                                         </div>

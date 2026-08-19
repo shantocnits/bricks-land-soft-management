@@ -17,6 +17,10 @@ class PhoneNumber extends Component
     public bool $showModal = false;
     public ?int $editingId = null;
 
+    // Delete confirmation state
+    public bool $showDeleteConfirmModal = false;
+    public ?int $deletingId = null;
+
     // Form fields
     public string $name = '';
     public string $address = '';
@@ -88,10 +92,21 @@ class PhoneNumber extends Component
         $this->dispatch('show-toast', message: $msg, type: 'success');
     }
 
-    public function delete(int $id): void
+    public function confirmDelete(int $id): void
     {
-        PhoneContact::findOrFail($id)->delete();
-        $this->dispatch('show-toast', message: 'নম্বরটি সফলভাবে মুছে ফেলা হয়েছে!', type: 'success');
+        $this->deletingId = $id;
+        $this->showDeleteConfirmModal = true;
+    }
+
+    public function delete(?int $id = null): void
+    {
+        $targetId = $id ?? $this->deletingId;
+        if ($targetId) {
+            PhoneContact::findOrFail($targetId)->delete();
+            $this->dispatch('show-toast', message: 'নম্বরটি সফলভাবে মুছে ফেলা হয়েছে!', type: 'success');
+        }
+        $this->showDeleteConfirmModal = false;
+        $this->deletingId = null;
     }
 
     public function closeModal(): void

@@ -213,7 +213,7 @@
                     <button type="button" wire:click="openNewLoanModal"
                         class="w-full py-3 px-4 bg-[#00838F] hover:bg-[#006064] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                        + নতুন লেনদেন
+                        নতুন লেনদেন
                     </button>
                     {{-- Green Button: ঋণ পরিশোধ --}}
                     <button type="button" wire:click="openPayModal"
