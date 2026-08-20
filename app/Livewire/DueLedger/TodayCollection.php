@@ -177,7 +177,7 @@ class TodayCollection extends Component
         $this->customer_phone = '';
         $this->customer_address = '';
         $this->total_due = 0;
-        $this->cash = 0;
+        $this->cash = '';
         $this->new_due = 0;
         $this->due_payment_date = '';
         $this->send_sms = false;

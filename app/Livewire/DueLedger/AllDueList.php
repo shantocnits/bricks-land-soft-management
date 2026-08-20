@@ -178,7 +178,7 @@ class AllDueList extends Component
         $this->customer_name = $challan->customer_name;
         $this->customer_phone = $challan->customer_phone;
         $this->customer_address = $challan->customer_address;
-        $this->cash = 0;
+        $this->cash = '';
         $this->notes = '';
         $this->send_sms = false;
         $this->due_payment_date = '';

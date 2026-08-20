@@ -476,7 +476,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-6h6"/>
                                     </svg>
                                 </span>
-                                <input type="number" step="0.01" wire:model="rate" placeholder="0"
+                                <input type="text" inputmode="numeric" step="0.01" wire:model="rate" placeholder="০.০০"
                                     class="w-full py-2.5 pl-9 pr-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-semibold">
                             </div>
                             @error('rate') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
@@ -489,7 +489,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
                                     </svg>
                                 </span>
-                                <input type="number" wire:model="divisor" placeholder="1"
+                                <input type="text" inputmode="numeric" wire:model="divisor" placeholder="১"
                                     class="w-full py-2.5 pl-9 pr-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-semibold">
                             </div>
                             @error('divisor') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror

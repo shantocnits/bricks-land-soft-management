@@ -288,7 +288,7 @@
                     <!-- Rate -->
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">রেট (প্রতি হাজার টাকা)</label>
-                        <input type="number" step="0.01" wire:model="rate" placeholder="যেমন: 9500"
+                        <input type="text" inputmode="numeric" step="0.01" wire:model="rate" placeholder="০.০০"
                                class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-semibold">
                         @error('rate') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                     </div>

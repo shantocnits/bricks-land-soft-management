@@ -130,13 +130,13 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1 uppercase font-sans">টপ প্যাডিং (উপরে)</label>
-                    <input type="number" wire:model="thermal_padding_top" placeholder="১০"
+                    <input type="text" inputmode="numeric" wire:model="thermal_padding_top" placeholder="১০"
                            class="w-full py-2.5 px-4 rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20 transition-all font-semibold shadow-inner">
                     @error('thermal_padding_top') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1 uppercase font-sans">বটম প্যাডিং (নিচে)</label>
-                    <input type="number" wire:model="thermal_padding_bottom" placeholder="০"
+                    <input type="text" inputmode="numeric" wire:model="thermal_padding_bottom" placeholder="০"
                            class="w-full py-2.5 px-4 rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20 transition-all font-semibold shadow-inner">
                     @error('thermal_padding_bottom') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                 </div>

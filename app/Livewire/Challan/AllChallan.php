@@ -13,6 +13,7 @@ use App\Models\Setting;
 class AllChallan extends Component
 {
     use WithPagination;
+    use \App\Traits\ValidatesUserLimits;
 
     public $search = '';
     public $dateFrom = '';
@@ -225,10 +226,10 @@ class AllChallan extends Component
         $this->customer_address = '';
         $this->ledger_id = '';
         $this->notes = '';
-        $this->rent = 0;
-        $this->transport_rent = 0;
-        $this->discount = 0;
-        $this->cash = 0;
+        $this->rent = '';
+        $this->transport_rent = '';
+        $this->discount = '';
+        $this->cash = '';
         $this->send_sms = false;
         $this->items = [];
         $this->value = 0;
@@ -245,8 +246,8 @@ class AllChallan extends Component
     {
         $this->items[] = [
             'category_name' => '',
-            'rate' => 0,
-            'quantity' => 0,
+            'rate' => '',
+            'quantity' => '',
             'amount' => 0
         ];
         $this->calculateTotals();
@@ -383,6 +384,10 @@ class AllChallan extends Component
             'items.*.quantity.required' => 'পরিমাণ আবশ্যক।',
         ]);
 
+        if (!$this->validateUserLimits($this->discount ?: 0, $this->due ?: 0)) {
+            return;
+        }
+
         $challanData = [
             'customer_type' => $this->customer_type,
             'customer_phone' => $this->customer_phone,
@@ -474,6 +479,10 @@ class AllChallan extends Component
             'items.*.category_name.required' => 'শ্রেণি আবশ্যক।',
             'items.*.quantity.required' => 'পরিমাণ আবশ্যক।',
         ]);
+
+        if (!$this->validateUserLimits($this->discount ?: 0, $this->due ?: 0)) {
+            return;
+        }
 
         $challanData = [
             'customer_type' => $this->customer_type,
@@ -667,6 +676,10 @@ class AllChallan extends Component
             'deliveryDate' => 'required|date'
         ]);
 
+        if (!$this->validateUserLimits(0, 0, $this->todayDeliveryQty ?: 0)) {
+            return;
+        }
+
         $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
         if ($item) {
             $challan = $item->challan;
@@ -716,6 +729,10 @@ class AllChallan extends Component
             'deliveryNo' => 'required',
             'deliveryDate' => 'required|date'
         ]);
+
+        if (!$this->validateUserLimits(0, 0, $this->todayDeliveryQty ?: 0)) {
+            return;
+        }
 
         $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
         $challan = null;

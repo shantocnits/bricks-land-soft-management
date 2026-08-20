@@ -731,12 +731,12 @@
 
                                     <div class="col-span-2">
 
-                                        <input type="number" step="0.01" wire:model.live="items.{{ $index }}.rate" placeholder="৮০" @focus="$el.select()"
+                                        <input type="text" inputmode="numeric" step="0.01" wire:model.live="items.{{ $index }}.rate" placeholder="৮০" @focus="$el.select()"
                                                class="w-full py-1.5 px-2.5 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-right text-xs font-semibold focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all text-gray-808 dark:text-white font-sans">
                                     </div>
                                     <div class="col-span-2">
 
-                                        <input type="number" wire:model.live="items.{{ $index }}.quantity" placeholder="০" @focus="$el.select()"
+                                        <input type="text" inputmode="numeric" wire:model.live="items.{{ $index }}.quantity" placeholder="০" @focus="$el.select()"
                                                class="w-full py-1.5 px-2.5 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-right text-xs font-semibold focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all text-gray-808 dark:text-white font-sans">
                                     </div>
                                     <div class="col-span-2 text-right font-sans font-bold text-gray-700 dark:text-slate-300">
@@ -798,16 +798,16 @@
                             <input type="text" value="{{ number_format($value) }}" disabled class="py-1.5 px-3 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-gray-700 dark:text-gray-300 font-bold select-none font-sans w-full">
 
                             <span class="text-xs font-bold text-[#E57E22] dark:text-orange-400 whitespace-nowrap">ছাড়:</span>
-                            <input type="number" wire:model.live="discount" @focus="$el.select()" placeholder="৳" class="py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-[#E57E22] dark:text-orange-400 font-bold focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 transition-all font-sans w-full">
+                            <input type="text" inputmode="numeric" wire:model.live="discount" @focus="$el.select()" placeholder="০.০০" class="py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-[#E57E22] dark:text-orange-400 font-bold focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 transition-all font-sans w-full">
 
                             <span class="text-xs font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">গাড়ি ভাড়া:</span>
-                            <input type="number" wire:model.live="transport_rent" @focus="$el.select()" placeholder="৳" class="py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-blue-600 dark:text-blue-400 font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-sans w-full">
+                            <input type="text" inputmode="numeric" wire:model.live="transport_rent" @focus="$el.select()" placeholder="০.০০" class="py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-blue-600 dark:text-blue-400 font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-sans w-full">
 
                             <span class="text-xs font-bold text-gray-800 dark:text-slate-200 whitespace-nowrap">মোট:</span>
                             <input type="text" value="{{ number_format($grand_total) }}" disabled class="py-1.5 px-3 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-gray-800 dark:text-slate-200 font-extrabold select-none font-sans w-full">
 
                             <span class="text-xs font-bold text-primary dark:text-primary-400 whitespace-nowrap">নগদ:</span>
-                            <input type="number" wire:model.live="cash" @focus="$el.select()" @click="$wire.set('cash', $wire.grand_total)" placeholder="৳" class="py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-255 dark:border-slate-700 rounded-lg text-right text-primary dark:text-primary-400 font-bold focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all font-sans w-full">
+                            <input type="text" inputmode="numeric" wire:model.live="cash" @focus="$el.select()" @click="$wire.set('cash', $wire.grand_total)" placeholder="০.০০" class="py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-gray-255 dark:border-slate-700 rounded-lg text-right text-primary dark:text-primary-400 font-bold focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all font-sans w-full">
 
                             <span class="text-xs font-bold text-red-500 dark:text-red-400 whitespace-nowrap">বাকি:</span>
                             <input type="text" value="{{ number_format($due) }}" disabled class="py-1.5 px-3 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-250 dark:border-slate-700 rounded-lg text-right text-red-600 dark:text-red-400 font-bold select-none font-sans w-full">

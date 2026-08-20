@@ -392,7 +392,7 @@
                             <label class="block text-gray-500 dark:text-slate-400 font-bold mb-1.5">জমা</label>
                             <div class="relative flex items-center">
                                 <span class="absolute left-3 text-gray-400 font-semibold">৳</span>
-                                <input type="number" step="0.01" wire:model.live="cash" placeholder="জমা পরিমাণ" class="w-full pl-7 pr-3.5 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-white font-sans font-semibold focus:outline-none focus:border-primary">
+                                <input type="text" inputmode="numeric" step="0.01" wire:model.live="cash" placeholder="০.০০" class="w-full pl-7 pr-3.5 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-808 dark:text-white font-sans font-semibold focus:outline-none focus:border-primary">
                             </div>
                             @error('cash') <span class="text-red-550 text-[10px] block mt-1">{{ $message }}</span> @enderror
                         </div>

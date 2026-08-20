@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 class TodayDelivery extends Component
 {
     use WithPagination;
+    use \App\Traits\ValidatesUserLimits;
 
     // Filter states
     public $search = '';
@@ -132,7 +133,7 @@ class TodayDelivery extends Component
         $this->deliveryItemCategory = '';
         $this->deliveryTotalQty = 0;
         $this->deliveredQtySoFar = 0;
-        $this->todayDeliveryQty = 0;
+        $this->todayDeliveryQty = '';
     }
 
     public function openNewDeliveryModal()
@@ -151,6 +152,10 @@ class TodayDelivery extends Component
             'deliveryDate' => 'required|date',
             'selectedChallanItemId' => 'required'
         ]);
+
+        if (!$this->validateUserLimits(0, 0, $this->todayDeliveryQty ?: 0)) {
+            return;
+        }
 
         $item = ChallanItem::find($this->selectedChallanItemId);
         if ($item) {

@@ -13,6 +13,7 @@
  class TodayChallan extends Component
  {
      use WithPagination;
+     use \App\Traits\ValidatesUserLimits;
  
      public $search = '';
      public $date = '';
@@ -280,17 +281,17 @@
          $this->ledger_id = '';
          $this->challan_type = 'আজকের';
          $this->notes = '';
-         $this->rent = 0;
-         $this->transport_rent = 0;
-         $this->discount = 0;
-         $this->cash = 0;
+         $this->rent = '';
+         $this->transport_rent = '';
+         $this->discount = '';
+         $this->cash = '';
          $this->send_sms = false;
          $this->items = [];
          $this->value = 0;
          $this->grand_total = 0;
          $this->due = 0;
          $this->due_payment_date = '';
-        $this->deliveryDate = now()->toDateString();
+         $this->deliveryDate = now()->toDateString();
          $this->editingId = null;
          $this->resetValidation();
      }
@@ -437,6 +438,10 @@
              'items.*.category_name.required' => 'শ্রেণি আবশ্যক।',
              'items.*.quantity.required' => 'পরিমাণ আবশ্যক।',
          ]);
+
+         if (!$this->validateUserLimits($this->discount ?: 0, $this->due ?: 0)) {
+             return;
+         }
  
          $challanData = [
              'customer_type' => $this->customer_type,
@@ -529,6 +534,10 @@
              'items.*.category_name.required' => 'শ্রেণি আবশ্যক।',
              'items.*.quantity.required' => 'পরিমাণ আবশ্যক।',
          ]);
+
+         if (!$this->validateUserLimits($this->discount ?: 0, $this->due ?: 0)) {
+             return;
+         }
 
  
          $challanData = [
@@ -716,6 +725,10 @@
             'deliveryDate' => 'required|date'
         ]);
 
+        if (!$this->validateUserLimits(0, 0, $this->todayDeliveryQty ?: 0)) {
+            return;
+        }
+
         $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
         if ($item) {
             $challan = $item->challan;
@@ -765,6 +778,10 @@
             'deliveryNo' => 'required',
             'deliveryDate' => 'required|date'
         ]);
+
+        if (!$this->validateUserLimits(0, 0, $this->todayDeliveryQty ?: 0)) {
+            return;
+        }
 
         $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
         $challan = null;

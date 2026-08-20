@@ -695,11 +695,8 @@
                             </div>
                         </template>
                     </div>
-                </div>
-
             </div>
         </div>
-
     </div>
 </body>
 </html>

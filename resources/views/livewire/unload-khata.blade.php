@@ -482,7 +482,7 @@ if (!function_exists('toBanglaNum')) {
                     {{-- Quantity --}}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 mb-1.5 font-sans">পরিমান <span class="text-red-500">*</span></label>
-                        <input type="number" wire:model="quantity" placeholder="আনলোডের পরিমাণ"
+                        <input type="text" inputmode="numeric" wire:model="quantity" placeholder="০"
                                class="w-full px-3 py-2.5 text-xs font-bold font-mono rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
                         @error('quantity')<p class="text-red-500 text-[10px] mt-1 font-sans">{{ $message }}</p>@enderror
                     </div>

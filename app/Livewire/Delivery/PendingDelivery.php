@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 class PendingDelivery extends Component
 {
     use WithPagination;
+    use \App\Traits\ValidatesUserLimits;
 
     // Filter states
     public $search = '';
@@ -132,6 +133,10 @@ class PendingDelivery extends Component
             'deliveryDate' => 'required|date',
             'selectedChallanItemId' => 'required'
         ]);
+
+        if (!$this->validateUserLimits(0, 0, $this->todayDeliveryQty ?: 0)) {
+            return;
+        }
 
         $item = ChallanItem::find($this->selectedChallanItemId);
         if ($item) {

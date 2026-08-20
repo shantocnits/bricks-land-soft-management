@@ -104,7 +104,7 @@
                 [
                     'id'          => 'M7lc1UVf-VE',
                     'title'       => 'আমাদের এই সফটওয়্যারের পুরনো ভার্সন এর ভিডিও',
-                    'subtitle'    => 'Brick field man | Md Manik Mia',
+                    'subtitle'    => 'Bricks Land | Codenext IT',
                     'thumbnail'   => 'https://img.youtube.com/vi/M7lc1UVf-VE/hqdefault.jpg',
                     'badge'       => 'A - Z',
                     'badge_color' => 'bg-orange-400',
@@ -112,7 +112,7 @@
                 [
                     'id'          => 'tgbNymZ7vqY',
                     'title'       => 'সফটওয়্যার এর ভিডিও',
-                    'subtitle'    => 'ইট ডাটা সফট | Payra Tech',
+                    'subtitle'    => 'Bricks Land | Codenext IT',
                     'thumbnail'   => 'https://img.youtube.com/vi/tgbNymZ7vqY/hqdefault.jpg',
                     'badge'       => 'A - Z',
                     'badge_color' => 'bg-orange-400',
@@ -120,7 +120,7 @@
                 [
                     'id'          => 'M7lc1UVf-VE',
                     'title'       => 'আমাদের এই সফটওয়্যারের পুরনো ভার্সন এর ভিডিও',
-                    'subtitle'    => 'Brick field man | Md Manik Mia',
+                    'subtitle'    => 'Bricks Land | Codenext IT',
                     'thumbnail'   => 'https://img.youtube.com/vi/M7lc1UVf-VE/hqdefault.jpg',
                     'badge'       => 'A - Z',
                     'badge_color' => 'bg-orange-400',

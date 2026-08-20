@@ -183,7 +183,7 @@
                       <!-- Amount Input -->
                       <div>
                           <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 font-sans">নতুন পরিমাণ সেট করুন</label>
-                          <input type="number" step="0.01" wire:model="amount" placeholder="৳ 0.00"
+                          <input type="text" inputmode="numeric" step="0.01" wire:model="amount" placeholder="০.০০"
                                  class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs text-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-250/20 transition-all font-semibold">
                           @error('amount') <span class="text-red-500 text-[10px] mt-1 block font-sans">{{ $message }}</span> @enderror
                       </div>

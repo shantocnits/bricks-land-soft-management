@@ -12,6 +12,7 @@ use App\Models\Ledger;
 class CustomerProfile extends Component
 {
     use WithPagination;
+    use \App\Traits\ValidatesUserLimits;
 
     public $phone;
     public $customer_name = '';
@@ -133,6 +134,10 @@ class CustomerProfile extends Component
             'deliveryDate' => 'required|date'
         ]);
 
+        if (!$this->validateUserLimits(0, 0, $this->todayDeliveryQty ?: 0)) {
+            return;
+        }
+
         $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
         if ($item) {
             $challan = $item->challan;
@@ -180,6 +185,10 @@ class CustomerProfile extends Component
             'deliveryNo' => 'required',
             'deliveryDate' => 'required|date'
         ]);
+
+        if (!$this->validateUserLimits(0, 0, $this->todayDeliveryQty ?: 0)) {
+            return;
+        }
 
         $item = \App\Models\ChallanItem::find($this->selectedChallanItemId);
         $challan = null;
