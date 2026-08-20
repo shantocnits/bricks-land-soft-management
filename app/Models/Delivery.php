@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsActivity;
 
 class Delivery extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'delivery_no', 'challan_id', 'challan_item_id', 'category_name',
         'quantity', 'delivery_date', 'next_delivery_date', 'notes',

@@ -454,4 +454,19 @@ class TodayCollection extends Component
             'seasons' => collect($this->seasonOptions())
         ])->layout('layouts.app');
     }
+
+    public $confirmDeleteId = null;
+
+    public function confirmDelete($id)
+    {
+        $this->confirmDeleteId = $id;
+    }
+
+    public function deleteConfirmed()
+    {
+        if ($this->confirmDeleteId) {
+            $this->delete($this->confirmDeleteId);
+            $this->confirmDeleteId = null;
+        }
+    }
 }

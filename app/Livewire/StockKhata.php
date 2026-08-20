@@ -169,7 +169,22 @@ class StockKhata extends Component
         $this->dispatch('show-toast', message: 'স্টক আপডেট রেকর্ডটি সফলভাবে আপডেট করা হয়েছে।', type: 'success');
     }
 
-    public function deleteAdjustment($id)
+    public $confirmDeleteId = null;
+
+    public function confirmDelete($id)
+    {
+        $this->confirmDeleteId = $id;
+    }
+
+    public function deleteConfirmed()
+    {
+        if ($this->confirmDeleteId) {
+            $this->delete($this->confirmDeleteId);
+            $this->confirmDeleteId = null;
+        }
+    }
+
+    public function delete($id)
     {
         $adj = StockAdjustment::findOrFail($id);
         $adjDate = Carbon::parse($adj->date);

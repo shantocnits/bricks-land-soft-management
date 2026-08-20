@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\LogsActivity;
 
 class InvestmentTransaction extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'investor_id',
         'transaction_type',

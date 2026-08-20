@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsActivity;
 
 class ChallanItem extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'challan_id', 'category_name', 'rate', 'quantity', 'delivered_quantity', 'amount'
     ];

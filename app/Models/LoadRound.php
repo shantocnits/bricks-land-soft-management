@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsActivity;
 
 class LoadRound extends Model
 {
+    use LogsActivity;
     protected $fillable = ['name', 'sort_order'];
 
     protected static function booted()

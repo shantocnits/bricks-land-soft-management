@@ -1,32 +1,4 @@
 <div class="space-y-6">
-    <!-- Success Alert -->
-    @if (session()->has('message'))
-        <div x-data="{ show: true }"
-             x-show="show"
-             x-init="setTimeout(() => show = false, 3000)"
-             x-transition:leave="transition ease-in duration-300"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-400 rounded-2xl flex items-center gap-3 text-sm shadow-sm font-sans"
-             x-cloak>
-            <span class="font-medium">{{ session('message') }}</span>
-        </div>
-    @endif
-
-    <!-- Error Alert -->
-    @if (session()->has('error'))
-        <div x-data="{ show: true }"
-             x-show="show"
-             x-init="setTimeout(() => show = false, 4000)"
-             x-transition:leave="transition ease-in duration-300"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 text-red-800 dark:text-red-400 rounded-2xl flex items-center gap-3 text-sm shadow-sm font-sans"
-             x-cloak>
-            <span class="font-medium">{{ session('error') }}</span>
-        </div>
-    @endif
-
     <!-- Top Action Bar -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-150 dark:border-slate-800 shadow-sm transition-colors duration-300">
         <!-- Search bar -->
@@ -101,8 +73,7 @@
                                         এডিট
                                     </button>
                                     @if($user->id !== auth()->id())
-                                        <button wire:click="delete({{ $user->id }})"
-                                                onclick="confirm('ব্যবহারকারী মুছে ফেলবেন?') || event.stopImmediatePropagation()"
+                                        <button wire:click="confirmDelete({{ $user->id }})"
                                                 class="px-2.5 py-1.5 border border-red-100 dark:border-red-950/30 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 rounded-lg transition-all cursor-pointer font-sans text-[11px] font-semibold"
                                                 title="মুছে ফেলুন">
                                             ডিলিট
@@ -279,6 +250,44 @@
                       </div>
                   </form>
              </div>
+        </div>
+    </template>
+
+    {{-- Delete Confirmation Modal (Full Screen Teleport) --}}
+    <template x-teleport="body">
+        <div x-data="{ open: @entangle('confirmDeleteId').live }"
+             x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+             x-cloak>
+            <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-150 dark:border-slate-800 text-center font-sans">
+                <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 mx-auto flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-gray-800 dark:text-white mb-2">আপনি কি নিশ্চিত?</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">
+                    আপনি কি নিশ্চিত যে এই ব্যবহারকারী মুছে ফেলতে চান?
+                </p>
+                <div class="flex items-center justify-center gap-3">
+                    <button type="button"
+                            wire:click="deleteConfirmed"
+                            class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer">
+                        হ্যাঁ, ডিলিট করুন
+                    </button>
+                    <button type="button"
+                            wire:click="$set('confirmDeleteId', null)"
+                            class="px-5 py-2 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-bold text-xs rounded-xl transition-all cursor-pointer">
+                        না
+                    </button>
+                </div>
+            </div>
         </div>
     </template>
 </div>

@@ -67,14 +67,6 @@
                     </button>
                 @endif
 
-                <!-- 5. পাসওয়ার্ড পরিবর্তন -->
-                <button type="button" wire:click="setTab('password')"
-                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'password' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-slate-900 border border-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/>
-                    </svg>
-                    <span>পাসওয়ার্ড পরিবর্তন</span>
-                </button>
 
                 @if($isUserAdmin)
                     <!-- 6. ইউজার লিমিট -->
@@ -167,14 +159,6 @@
                     </button>
                 @endif
 
-                <!-- 5. পাসওয়ার্ড পরিবর্তন -->
-                <button type="button" wire:click="setTab('password')"
-                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border-0 {{ $activeTab === 'password' ? 'bg-primary text-white shadow-md' : 'bg-transparent text-gray-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800/50 hover:text-emerald-700 dark:hover:text-emerald-400' }}">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/>
-                    </svg>
-                    <span>পাসওয়ার্ড পরিবর্তন</span>
-                </button>
 
                 @if($isUserAdmin)
                     <!-- 6. ইউজার লিমিট -->
@@ -230,9 +214,6 @@
                         @else
                             <livewire:settings.my-profile wire:key="subtab-my-profile" />
                         @endif
-                        @break
-                    @case('password')
-                        <livewire:settings.password-change wire:key="subtab-password-change" />
                         @break
                     @default
                         @if($isUserAdmin)

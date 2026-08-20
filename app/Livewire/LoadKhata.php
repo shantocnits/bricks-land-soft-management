@@ -174,6 +174,21 @@ class LoadKhata extends Component
         $this->showModal   = true;
     }
 
+    public $confirmDeleteId = null;
+
+    public function confirmDelete($id)
+    {
+        $this->confirmDeleteId = $id;
+    }
+
+    public function deleteConfirmed()
+    {
+        if ($this->confirmDeleteId) {
+            $this->delete($this->confirmDeleteId);
+            $this->confirmDeleteId = null;
+        }
+    }
+
     public function delete($id)
     {
         $entry = LoadEntry::findOrFail($id);

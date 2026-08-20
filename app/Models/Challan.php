@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Delivery;
+use App\Traits\LogsActivity;
 
 class Challan extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'customer_type',
         'customer_phone',

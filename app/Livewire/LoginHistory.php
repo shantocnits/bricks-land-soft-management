@@ -13,6 +13,7 @@ class LoginHistory extends Component
     public $perPage = 15;
     public $selectedLogs = [];
     public $selectAll = false;
+    public $showDeleteConfirmModal = false;
 
     protected $paginationTheme = 'tailwind';
 
@@ -74,6 +75,12 @@ class LoginHistory extends Component
 
     public function updatedSelectAll($value)
     {
+        if (auth()->check() && auth()->user()->role !== 'admin') {
+            $this->selectAll = false;
+            $this->selectedLogs = [];
+            return;
+        }
+
         if ($value) {
             $paginatedIds = LoginLog::orderBy('id', 'desc')
                 ->paginate($this->perPage)
@@ -86,12 +93,33 @@ class LoginHistory extends Component
         }
     }
 
+    public function confirmDeleteSelected()
+    {
+        if (auth()->check() && auth()->user()->role !== 'admin') {
+            $this->dispatch('show-toast', message: 'সাধারণ ইউজার অথবা স্টাফ লগ রেকর্ড মুছে ফেলতে পারবে না!', type: 'danger');
+            return;
+        }
+
+        if (count($this->selectedLogs) > 0) {
+            $this->showDeleteConfirmModal = true;
+        } else {
+            $this->dispatch('show-toast', message: 'অনুগ্রহ করে অন্তত একটি রেকর্ড সিলেক্ট করুন।', type: 'danger');
+        }
+    }
+
     public function deleteSelected()
     {
+        if (auth()->check() && auth()->user()->role !== 'admin') {
+            $this->dispatch('show-toast', message: 'সাধারণ ইউজার অথবা স্টাফ লগ রেকর্ড মুছে ফেলতে পারবে না!', type: 'danger');
+            $this->showDeleteConfirmModal = false;
+            return;
+        }
+
         if (count($this->selectedLogs) > 0) {
             LoginLog::whereIn('id', $this->selectedLogs)->delete();
             $this->selectedLogs = [];
             $this->selectAll = false;
+            $this->showDeleteConfirmModal = false;
             $this->dispatch('show-toast', message: 'নির্বাচিত লগ রেকর্ড সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
         }
     }

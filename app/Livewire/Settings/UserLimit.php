@@ -9,8 +9,9 @@ use App\Models\UserLimit as UserLimitModel;
 class UserLimit extends Component
 {
     public $selectedUserId = '';
-    public $limitType = 'daily_invoice_limit';
+    public $limitType = 'discount_limit';
     public $amount = '';
+    public $editingLimitId = null;
 
     // Modal and Search control
     public $showModal = false;
@@ -18,7 +19,7 @@ class UserLimit extends Component
 
     protected $rules = [
         'selectedUserId' => 'required|exists:users,id',
-        'limitType' => 'required|in:daily_invoice_limit,max_discount_limit,daily_payment_limit',
+        'limitType' => 'required|in:discount_limit,due_limit,delivery_limit,daily_invoice_limit,max_discount_limit,daily_payment_limit',
         'amount' => 'required|numeric|min:0',
     ];
 
@@ -36,42 +37,82 @@ class UserLimit extends Component
         $this->showModal = true;
     }
 
+    public function editLimit($id)
+    {
+        $limit = UserLimitModel::find($id);
+        if ($limit) {
+            $this->editingLimitId = $limit->id;
+            $this->selectedUserId = $limit->user_id;
+            $this->limitType      = $limit->limit_type;
+            $this->amount         = $limit->amount;
+            $this->showModal      = true;
+        }
+    }
+
     public function setLimit()
     {
         // Block action if logged in as Demo
         if (auth()->user()->hasRole('demo')) {
-            session()->flash('message', 'ডেমো মোডে কোনো লিমিট পরিবর্তন করা সম্ভব নয়।');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে কোনো লিমিট পরিবর্তন করা সম্ভব নয়।', type: 'danger');
             $this->showModal = false;
             return;
         }
 
         $this->validate();
 
-        UserLimitModel::updateOrCreate(
-            [
-                'user_id' => $this->selectedUserId,
-                'limit_type' => $this->limitType,
-            ],
-            [
-                'amount' => $this->amount,
-            ]
-        );
+        if ($this->editingLimitId) {
+            $limit = UserLimitModel::find($this->editingLimitId);
+            if ($limit) {
+                $limit->update([
+                    'user_id'    => $this->selectedUserId,
+                    'limit_type' => $this->limitType,
+                    'amount'     => $this->amount,
+                ]);
+            }
+            $msg = 'ইউজার লিমিট সফলভাবে আপডেট করা হয়েছে।';
+        } else {
+            UserLimitModel::updateOrCreate(
+                [
+                    'user_id'    => $this->selectedUserId,
+                    'limit_type' => $this->limitType,
+                ],
+                [
+                    'amount'     => $this->amount,
+                ]
+            );
+            $msg = 'ইউজার লিমিট সফলভাবে সেট করা হয়েছে।';
+        }
 
-        session()->flash('message', 'ইউজার লিমিট সফলভাবে সেট করা হয়েছে।');
+        $this->dispatch('show-toast', message: $msg, type: 'success');
         $this->showModal = false;
         $this->resetForm();
+    }
+
+    public $confirmDeleteId = null;
+
+    public function confirmDelete($id)
+    {
+        $this->confirmDeleteId = $id;
+    }
+
+    public function deleteConfirmed()
+    {
+        if ($this->confirmDeleteId) {
+            $this->deleteLimit($this->confirmDeleteId);
+            $this->confirmDeleteId = null;
+        }
     }
 
     public function deleteLimit($id)
     {
         // Block action if logged in as Demo
         if (auth()->user()->hasRole('demo')) {
-            session()->flash('message', 'ডেমো মোডে লিমিট মুছে ফেলা সম্ভব নয়।');
+            $this->dispatch('show-toast', message: 'ডেমো মোডে লিমিট মুছে ফেলা সম্ভব নয়।', type: 'danger');
             return;
         }
 
         UserLimitModel::destroy($id);
-        session()->flash('message', 'ইউজার লিমিট সফলভাবে মুছে ফেলা হয়েছে।');
+        $this->dispatch('show-toast', message: 'ইউজার লিমিট সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
     }
 
     public function cancelEdit()
@@ -82,8 +123,8 @@ class UserLimit extends Component
 
     public function resetForm()
     {
-        $this->reset(['selectedUserId', 'amount']);
-        $this->limitType = 'daily_invoice_limit';
+        $this->reset(['selectedUserId', 'amount', 'editingLimitId']);
+        $this->limitType = 'discount_limit';
     }
 
     public function render()

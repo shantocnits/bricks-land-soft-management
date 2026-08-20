@@ -142,7 +142,7 @@ class UserManagement extends Component
                     $user->syncPermissions([]);
                 }
 
-                session()->flash('message', 'ইউজার সফলভাবে আপডেট করা হয়েছে।');
+                $this->dispatch('show-toast', message: 'ইউজার সফলভাবে আপডেট করা হয়েছে।', type: 'success');
             }
         } else {
             $photoPath = null;
@@ -169,7 +169,7 @@ class UserManagement extends Component
                 $user->syncPermissions($this->selectedPermissions);
             }
 
-            session()->flash('message', 'নতুন ইউজার সফলভাবে তৈরি করা হয়েছে।');
+            $this->dispatch('show-toast', message: 'নতুন ইউজার সফলভাবে তৈরি করা হয়েছে।', type: 'success');
         }
 
         // Reset permission cache so changes reflect instantly
@@ -197,10 +197,25 @@ class UserManagement extends Component
         }
     }
 
+    public $confirmDeleteId = null;
+
+    public function confirmDelete($id)
+    {
+        $this->confirmDeleteId = $id;
+    }
+
+    public function deleteConfirmed()
+    {
+        if ($this->confirmDeleteId) {
+            $this->delete($this->confirmDeleteId);
+            $this->confirmDeleteId = null;
+        }
+    }
+
     public function delete($id)
     {
         if ($id == auth()->id()) {
-            session()->flash('error', 'আপনি বর্তমানে লগইন থাকা ইউজারটি ডিলিট করতে পারবেন না।');
+            $this->dispatch('show-toast', message: 'আপনি বর্তমানে লগইন থাকা ইউজারটি ডিলিট করতে পারবেন না।', type: 'danger');
             return;
         }
 
@@ -215,7 +230,7 @@ class UserManagement extends Component
         // Reset permission cache
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        session()->flash('message', 'ইউজার সফলভাবে মুছে ফেলা হয়েছে।');
+        $this->dispatch('show-toast', message: 'ইউজার সফলভাবে মুছে ফেলা হয়েছে।', type: 'success');
         $this->resetForm();
     }
 

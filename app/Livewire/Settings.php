@@ -42,9 +42,9 @@ class Settings extends Component
     {
         $user = Auth::user();
         if ($user && $user->isAdmin()) {
-            return ['my_profile', 'profile', 'category', 'ledger', 'user', 'password', 'limit', 'printer', 'stock', 'sms'];
+            return ['my_profile', 'profile', 'category', 'ledger', 'user', 'limit', 'printer', 'stock', 'sms'];
         }
-        return ['my_profile', 'password'];
+        return ['my_profile'];
     }
 
     public function render()

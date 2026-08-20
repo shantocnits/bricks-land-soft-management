@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsActivity;
 
 class DeunaTransaction extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'ledger_name', 'transaction_type', 'address', 'phone',
         'amount', 'start_date', 'transaction_date', 'due_date',

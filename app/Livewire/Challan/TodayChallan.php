@@ -635,13 +635,35 @@
          $this->showModal = true;
      }
  
-     public function delete($id)
-     {
-         Challan::destroy($id);
-         $msg = 'চালান মুছে ফেলা হয়েছে।';
-         session()->flash('message', $msg);
-         $this->dispatch('show-toast', ['message' => $msg]);
-     }
+    public $confirmDeleteId = null;
+
+    public function confirmDelete($id)
+    {
+        $this->confirmDeleteId = $id;
+    }
+
+    public function deleteConfirmed()
+    {
+        if ($this->confirmDeleteId) {
+            $this->delete($this->confirmDeleteId);
+            $this->confirmDeleteId = null;
+        }
+    }
+
+    public function delete($id)
+    {
+        $c = Challan::find($id);
+        if ($c) {
+            $cNo = $c->challan_no;
+            $cCust = $c->customer_name;
+            $cTotal = $c->grand_total;
+            $c->delete();
+            \App\Models\ActivityLog::log('চালান ডিলিট', "চালান ডিলিট: নং {$cNo} • গ্রাহক: {$cCust} • মোট ৳ " . number_format($cTotal));
+        }
+        $msg = 'চালান মুছে ফেলা হয়েছে।';
+        session()->flash('message', $msg);
+        $this->dispatch('show-toast', ['message' => $msg]);
+    }
  
     public function openDeliveryModal($challanId)
     {

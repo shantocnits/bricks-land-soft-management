@@ -261,9 +261,31 @@ class CustomerProfile extends Component
         }
     }
 
+    public $confirmDeleteId = null;
+
+    public function confirmDelete($id)
+    {
+        $this->confirmDeleteId = $id;
+    }
+
+    public function deleteConfirmed()
+    {
+        if ($this->confirmDeleteId) {
+            $this->delete($this->confirmDeleteId);
+            $this->confirmDeleteId = null;
+        }
+    }
+
     public function delete($id)
     {
-        Challan::destroy($id);
+        $c = Challan::find($id);
+        if ($c) {
+            $cNo = $c->challan_no;
+            $cCust = $c->customer_name;
+            $cTotal = $c->grand_total;
+            $c->delete();
+            \App\Models\ActivityLog::log('চালান ডিলিট', "চালান ডিলিট (গ্রাহক প্রোফাইল): নং {$cNo} • গ্রাহক: {$cCust} • মোট ৳ " . number_format($cTotal));
+        }
         session()->flash('message', 'চালান মুছে ফেলা হয়েছে।');
     }
 

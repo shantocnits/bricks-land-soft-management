@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Support\Facades\Schema;
+use App\Traits\LogsActivity;
 
 class Ledger extends Model
 {
+    use LogsActivity;
+
     protected $fillable = ['serial', 'name', 'group', 'group_type', 'rate', 'divisor', 'is_active'];
 
     protected $casts = [

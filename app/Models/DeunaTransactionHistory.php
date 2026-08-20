@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\LogsActivity;
 
 class DeunaTransactionHistory extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'deuna_transaction_id',
         'type',
