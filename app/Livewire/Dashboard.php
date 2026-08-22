@@ -8,9 +8,9 @@ use App\Models\ChallanItem;
 use App\Models\Payment;
 use App\Models\LoadEntry;
 use App\Models\UnloadItem;
-use App\Models\UnloadEntry;
 use App\Models\Delivery;
 use App\Models\CashEntry;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -35,7 +35,7 @@ class Dashboard extends Component
     public function openProfitLossModal(): void
     {
         if (empty($this->modalSeason)) {
-            $this->modalSeason = \App\Models\Setting::get('season', '২৫-২৬');
+            $this->modalSeason = Setting::get('season', '২৫-২৬');
         }
         $this->showProfitLossModal = true;
     }
@@ -68,52 +68,104 @@ class Dashboard extends Component
             if ($this->filterPeriod === 'today') {
                 $queryDate = Carbon::today();
             } elseif ($this->filterPeriod === '7days') {
-                $startDate = Carbon::today()->subDays(6);
+                $startDate = Carbon::today()->subDays(6); // last 7 days inclusive
             } elseif ($this->filterPeriod === '15days') {
-                $startDate = Carbon::today()->subDays(14);
+                $startDate = Carbon::today()->subDays(14); // last 15 days inclusive
             }
-            // 'season' & 'profit_loss' show full season data
+            // 'season' & 'profit_loss' show full season data without date boundaries
         }
 
-        $activeSeason = \App\Models\Setting::get('season', '২৫-২৬');
+        $activeSeason = Setting::get('season', '২৫-২৬');
 
-        // 1. Challan Summary Cards
-        $challanQuery = Challan::query()->where(function ($q) use ($activeSeason) {
-            $q->where('season', $activeSeason)->orWhereNull('season');
-        });
+        // --- 1. Challan Sales Query (grand_total > 0) ---
+        $salesQuery = Challan::query()
+            ->where('grand_total', '>', 0)
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            });
+
         if ($queryDate) {
-            $challanQuery->whereDate('date', $queryDate);
+            $salesQuery->whereDate('date', $queryDate);
         } elseif ($startDate) {
-            $challanQuery->whereDate('date', '>=', $startDate);
+            $salesQuery->whereDate('date', '>=', $startDate);
         }
 
-        $totalSalesVat = $challanQuery->sum('grand_total');
-        $cashSales = $challanQuery->sum('cash');
-        $dueSales = $challanQuery->sum('due');
-        $totalChallanValue = $challanQuery->sum('total_value');
-        $totalDiscount = $challanQuery->sum('discount');
-        $totalTransportRent = $challanQuery->sum('transport_rent');
+        $totalSalesVat      = (float) (clone $salesQuery)->sum('grand_total');
+        $cashSales          = (float) (clone $salesQuery)->sum('cash');
+        $dueSales           = (float) (clone $salesQuery)->sum('due');
+        $totalChallanValue  = (float) (clone $salesQuery)->sum('total_value');
+        $totalDiscount      = (float) (clone $salesQuery)->sum('discount');
+        $totalTransportRent = (float) (clone $salesQuery)->sum('transport_rent');
 
-        // 2. Payment Summary Card & Table
-        $paymentQuery = Payment::query()->where(function ($q) use ($activeSeason) {
-            $q->where('season', $activeSeason)->orWhereNull('season');
-        });
+        // --- 2. Due Collection Query (grand_total == 0) ---
+        $dueCollectionQuery = Challan::query()
+            ->where('grand_total', 0)
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            });
+
         if ($queryDate) {
-            $paymentQuery->whereDate('date', $queryDate);
+            $dueCollectionQuery->whereDate('date', $queryDate);
+        } elseif ($startDate) {
+            $dueCollectionQuery->whereDate('date', '>=', $startDate);
+        }
+
+        $dueDeposit = (float) $dueCollectionQuery->sum('cash');
+
+        // --- 3. Payment Query (Total Expenses) ---
+        $paymentQuery = Payment::query()
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            });
+
+        if ($queryDate) {
+            $dmySlash = $queryDate->format('d/m/Y');
+            $dmyDash  = $queryDate->format('d-m-Y');
+            $ymdDash  = $queryDate->format('Y-m-d');
+            $paymentQuery->where(function ($sub) use ($dmySlash, $dmyDash, $ymdDash, $queryDate) {
+                $sub->where('date', $dmySlash)
+                    ->orWhere('date', $dmyDash)
+                    ->orWhere('date', $ymdDash)
+                    ->orWhereDate('date', $queryDate)
+                    ->orWhereDate('created_at', $queryDate);
+            });
         } elseif ($startDate) {
             $paymentQuery->whereDate('date', '>=', $startDate);
         }
-        $totalPayment = $paymentQuery->sum('payment');
 
-        // 3. Due Collection / Remaining Baki
-        $dueDeposit = max(0, $dueSales - $totalPayment);
+        $totalPayment = (float) (clone $paymentQuery)->sum('payment');
 
-        // 4. Cash Summary
-        $netCash = $cashSales + $totalPayment;
+        // --- 4. Manual Cash Entries (CashEntry) ---
+        $manualInQuery = CashEntry::query()
+            ->where('is_system', false)
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            });
 
-        // 5. Challan Category Table Data
+        $manualOutQuery = CashEntry::query()
+            ->where('is_system', false)
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            });
+
+        if ($queryDate) {
+            $manualInQuery->whereDate('date', $queryDate);
+            $manualOutQuery->whereDate('date', $queryDate);
+        } elseif ($startDate) {
+            $manualInQuery->whereDate('date', '>=', $startDate);
+            $manualOutQuery->whereDate('date', '>=', $startDate);
+        }
+
+        $manualCashIn  = (float) $manualInQuery->sum('cash_in');
+        $manualCashOut = (float) $manualOutQuery->sum('cash_out');
+
+        // --- 5. Total Net Cash ---
+        $netCash = ($cashSales + $dueDeposit + $manualCashIn) - ($totalPayment + $manualCashOut);
+
+        // --- 6. Challan Category Table Data ---
         $challanItemsQuery = ChallanItem::query()
             ->join('challans', 'challan_items.challan_id', '=', 'challans.id')
+            ->where('challans.grand_total', '>', 0)
             ->where(function ($q) use ($activeSeason) {
                 $q->where('challans.season', $activeSeason)->orWhereNull('challans.season');
             })
@@ -123,6 +175,7 @@ class Dashboard extends Component
                 DB::raw('SUM(challan_items.quantity) as total_qty'),
                 DB::raw('SUM(challan_items.amount) as total_amount')
             );
+
         if ($queryDate) {
             $challanItemsQuery->whereDate('challans.date', $queryDate);
         } elseif ($startDate) {
@@ -133,129 +186,169 @@ class Dashboard extends Component
         }
         $challanCategories = $challanItemsQuery->groupBy('challan_items.category_name')->get();
 
-        // 6. Payment Table Data
+        // --- 7. Payment Summary Table Data ---
         $paymentsQueryList = Payment::query()
-            ->select('ledger', 'desc', DB::raw('SUM(payment) as total_payment'))
-            ->groupBy('ledger', 'desc');
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            })
+            ->select('ledger', DB::raw('SUM(payment) as total_payment'))
+            ->groupBy('ledger');
+
         if ($queryDate) {
-            $paymentsQueryList->whereDate('date', $queryDate);
+            $dmySlash = $queryDate->format('d/m/Y');
+            $dmyDash  = $queryDate->format('d-m-Y');
+            $ymdDash  = $queryDate->format('Y-m-d');
+            $paymentsQueryList->where(function ($sub) use ($dmySlash, $dmyDash, $ymdDash, $queryDate) {
+                $sub->where('date', $dmySlash)
+                    ->orWhere('date', $dmyDash)
+                    ->orWhere('date', $ymdDash)
+                    ->orWhereDate('date', $queryDate)
+                    ->orWhereDate('created_at', $queryDate);
+            });
         } elseif ($startDate) {
             $paymentsQueryList->whereDate('date', '>=', $startDate);
         }
         if ($this->search) {
-            $paymentsQueryList->where(function ($q) {
-                $q->where('ledger', 'like', '%' . $this->search . '%')
-                    ->orWhere('desc', 'like', '%' . $this->search . '%');
-            });
+            $paymentsQueryList->where('ledger', 'like', '%' . $this->search . '%');
         }
         $paymentSummary = $paymentsQueryList->get();
 
-        // 7. Production Table Data
-        $totalChallanQty = $challanCategories->sum('total_qty');
+        // --- 8. Production Summary Table Data ---
+        $totalLoadQty = (float) LoadEntry::query()
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            })
+            ->when($queryDate, fn($q) => $q->whereDate('date', $queryDate))
+            ->when($startDate, fn($q) => $q->whereDate('date', '>=', $startDate))
+            ->sum('quantity');
+
         $productions = [
-            ['mill' => '১ নং মেল', 'qty' => $totalChallanQty],
+            ['mill' => '১ নং মেল', 'qty' => $totalLoadQty > 0 ? $totalLoadQty : $challanCategories->sum('total_qty')],
         ];
 
-        // 8. Delivery Table Data
+        // --- 9. Delivery Summary Table Data ---
         $deliveryQuery = Delivery::query()
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            })
             ->select('category_name', DB::raw('SUM(quantity) as total_qty'))
             ->groupBy('category_name');
+
         if ($queryDate) {
             $deliveryQuery->whereDate('delivery_date', $queryDate);
         } elseif ($startDate) {
             $deliveryQuery->whereDate('delivery_date', '>=', $startDate);
         }
+        if ($this->search) {
+            $deliveryQuery->where('category_name', 'like', '%' . $this->search . '%');
+        }
         $deliverySummary = $deliveryQuery->get();
 
-        // 9. Load Table Data
+        // --- 10. Load Summary Table Data ---
         $loadQuery = LoadEntry::query()
-            ->select('description', 'category', DB::raw('SUM(quantity) as total_qty'))
-            ->groupBy('description', 'category');
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('season', $activeSeason)->orWhereNull('season');
+            })
+            ->select(DB::raw("COALESCE(NULLIF(description, ''), category, 'লোডিং') as load_desc"), DB::raw('SUM(quantity) as total_qty'))
+            ->groupBy('load_desc');
+
         if ($queryDate) {
             $loadQuery->whereDate('date', $queryDate);
         } elseif ($startDate) {
             $loadQuery->whereDate('date', '>=', $startDate);
         }
+        if ($this->search) {
+            $loadQuery->where('description', 'like', '%' . $this->search . '%');
+        }
         $loadSummary = $loadQuery->get();
 
-        // 10. Unload Table Data
+        // --- 11. Unload Summary Table Data ---
         $unloadQuery = UnloadItem::query()
             ->join('unload_entries', 'unload_items.unload_entry_id', '=', 'unload_entries.id')
+            ->where(function ($q) use ($activeSeason) {
+                $q->where('unload_entries.season', $activeSeason)->orWhereNull('unload_entries.season');
+            })
             ->select('unload_items.category_name', DB::raw('SUM(unload_items.quantity) as total_qty'))
             ->groupBy('unload_items.category_name');
+
         if ($queryDate) {
             $unloadQuery->whereDate('unload_entries.date', $queryDate);
         } elseif ($startDate) {
             $unloadQuery->whereDate('unload_entries.date', '>=', $startDate);
         }
+        if ($this->search) {
+            $unloadQuery->where('unload_items.category_name', 'like', '%' . $this->search . '%');
+        }
         $unloadSummary = $unloadQuery->get();
 
-        // 11. Profit & Loss Modal Dataset for selected $modalSeason
+        // --- 12. Profit & Loss Modal Dataset ---
         $mSeason = $this->modalSeason ?: $activeSeason;
 
-        $mSales = Challan::where(function($q) use ($mSeason) {
-            $q->where('season', $mSeason)->orWhereNull('season');
-        })->sum('grand_total');
+        $mSales = (float) Challan::where('grand_total', '>', 0)
+            ->where(function($q) use ($mSeason) {
+                $q->where('season', $mSeason)->orWhereNull('season');
+            })->sum('grand_total');
 
         $expenseLedgers = \App\Models\Ledger::where('group_type', 'expense')
             ->orWhere('group', 'LIKE', '%খরচ%')
             ->orWhere('name', 'LIKE', '%খরচ%')
             ->pluck('name')->toArray();
 
-        $mExpenses = Payment::where(function($q) use ($mSeason) {
-            $q->where('season', $mSeason)->orWhereNull('season');
-        })
-        ->where(function($q) use ($expenseLedgers) {
-            if (!empty($expenseLedgers)) {
-                $q->whereIn('ledger', $expenseLedgers);
-            } else {
-                $q->where('payment', '>', 0);
-            }
-        })
-        ->sum('payment');
+        $mExpenses = (float) Payment::where(function($q) use ($mSeason) {
+                $q->where('season', $mSeason)->orWhereNull('season');
+            })
+            ->where(function($q) use ($expenseLedgers) {
+                if (!empty($expenseLedgers)) {
+                    $q->whereIn('ledger', $expenseLedgers);
+                } else {
+                    $q->where('payment', '>', 0);
+                }
+            })
+            ->sum('payment');
 
-        $mOverpayment = Payment::where(function($q) use ($mSeason) {
+        $mOverpayment = (float) Payment::where(function($q) use ($mSeason) {
             $q->where('season', $mSeason)->orWhereNull('season');
         })->where('purchase_receive', '<', 0)->sum('purchase_receive');
 
         $mNetProfitLoss = $mSales - ($mExpenses + abs($mOverpayment));
 
-        $mDue = Challan::where(function($q) use ($mSeason) {
-            $q->where('season', $mSeason)->orWhereNull('season');
-        })->sum('due');
+        $mDue = (float) Challan::where('grand_total', '>', 0)
+            ->where(function($q) use ($mSeason) {
+                $q->where('season', $mSeason)->orWhereNull('season');
+            })->sum('due');
 
         $mOverallProfitLoss = $mNetProfitLoss - $mDue;
 
         $challanSeasons = Challan::whereNotNull('season')->select('season')->distinct()->pluck('season')->toArray();
-        $loadSeasons = LoadEntry::whereNotNull('season')->select('season')->distinct()->pluck('season')->toArray();
+        $loadSeasons    = LoadEntry::whereNotNull('season')->select('season')->distinct()->pluck('season')->toArray();
         $availableSeasons = array_unique(array_merge(['২৫-২৬', '২৪-২৫', '২৩-২৪'], $challanSeasons, $loadSeasons));
         sort($availableSeasons);
 
         return view('livewire.dashboard', [
-            'totalSalesVat' => $totalSalesVat,
-            'cashSales' => $cashSales,
-            'dueSales' => $dueSales,
-            'totalPayment' => $totalPayment,
-            'dueDeposit' => $dueDeposit,
-            'netCash' => $netCash,
-            'totalChallanValue' => $totalChallanValue,
-            'totalDiscount' => $totalDiscount,
+            'totalSalesVat'      => $totalSalesVat,
+            'cashSales'          => $cashSales,
+            'dueSales'           => $dueSales,
+            'totalPayment'       => $totalPayment,
+            'dueDeposit'         => $dueDeposit,
+            'netCash'            => $netCash,
+            'totalChallanValue'  => $totalChallanValue,
+            'totalDiscount'      => $totalDiscount,
             'totalTransportRent' => $totalTransportRent,
-            'challanCategories' => $challanCategories,
-            'paymentSummary' => $paymentSummary,
-            'productions' => $productions,
-            'deliverySummary' => $deliverySummary,
-            'loadSummary' => $loadSummary,
-            'unloadSummary' => $unloadSummary,
+            'challanCategories'  => $challanCategories,
+            'paymentSummary'     => $paymentSummary,
+            'productions'        => $productions,
+            'deliverySummary'    => $deliverySummary,
+            'loadSummary'        => $loadSummary,
+            'unloadSummary'      => $unloadSummary,
             // Modal Data
-            'modalSeason' => $mSeason,
-            'mSales' => $mSales,
-            'mExpenses' => $mExpenses,
-            'mOverpayment' => $mOverpayment,
-            'mNetProfitLoss' => $mNetProfitLoss,
-            'mDue' => $mDue,
+            'modalSeason'        => $mSeason,
+            'mSales'             => $mSales,
+            'mExpenses'          => $mExpenses,
+            'mOverpayment'       => $mOverpayment,
+            'mNetProfitLoss'     => $mNetProfitLoss,
+            'mDue'               => $mDue,
             'mOverallProfitLoss' => $mOverallProfitLoss,
-            'availableSeasons' => array_reverse($availableSeasons),
+            'availableSeasons'   => array_reverse($availableSeasons),
         ])->layout('layouts.app');
     }
 }
