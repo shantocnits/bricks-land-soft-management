@@ -24,11 +24,11 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     <!-- Flatpickr Datepicker & Chart.js -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
-    <style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" data-navigate-track>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css" data-navigate-track>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" data-navigate-track></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js" data-navigate-track></script>
+    <style data-navigate-track>
         .flatpickr-calendar { border-radius: 1rem !important; box-shadow: 0 20px 60px rgba(0,0,0,0.18) !important; border: 1px solid #e5e7eb !important; font-family: 'Inter', sans-serif !important; overflow: hidden; }
         .dark .flatpickr-calendar { background: #0f172a !important; border-color: #1e293b !important; color: #e2e8f0 !important; }
         .dark .flatpickr-months, .dark .flatpickr-weekdays { background: #0f172a !important; }

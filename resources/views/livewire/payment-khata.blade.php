@@ -1206,7 +1206,7 @@
     <!-- ========================================== -->
 
     <!-- Print Specific Stylesheet -->
-    <style>
+    <style data-navigate-once>
         @media print {
             body * {
                 visibility: hidden !important;

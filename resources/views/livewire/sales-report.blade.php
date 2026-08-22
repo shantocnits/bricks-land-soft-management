@@ -511,7 +511,7 @@ if (!function_exists('toBanglaNum')) {
     </div>
 </div>
 
-<script>
+<script data-navigate-once>
     window.addEventListener('reset-flatpickrs', () => {
         document.querySelectorAll('[data-flatpickr]').forEach(el => {
             if (el._flatpickr) {

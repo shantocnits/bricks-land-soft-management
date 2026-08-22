@@ -19,14 +19,17 @@
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
     
-    /* Global Border variable (#e5e7eb / border-gray-200) */
+    /* Global Border variables */
     --color-border: #e5e7eb;
     --border: #e5e7eb;
+    --color-app-border: #e5e7eb;
+    --color-app-border-dark: #334155;
 
     /* Primary brand colors (emerald shades) */
     --color-primary: #059669;         /* emerald-600 */
     --color-primary-dark: #047857;    /* emerald-700 */
     --color-primary-light: #10b981;   /* emerald-500 */
+    --color-primary-hover: #047857;
     
     /* Secondary & Accent brand colors */
     --color-secondary: #068a6b;
@@ -35,6 +38,22 @@
 
     --color-accent: #009e74;
     --color-accent-hover: #008762;
+    --color-accent-dark: #007856;
+    --color-accent-light: #00b888;
+
+    /* Sidebar dark green theme colors */
+    --color-sidebar: #034c3c;
+    --color-sidebar-dark: #023e31;
+    --color-sidebar-light: #056651;
+    --color-primary-sidebar: #034c3c;
+    --color-primary-sidebar-dark: #023e31;
+    --color-primary-sidebar-light: #056651;
+
+    /* Dark mode background & surface tokens */
+    --color-dark-bg: #0b1329;
+    --color-dark-surface: #0f172a;
+    --color-dark-card: #1e293b;
+    --color-dark-border: #334155;
 
     /* Additional UI Brand Accent Tokens */
     --color-cyan-brand: #00838F;
@@ -43,10 +62,11 @@
     --color-teal-brand: #0B958E;
     --color-purple-brand: #BF20BA;
 
-    /* Sidebar dark green theme colors */
-    --color-primary-sidebar: #034c3c;
-    --color-primary-sidebar-dark: #023e31;
-    --color-primary-sidebar-light: #056651;
+    /* Status Colors */
+    --color-status-success: #10b981;
+    --color-status-warning: #f59e0b;
+    --color-status-danger: #ef4444;
+    --color-status-info: #3b82f6;
 
     /* Primary palette matching shades */
     --color-primary-50: #ecfdf5;
@@ -55,9 +75,123 @@
     --color-primary-200: #a7f3d0;
     --color-primary-300: #6ee7b7;
     --color-primary-400: #34d399;
+    --color-primary-500: #10b981;
+    --color-primary-600: #059669;
+    --color-primary-700: #047857;
     --color-primary-800: #065f46;
     --color-primary-900: #064e3b;
     --color-primary-950: #022c22;
+
+    /* Emerald Palette Mapping */
+    --color-emerald-50: #ecfdf5;
+    --color-emerald-100: #d1fae5;
+    --color-emerald-200: #a7f3d0;
+    --color-emerald-250: #6ee7b7;
+    --color-emerald-300: #6ee7b7;
+    --color-emerald-400: #34d399;
+    --color-emerald-500: #10b981;
+    --color-emerald-600: #059669;
+    --color-emerald-700: #047857;
+    --color-emerald-800: #065f46;
+    --color-emerald-900: #064e3b;
+    --color-emerald-950: #022c22;
+
+    /* Red Palette Mapping */
+    --color-red-50: #fef2f2;
+    --color-red-100: #fee2e2;
+    --color-red-200: #fecaca;
+    --color-red-300: #fca5a5;
+    --color-red-350: #f87171;
+    --color-red-400: #f87171;
+    --color-red-450: #ef4444;
+    --color-red-500: #ef4444;
+    --color-red-505: #dc2626;
+    --color-red-550: #dc2626;
+    --color-red-600: #dc2626;
+    --color-red-650: #b91c1c;
+    --color-red-700: #b91c1c;
+    --color-red-800: #991b1b;
+    --color-red-900: #7f1d1d;
+    --color-red-950: #450a0a;
+
+    /* Slate Palette Mapping */
+    --color-slate-50: #f8fafc;
+    --color-slate-100: #f1f5f9;
+    --color-slate-150: #e8eef5;
+    --color-slate-200: #e2e8f0;
+    --color-slate-300: #cbd5e1;
+    --color-slate-350: #cbd5e1;
+    --color-slate-400: #94a3b8;
+    --color-slate-500: #64748b;
+    --color-slate-600: #475569;
+    --color-slate-700: #334155;
+    --color-slate-750: #1e293b;
+    --color-slate-800: #1e293b;
+    --color-slate-900: #0f172a;
+    --color-slate-950: #020617;
+
+    /* Gray Palette Mapping */
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-150: #e5e7eb;
+    --color-gray-200: #e5e7eb;
+    --color-gray-205: #e5e7eb;
+    --color-gray-250: #e5e7eb;
+    --color-gray-255: #d1d5db;
+    --color-gray-300: #d1d5db;
+    --color-gray-350: #9ca3af;
+    --color-gray-400: #9ca3af;
+    --color-gray-408: #9ca3af;
+    --color-gray-450: #6b7280;
+    --color-gray-500: #6b7280;
+    --color-gray-505: #6b7280;
+    --color-gray-550: #4b5563;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-708: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-808: #111827;
+    --color-gray-900: #111827;
+    --color-gray-950: #030712;
+
+    /* Amber Palette Mapping */
+    --color-amber-50: #fffbeb;
+    --color-amber-100: #fef3c7;
+    --color-amber-200: #fde68a;
+    --color-amber-300: #fcd34d;
+    --color-amber-400: #fbbf24;
+    --color-amber-500: #f59e0b;
+    --color-amber-600: #d97706;
+    --color-amber-700: #b45309;
+    --color-amber-800: #92400e;
+    --color-amber-900: #78350f;
+    --color-amber-950: #451a03;
+
+    /* Orange Palette Mapping */
+    --color-orange-50: #fff7ed;
+    --color-orange-100: #ffedd5;
+    --color-orange-200: #fed7aa;
+    --color-orange-300: #fdba74;
+    --color-orange-400: #fb923c;
+    --color-orange-500: #f97316;
+    --color-orange-600: #ea580c;
+    --color-orange-700: #c2410c;
+    --color-orange-800: #9a3412;
+    --color-orange-900: #7c2d12;
+    --color-orange-950: #431407;
+
+    /* Blue Palette Mapping */
+    --color-blue-50: #eff6ff;
+    --color-blue-100: #dbeafe;
+    --color-blue-200: #bfdbfe;
+    --color-blue-300: #93c5fd;
+    --color-blue-400: #60a5fa;
+    --color-blue-500: #3b82f6;
+    --color-blue-600: #2563eb;
+    --color-blue-700: #1d4ed8;
+    --color-blue-800: #1e40af;
+    --color-blue-900: #1e3a8a;
+    --color-blue-950: #172554;
 }
 
 @variant dark (&:where(.dark, .dark *));

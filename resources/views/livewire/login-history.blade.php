@@ -235,7 +235,7 @@
     @endif
 
     <!-- Custom inline styles to force active pagination links match primary color theme -->
-    <style>
+    <style data-navigate-once>
         .pagination-primary nav span[aria-current="page"] > span,
         .pagination-primary nav span[aria-current="page"] > a {
             background-color: #034C3C !important;

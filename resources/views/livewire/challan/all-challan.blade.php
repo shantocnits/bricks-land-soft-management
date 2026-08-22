@@ -947,7 +947,7 @@
     </div>
     </template>
 
-    <style>
+    <style data-navigate-once>
         /* Preview / Print stylesheet classes */
         .print-page {
             width: 100%;
@@ -1085,7 +1085,7 @@
         }
     </style>
 
-    <script>
+    <script data-navigate-once>
         function printElement(elementId) {
             var printContent = document.getElementById(elementId).innerHTML;
             var originalContent = document.body.innerHTML;

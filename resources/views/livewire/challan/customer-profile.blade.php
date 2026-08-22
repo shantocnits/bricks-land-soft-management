@@ -1015,7 +1015,7 @@
     </div>
     @endif
 
-    <style>
+    <style data-navigate-once>
         .challan-modal-scroll::-webkit-scrollbar { width: 5px; }
         .challan-modal-scroll::-webkit-scrollbar-track { background: transparent; }
         .challan-modal-scroll::-webkit-scrollbar-thumb { background: #10b981; border-radius: 999px; }
