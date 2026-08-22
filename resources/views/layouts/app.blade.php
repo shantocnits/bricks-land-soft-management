@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <script>
+    <script data-navigate-once>
         try {
             var stored = localStorage.getItem('_x_darkMode') || localStorage.getItem('darkMode');
             if (stored === 'true' || stored === '"true"') {
@@ -26,27 +26,9 @@
     <!-- Flatpickr Datepicker & Chart.js -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" data-navigate-track>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css" data-navigate-track>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" data-navigate-track></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr" data-navigate-track></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js" data-navigate-track></script>
-    <style data-navigate-track>
-        .flatpickr-calendar { border-radius: 1rem !important; box-shadow: 0 20px 60px rgba(0,0,0,0.18) !important; border: 1px solid #e5e7eb !important; font-family: 'Inter', sans-serif !important; overflow: hidden; }
-        .dark .flatpickr-calendar { background: #0f172a !important; border-color: #1e293b !important; color: #e2e8f0 !important; }
-        .dark .flatpickr-months, .dark .flatpickr-weekdays { background: #0f172a !important; }
-        .dark .flatpickr-day { color: #cbd5e1 !important; }
-        .dark .flatpickr-day:hover { background: #1e293b !important; }
-        .dark .flatpickr-day.selected { background: #059669 !important; border-color: #059669 !important; color: #fff !important; }
-        .flatpickr-day.selected { background: #059669 !important; border-color: #059669 !important; }
-        .dark .flatpickr-current-month, .dark .flatpickr-month { color: #e2e8f0 !important; }
-        .dark .numInputWrapper input { color: #e2e8f0 !important; }
-        .dark .flatpickr-prev-month svg, .dark .flatpickr-next-month svg { fill: #94a3b8 !important; }
-        .dark .flatpickr-weekday { color: #64748b !important; }
-        .dark .flatpickr-monthSelect-month { color: #cbd5e1 !important; }
-        .dark .flatpickr-monthSelect-month:hover { background: #1e293b !important; }
-        .dark .flatpickr-monthSelect-month.selected { background: #059669 !important; color: #fff !important; }
-        .flatpickr-monthSelect-month.selected { background: #059669 !important; }
-        .flatpickr-input { cursor: pointer !important; }
-        #nprogress { display: none !important; }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" data-navigate-track></script>
 </head>
 <body x-data="{ 
           darkMode: localStorage.getItem('darkMode') === 'true' || localStorage.getItem('_x_darkMode') === 'true', 
@@ -143,223 +125,6 @@
             
         </div>
     </div>
-
-    @livewireScripts
-    <!-- Flatpickr JS -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        var fpLocale = {
-            firstDayOfWeek: 6,
-            weekdays: {
-                shorthand: ['রবি','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি'],
-                longhand: ['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার']
-            },
-            months: {
-                shorthand: ['জান','ফেব','মার্চ','এপ্রি','মে','জুন','জুলাই','আগ','সেপ','অক্টো','নভে','ডিসে'],
-                longhand: ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর']
-            }
-        };
-
-        function initFlatpickrs() {
-            document.querySelectorAll('[data-flatpickr]').forEach(function(el) {
-                if (el._flatpickr) {
-                    var expectedVal = el.hasAttribute('data-default') ? el.getAttribute('data-default') : el.value;
-                    if (!expectedVal) {
-                        if (el._flatpickr.selectedDates.length > 0 || (el._flatpickr.altInput && el._flatpickr.altInput.value !== '')) {
-                            el._flatpickr.clear();
-                        }
-                    } else {
-                        var currentFormatted = el._flatpickr.input ? el._flatpickr.input.value : '';
-                        if (expectedVal !== currentFormatted || el._flatpickr.selectedDates.length === 0) {
-                            el._flatpickr.setDate(expectedVal, false);
-                        }
-                    }
-                    return;
-                }
-
-                // Add wire:ignore to parent dynamically to prevent Livewire from deleting altInput
-                if (el.parentElement) {
-                    el.parentElement.setAttribute('wire:ignore', '');
-                }
-
-                // Sibling check: clean up stale flatpickr-input elements created as altInput
-                var next = el.nextElementSibling;
-                if (next && next.classList.contains('flatpickr-input') && !next.hasAttribute('data-flatpickr')) {
-                    next.remove();
-                }
-
-                var wireProp = el.getAttribute('data-wire-prop');
-                var options = {
-                    locale: fpLocale,
-                    dateFormat: 'Y-m-d',
-                    altInput: true,
-                    altFormat: 'd-m-Y',
-                    altInputClass: el.className,
-                    allowInput: false,
-                    disableMobile: true,
-                    position: 'auto',
-                    onOpen: function(selectedDates, dateStr, instance) {
-                        if (instance && typeof instance._positionCalendar === 'function') {
-                            setTimeout(function() { instance._positionCalendar(); }, 10);
-                        }
-                    },
-                    onChange: function(selectedDates, dateStr, instance) {
-                        if (!wireProp) return;
-                        try {
-                            var closestWire = el.closest('[wire\\:id]');
-                            if (closestWire) {
-                                var wireId = closestWire.getAttribute('wire:id');
-                                var comp = Livewire.find(wireId);
-                                if (comp) { comp.set(wireProp, dateStr); return; }
-                            }
-                        } catch(e) { console.warn('Flatpickr Livewire set error:', e); }
-                    }
-                };
-                var defaultDate = el.hasAttribute('data-default') ? el.getAttribute('data-default') : el.value;
-                if (defaultDate) options.defaultDate = defaultDate;
-                flatpickr(el, options);
-            });
-
-            document.querySelectorAll('[data-flatpickr-month]').forEach(function(el) {
-                if (el._flatpickr) {
-                    var expectedVal = el.hasAttribute('data-default') ? el.getAttribute('data-default') : el.value;
-                    if (!expectedVal) {
-                        if (el._flatpickr.selectedDates.length > 0 || (el._flatpickr.altInput && el._flatpickr.altInput.value !== '')) {
-                            el._flatpickr.clear();
-                        }
-                    } else {
-                        if (el._flatpickr.selectedDates.length === 0) {
-                            el._flatpickr.setDate(expectedVal, false);
-                        }
-                    }
-                    return;
-                }
-
-                if (el.parentElement) {
-                    el.parentElement.setAttribute('wire:ignore', '');
-                }
-
-                var wireProp = el.getAttribute('data-wire-prop') || 'filterMonth';
-                var options = {
-                    locale: fpLocale,
-                    plugins: [
-                        new monthSelectPlugin({
-                            shorthand: true,
-                            dateFormat: 'Y-m',
-                            altFormat: 'F Y'
-                        })
-                    ],
-                    allowInput: false,
-                    disableMobile: true,
-                    onChange: function(selectedDates, dateStr, instance) {
-                        if (!wireProp) return;
-                        try {
-                            var closestWire = el.closest('[wire\\:id]');
-                            if (closestWire) {
-                                var wireId = closestWire.getAttribute('wire:id');
-                                var comp = Livewire.find(wireId);
-                                if (comp) { comp.set(wireProp, dateStr); return; }
-                            }
-                        } catch(e) { console.warn('Flatpickr Livewire set error:', e); }
-                    }
-                };
-                var defaultDate = el.hasAttribute('data-default') ? el.getAttribute('data-default') : el.value;
-                if (defaultDate) options.defaultDate = defaultDate;
-                flatpickr(el, options);
-            });
-        }
-
-        var fpObserver;
-        function setupObserver() {
-            if (fpObserver) {
-                try { fpObserver.disconnect(); } catch(e) {}
-            }
-            fpObserver = new MutationObserver(function(mutations) {
-                var hasFp = false;
-                mutations.forEach(function(m) {
-                    m.addedNodes.forEach(function(n) {
-                        if (n.nodeType === 1 && (n.querySelector && n.querySelector('[data-flatpickr]') || n.matches && n.matches('[data-flatpickr]'))) hasFp = true;
-                    });
-                });
-                if (hasFp) setTimeout(initFlatpickrs, 100);
-            });
-            fpObserver.observe(document.body, { childList: true, subtree: true });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() { 
-            setupObserver();
-            setTimeout(initFlatpickrs, 200); 
-        });
-        document.addEventListener('livewire:navigated', function() { 
-            setupObserver();
-            setTimeout(initFlatpickrs, 200); 
-        });
-        document.addEventListener('livewire:update', function() { setTimeout(initFlatpickrs, 100); });
-
-        // ===== Disable Livewire Navigation Progress Bar =====
-        document.addEventListener("livewire:init", () => {
-            if (window.Alpine && window.Alpine.navigate) {
-                window.Alpine.navigate.disableProgressBar();
-            }
-        });
-
-        // =========================================================================
-        // 🖨️ PROJECT PRINT SYSTEM ENGINE (Universal Print Area Handler)
-        // -------------------------------------------------------------------------
-        // This function handles all print operations across the entire application.
-        // Target Containers: #print-a4-customer, #print-a4-dual, #print-pos-customer, #print-pos-dual
-        // Page Orientations: A4 landscape (print-a4-dual), 80mm auto (pos), A4 portrait (default)
-        // =========================================================================
-        window.printChallanArea = function(printAreaId) {
-            var el = document.getElementById(printAreaId);
-            if (!el) { window.print(); return; }
-            
-            var clone = el.cloneNode(true);
-            clone.id = '__print_clone__';
-            clone.style.cssText = '';
-            clone.removeAttribute('class');
-            
-            // প্রজেক্টের ৪টি প্রিন্ট আইডি অনুসারে পেজ সাইজ ও মার্জিন নির্ধারণ
-            var pageSize = 'A4 portrait';
-            var marginSize = '5mm';
-            var cloneHeight = 'auto';
-            if (printAreaId === 'print-a4-dual' || (printAreaId && printAreaId.indexOf('unload') !== -1)) {
-                pageSize = 'A4 landscape';
-                marginSize = '5mm';
-            } else if (printAreaId === 'print-pos-customer') {
-                pageSize = '80mm auto';
-                marginSize = '2mm';
-                cloneHeight = '100vh';
-            } else if (printAreaId === 'print-pos-dual') {
-                pageSize = 'A4 portrait';
-                marginSize = '5mm';
-            }
-
-            var style = document.createElement('style');
-            style.textContent = [
-                '@media print {',
-                '  body * { visibility: hidden !important; }',
-                '  #__print_clone__, #__print_clone__ * { visibility: visible !important; }',
-                '  #__print_clone__ { position:fixed!important;left:0!important;top:0!important;width:100%!important;height:' + cloneHeight + '!important;min-height:' + cloneHeight + '!important;background:#ffffff!important;padding:2mm!important;margin:0!important;z-index:999999!important; }',
-                '  @page { size: ' + pageSize + ' !important; margin: ' + marginSize + ' !important; }',
-                '}'
-            ].join('\n');
-            
-            document.head.appendChild(style);
-            document.body.appendChild(clone);
-            
-            setTimeout(function() {
-                window.print();
-                setTimeout(function() {
-                    document.body.removeChild(clone);
-                    document.head.removeChild(style);
-                }, 500);
-            }, 100);
-        };
-        // =========================================================================
-        // 🖨️ END OF PROJECT PRINT SYSTEM ENGINE
-        // =========================================================================
-    </script>
 
     <!-- Universal Floating Action Buttons & Professional Modals Widget Area -->
     <div x-data="{
@@ -698,5 +463,6 @@
             </div>
         </div>
     </div>
+    @livewireScripts
 </body>
 </html>

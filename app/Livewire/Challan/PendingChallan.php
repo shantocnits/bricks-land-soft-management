@@ -805,7 +805,7 @@ class PendingChallan extends Component
 
         $printChallans = (clone $query)->get();
 
-        $totalDue = $printChallans->sum('due');
+        $totalDue = (clone $query)->sum('due');
 
         $settings = [
             'company_name_bn' => Setting::get('company_name_bn', 'ডেমো ব্রিকস'),
